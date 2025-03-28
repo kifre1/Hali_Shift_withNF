@@ -1,10 +1,3 @@
-#Nancy go to line 383
-
-
-
-#
-#
-#
 
 #BNAM .mat to .nc
 
@@ -198,95 +191,10 @@ plot(Depth_dims_raster_layer, main = "Depth with Correct Coordinates")
 #--------
 #--------
 #pull our new data (Depth_dims_raster_layer, B_Temperature_stack ,Temperature_stack, to the survey data----
-catch_data <- read_rds("C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/data/Derived/all_halibut_catch2.rds") 
-tows_data <- read_rds("C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/data/Derived/all_unique_tows2.rds") 
+catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_formatted.rds") 
+#tows_data <- read_rds("C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/data/Derived/all_unique_tows2.rds") 
   
-#structure that i am aiming for 
-SampleData <- read.csv("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/halibut_all_data.csv")
-names(SampleData)
-str(catch_data)
 
-#change names and add columns to match catch_data to the sample as closely as possible 
-catch_data <- catch_data |> 
-  ungroup() |> 
-  mutate(X = row_number())|> 
-  mutate(NMFS_SVSPP = 101)|> 
-  mutate(DFO_SPEC = 30)|>
-  mutate(trawl_id = gsub("-", "", trawl_id))
-names(catch_data)[names(catch_data) == "trawl_id"] <-"ID" #renamed but not reformatted   
-names(catch_data)[names(catch_data) == "date"] <-"DATE"          
-names(catch_data)[names(catch_data) == "year"] <- "EST_YEAR"      
-names(catch_data)[names(catch_data) == "season"] <-"SEASON"        
-names(catch_data)[names(catch_data) == "survey"] <-"SURVEY"       
-"SVVESSEL"  #I do not have anything like this, the closest thing is survey_season, which i will keep because I think it is harmless 
-names(catch_data)[names(catch_data) == "latitude"] <-"DECDEG_BEGLAT" 
-names(catch_data)[names(catch_data) == "longitude"] <-"DECDEG_BEGLON" 
-catch_data <- catch_data |> 
-  mutate(PRESENCE = if_else(total_abundance > 0, 1, 0))  
-names(catch_data)[names(catch_data) == "swept"] <-"Swept" 
-names(catch_data)[names(catch_data) == "total_biomass"] <-"BIOMASS"       
-names(catch_data)[names(catch_data) == "total_abundance"] <-"ABUNDANCE"     
-catch_data <- catch_data %>%
-  select(X, ID, DATE, EST_YEAR, SEASON, SURVEY, survey_season, DECDEG_BEGLAT, DECDEG_BEGLON, NMFS_SVSPP, DFO_SPEC, PRESENCE, BIOMASS, ABUNDANCE, Swept)
-
-
-catch_data %>%
-  count(SURVEY, PRESENCE)
-catch_data %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
-catch_data %>%
-  group_by(SURVEY, SEASON) %>%
-  summarize(count = n(), .groups = "drop")
-catch_data %>%
-  group_by(SURVEY, Swept) %>%
-  summarize(count = n(), .groups = "drop")
-SampleData %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
-SampleData %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
-
-#plot US data----
-All_region <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/region_shapefile/full_survey_region_simple.shp")
-crs <- st_crs(All_region)
-#subset us data and make spatial
-US_Data<-subset(catch_data, SURVEY=="MA"|SURVEY=="ME_NH"|SURVEY=="NEFSC")
-US_Data_sf <- US_Data |> 
-  st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  # Use same CRS as land_sf
-#for plotting
-land <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/Mapping_shapefiles/poly_NAD83.shp")
-land <- st_transform (land, crs)
-land <- st_make_valid(land)
-bbox <- st_bbox(US_Data_sf)
-buffer_factor <- 0.1
-expanded_bbox <- bbox + c(-1, -1, 1, 1) * buffer_factor * (bbox[3] - bbox[1])
-bbox_poly <- st_as_sfc(st_bbox(expanded_bbox, crs = st_crs(land_sf)))
-land <- st_intersection(land, bbox_poly)
-
-ggplot() +
-  geom_sf(data = US_Data_sf, aes(color = SURVEY)) + 
-  facet_wrap(~SURVEY) +  
-  geom_sf(data = land, fill = "gray80", color = "black") 
-#subset ca data and make spatial
-CA_Data<-subset(catch_data, SURVEY=="DFO"|SURVEY=="NF")
-CA_Data_sf <- CA_Data |> 
-  st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  # Use same CRS as land_sf
-#for plotting
-land <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/Mapping_shapefiles/poly_NAD83.shp")
-land <- st_transform (land, crs)
-land <- st_make_valid(land)
-bbox <- st_bbox(CA_Data_sf)
-buffer_factor <- 0.1
-expanded_bbox <- bbox + c(-1, -1, 1, 1) * buffer_factor * (bbox[3] - bbox[1])
-bbox_poly <- st_as_sfc(st_bbox(expanded_bbox, crs = st_crs(land_sf)))
-land <- st_intersection(land, bbox_poly)
-
-ggplot() +
-  geom_sf(data = CA_Data_sf, aes(color = SURVEY)) + 
-  facet_wrap(~SURVEY) +  
-  geom_sf(data = land, fill = "gray80", color = "black") 
 
 #----
 
