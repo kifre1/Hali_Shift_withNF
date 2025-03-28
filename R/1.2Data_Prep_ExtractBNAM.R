@@ -281,17 +281,13 @@ catch_df$DECDEG_BEGLAT <- coordinates(catch_data)[, 2]  # Extract latitude
 write_rds(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates.rds"), compress = "gz")
 #-------
 
-#Nancy start here for depth analysis 
-#I still have work to do here....
-  #make sure that the pull from the raster stacks is ok
-  #figure out why sometimes the layer does not exist for a month/year combo and what to do about that if it does for other covariates
-  #when the covariate values are all 0, it is because it is out of the bounds of the bnam projections (ie too close to shore?)
-  #add NF data
+#The data now have 
 catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_with_covariates.rds") 
 #we do not have surface temperature files beyond 2021, BUT we do have 2022/2023 for bottom temperature 
 catch_data <- catch_data %>%
   filter(EST_YEAR < 2022)
-write_rds(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates_1990to2021.rds"), compress = "gz")
+write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_with_covariates_1990to2021.rds"), compress = "gz")
+catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_with_covariates_1990to2021.rds") 
 
 str(catch_data)
 catch_data %>%
@@ -304,47 +300,39 @@ catch_data %>%
   summarize(count = n(), .groups = "drop")
 hist(catch_data$Swept)
 
-
+library(here)
 #plot survey data----
-All_region <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/region_shapefile/full_survey_region_simple.shp")
+All_region <- st_read(here:here("Data/TempShapefiles/full_survey_region_simple.shp"))
 crs <- st_crs(All_region)
-#subset us data and make spatial
+plot(All_region)
+#All
+land <- st_read(here:here("Data/Mapping_shapefiles/poly_NAD83.shp"))
+land <- st_transform (land, crs)
+land <- st_make_valid(land)
+
+#all
+catch_data_sf <- catch_data |> 
+  st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  
+all_bbox <- st_bbox(catch_data_sf)
+all_bbox_poly <- st_as_sfc(st_bbox(all_bbox, crs = st_crs(land)))
+all_land <- st_intersection(land, all_bbox_poly)
+
+ggplot() +
+  geom_sf(data = catch_data_sf, aes(color = SURVEY)) + 
+  geom_sf(data = all_land, fill = "gray80", color = "black") 
+
+#US
 US_Data<-subset(catch_data, SURVEY=="MA"|SURVEY=="ME_NH"|SURVEY=="NEFSC")
 US_Data_sf <- US_Data |> 
   st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  # Use same CRS as land_sf
 #for plotting
-land <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/Mapping_shapefiles/poly_NAD83.shp")
-land <- st_transform (land, crs)
-land <- st_make_valid(land)
-bbox <- st_bbox(US_Data_sf)
-buffer_factor <- 0.1
-expanded_bbox <- bbox + c(-1, -1, 1, 1) * buffer_factor * (bbox[3] - bbox[1])
-bbox_poly <- st_as_sfc(st_bbox(expanded_bbox, crs = st_crs(land_sf)))
-land <- st_intersection(land, bbox_poly)
+US_bbox <- st_bbox(US_Data_sf)
+US_bbox_poly <- st_as_sfc(st_bbox(US_bbox, crs = st_crs(land)))
+US_land <- st_intersection(land, US_bbox_poly)
 
 ggplot() +
   geom_sf(data = US_Data_sf, aes(color = SURVEY)) + 
   facet_wrap(~SURVEY) +  
-  geom_sf(data = land, fill = "gray80", color = "black") 
-#subset ca data and make spatial
-CA_Data<-subset(catch_data, SURVEY=="DFO"|SURVEY=="NF")
-CA_Data_sf <- CA_Data |> 
-  st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  # Use same CRS as land_sf
-#for plotting
-land <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/Mapping_shapefiles/poly_NAD83.shp")
-land <- st_transform (land, crs)
-land <- st_make_valid(land)
-bbox <- st_bbox(CA_Data_sf)
-buffer_factor <- 0.1
-expanded_bbox <- bbox + c(-1, -1, 1, 1) * buffer_factor * (bbox[3] - bbox[1])
-bbox_poly <- st_as_sfc(st_bbox(expanded_bbox, crs = st_crs(land_sf)))
-land <- st_intersection(land, bbox_poly)
-
-ggplot() +
-  geom_sf(data = CA_Data_sf, aes(color = SURVEY)) + 
-  facet_wrap(~SURVEY) +  
-  geom_sf(data = land, fill = "gray80", color = "black") 
-
-
+  geom_sf(data = US_land, fill = "gray80", color = "black") 
 
 
