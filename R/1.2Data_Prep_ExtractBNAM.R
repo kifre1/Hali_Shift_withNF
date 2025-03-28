@@ -300,6 +300,11 @@ catch_data %>%
   summarize(count = n(), .groups = "drop")
 hist(catch_data$Swept)
 
+# From here, the data represent 1990-2021, this solves the NAs from missing year/months
+#now we still have locations where all covariates are 0
+catch_data_zero <- catch_data %>%
+  filter(BT_monthly == 0, T_monthly == 0, Depth_value == 0)#n=6345
+
 library(here)
 #plot survey data----
 All_region <- st_read(here:here("Data/TempShapefiles/full_survey_region_simple.shp"))
@@ -309,6 +314,17 @@ plot(All_region)
 land <- st_read(here:here("Data/Mapping_shapefiles/poly_NAD83.shp"))
 land <- st_transform (land, crs)
 land <- st_make_valid(land)
+
+#plot zeros
+catch_data_zero_sf <- catch_data_zero |> 
+  st_as_sf(coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = crs)  
+zero_bbox <- st_bbox(catch_data_zero_sf)
+zero_bbox_poly <- st_as_sfc(st_bbox(zero_bbox, crs = st_crs(land)))
+zero_land <- st_intersection(land, zero_bbox_poly)
+
+ggplot() +
+  geom_sf(data = catch_data_zero_sf, aes(color = SURVEY)) + 
+  geom_sf(data = zero_land, fill = "gray80", color = "black") 
 
 #all
 catch_data_sf <- catch_data |> 
