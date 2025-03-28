@@ -288,7 +288,12 @@ write_rds(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates.rds
   #when the covariate values are all 0, it is because it is out of the bounds of the bnam projections (ie too close to shore?)
   #add NF data
 catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_with_covariates.rds") 
+#we do not have surface temperature files beyond 2021, BUT we do have 2022/2023 for bottom temperature 
+catch_data <- catch_data %>%
+  filter(EST_YEAR < 2022)
+write_rds(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates_1990to2021.rds"), compress = "gz")
 
+str(catch_data)
 catch_data %>%
   count(SURVEY, PRESENCE)
 catch_data %>%
@@ -339,3 +344,7 @@ ggplot() +
   geom_sf(data = CA_Data_sf, aes(color = SURVEY)) + 
   facet_wrap(~SURVEY) +  
   geom_sf(data = land, fill = "gray80", color = "black") 
+
+
+
+
