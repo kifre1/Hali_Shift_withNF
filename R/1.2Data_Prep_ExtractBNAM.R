@@ -182,7 +182,7 @@ crs(B_Temperature_stack) <- "+proj=longlat +datum=WGS84"
 plot(B_Temperature_stack[[1]], main = "Bottom Temperature with Correct Coordinates")
 #--------
 #--------
-# Reproject the depth layer Assign the coordinates----
+#Depth:  Reproject the depth layer Assign the coordinates----
 extent(Depth_dims_raster_layer) <- extent(min(x_coords), max(x_coords), min(y_coords), max(y_coords))
 crs(Depth_dims_raster_layer) <- "+proj=longlat +datum=WGS84"
 
@@ -192,17 +192,9 @@ plot(Depth_dims_raster_layer, main = "Depth with Correct Coordinates")
 #--------
 #pull our new data (Depth_dims_raster_layer, B_Temperature_stack ,Temperature_stack, to the survey data----
 catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_formatted.rds") 
-#tows_data <- read_rds("C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/data/Derived/all_unique_tows2.rds") 
-  
-
-
-#----
-
-head(SampleData)
 head(catch_data)
 
 #ATTACH Environmentla covariates#ATTACHSURVEY Environmentla covariates----
-#----
 "Depth"         
 "SST_seasonal"  
 "BT_seasonal"  
@@ -286,7 +278,8 @@ catch_df <- as.data.frame(catch_data)
 catch_df$DECDEG_BEGLON <- coordinates(catch_data)[, 1]  # Extract longitude
 catch_df$DECDEG_BEGLAT <- coordinates(catch_data)[, 2]  # Extract latitude
  
-write.csv(catch_df, "C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/R/Kiyomi_Code/Catch_data_with_covariates.csv")
+write_rds(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates.rds"), compress = "gz")
+#-------
 
 #Nancy start here for depth analysis 
 #I still have work to do here....
@@ -294,27 +287,20 @@ write.csv(catch_df, "C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/R/Kiyom
   #figure out why sometimes the layer does not exist for a month/year combo and what to do about that if it does for other covariates
   #when the covariate values are all 0, it is because it is out of the bounds of the bnam projections (ie too close to shore?)
   #add NF data
-catch_data<-read.csv("C:/Users/fergusonk/Documents/Halibut/Halibut_Paper1/R/Kiyomi_Code/Catch_data_with_covariates.csv", header =T)
+catch_data <- read_rds("Data/Derived/all_raw_halibut_catch_with_covariates.rds") 
 
 catch_data %>%
   count(SURVEY, PRESENCE)
-catch_data %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
 catch_data %>%
   group_by(SURVEY, SEASON) %>%
   summarize(count = n(), .groups = "drop")
 catch_data %>%
   group_by(SURVEY, Swept) %>%
   summarize(count = n(), .groups = "drop")
-SampleData %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
-SampleData %>%
-  group_by(SURVEY, PRESENCE) %>%
-  summarize(count = n(), .groups = "drop")
+hist(catch_data$Swept)
 
-#plot US data----
+
+#plot survey data----
 All_region <- st_read("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/region_shapefile/full_survey_region_simple.shp")
 crs <- st_crs(All_region)
 #subset us data and make spatial
@@ -353,6 +339,3 @@ ggplot() +
   geom_sf(data = CA_Data_sf, aes(color = SURVEY)) + 
   facet_wrap(~SURVEY) +  
   geom_sf(data = land, fill = "gray80", color = "black") 
-
-
-
