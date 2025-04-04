@@ -97,7 +97,7 @@ if(first_run){
   dir.create(date_dir, recursive = TRUE)
   
   # Load data
-  Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al3.csv"))
+  Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
   Data <- Data %>%
     rename(Depth = Depth_value)
  # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
@@ -375,6 +375,8 @@ if(first_run){
     )
     # If that all went okay..
     # Fit model and save it
+   # debugonce(fit_model)  # Debug interactively
+    
     fit = fit_model(
       "working_dir" = date_dir,
       "settings" = settings_all[[i]],
@@ -388,7 +390,7 @@ if(first_run){
       "a_i" = as_units(vast_samp_dat[, "Swept"], "km2"),
       "X1config_cp" = X1config_cp_all[[i]],
       "X2config_cp" = X2config_cp_all[[i]],
-      "covariate_data" = vast_cov_dat,
+      "covariate_df" = vast_cov_dat,
       "X1_formula" = hab_formula_all[[i]],
       "X2_formula" = hab_formula_all[[i]],
       "catchability_data" = vast_catch_dat,
