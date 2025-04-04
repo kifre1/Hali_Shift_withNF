@@ -154,12 +154,43 @@ st_write(DFO, (here::here("R/data/index_shapefiles/NS_Survey_RegionMR27.shp")))
 st_write(NF_Survey_Region, (here::here("R/data/index_shapefiles/NF_Survey_RegionMR27.shp")))
 st_write(NMFS, (here::here("R/data/index_shapefiles/USA_Survey_RegionMR27.shp")))
 
-Canada <- st_read(here::here("R/data/index_shapefiles/Canada_Survey_region.shp"))
-Canada <- Canada %>% select(-c("Shape_Area", "Shape_Leng"))
-Canada$Region <- "Canada"
-st_write(NMFS, (here::here("R/data/index_shapefiles/Canada_Survey_RegionMR27.shp")))
-
 #st_write(ALL, "C:/Users/fergusonk/Documents/Halibut/shapefiles/SurveyArea/ALL_Survey_RegionMR27.shp")
 #st_write(Canada, "C:/Users/fergusonk/Documents/Halibut/shapefiles/SurveyArea/Canada_Survey_RegionMR27.shp")
-
+125.59-108-11
 #take these to arc to make unions (canada and all)
+Canada <- st_read(here::here("R/Shapefiles/SurveyArea/Canada_Survey_RegionAL3.shp"))
+NF<- st_read(here::here("R/Shapefiles/NF_Survey.shp"))
+NS<- st_read(here::here("R/Shapefiles/IndexShapefiles/NS_Survey_RegionMR27.shp"))
+USA <- st_read(here::here("R/Shapefiles/SurveyArea/USA_SURVEY_REGION.shp"))
+FullRegion <- st_read(here::here("R/Shapefiles/SurveyArea/Full_survey_Area.shp"))
+
+NF <- NF %>% select(-c("Shape_Area", "Shape_Leng"))
+FullRegion <- FullRegion %>% select(-c("Shape_Area", "Shape_Leng"))
+USA <- USA %>% select(-c("Shape_Area", "Shape_Leng"))
+USA$Region <- "USA"
+USA_2D <- st_zm(USA, drop = TRUE)
+FullRegion_2D <- st_zm(FullRegion, drop = TRUE)
+
+st_write(FullRegion, (here::here("R/shapefiles/IndexShapefiles/Full_RegionAl3.shp")))
+st_write(Canada, (here::here("R/shapefiles/IndexShapefiles/Canada_RegionAl3.shp")))
+st_write(USA, (here::here("R/shapefiles/IndexShapefiles/USA_RegionAl3.shp")))
+st_write(NF, (here::here("R/shapefiles/IndexShapefiles/NF_RegionAl3.shp")))
+st_write(NS, (here::here("R/shapefiles/IndexShapefiles/NS_RegionAl3.shp")))
+
+ggplot() +
+  geom_sf(data = FullRegion, fill = "red", alpha = 0.5) +
+  geom_sf(data = Canada, fill = "yellow", alpha = 0.5) +
+  #geom_sf(data = NS, fill = "orange", alpha = 0.5) +
+  geom_sf(data = NF, fill = "green", alpha = 0.5) +
+  geom_sf(data = USA, fill = "blue", alpha = 0.5) +
+  coord_sf(expand = FALSE) +  # Prevent auto-clipping
+  theme_minimal()     
+
+FullRegion<- rbind(Canada,USA)
+FullRegion <- st_union(FullRegion)
+plot(FullRegion)
+FullRegion <- st_make_valid(FullRegion)  # Fix invalid geometries
+
+Canada <- Canada %>% select(-c("Shape_Area", "Shape_Leng"))
+Canada$Region <- "Canada"
+st_write(Canada, (here::here("R/Shapefiles/SurveyArea/Canada_Survey_RegionMR31.shp")))

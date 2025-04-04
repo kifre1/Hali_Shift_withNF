@@ -1,14 +1,10 @@
 #REworking the original model to include NFdata
 #to do list
-#Plot MA and ME_NH and NEFSC data
-#Get NF 0s
-#Clip US to bnam
-#rerun BNAM_Data_Prep- running in Halibut_Paper1.Rproj
-#finish making full_model_region.shp
-
 #change index shape files
 #change the way "swept" is used
 #check that ID format is ok
+
+
 
 ####this is the SMD, the first step in the analysis 
 #R.version 4.4.1
@@ -75,17 +71,17 @@ root_dir<- paste0(here::here(), "/")
 ######
 # Global use case options
 #seasons_run<- c("SPRING") #!!!Kiyomi: adding this part to try to make it a bit more flexible and reduce chance of error if you do end up running more than just the spring. It comes into play with data filtering, setting up observation "times", etc.
-strata_use <- data.frame("STRATA" = c("All", "NMFS", "DFO", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CB4Vn")) # We may want to adjust this to include more areas
-cell_size <- 25000 #!!!Kiyomi: here is where you could adjust the resolution of the extrpolation grid. Right now, this generates a grid that is roughly equivalent to the NOAA OISST data (25 km X 25 km)!!! 
+strata_use <- data.frame("STRATA" = c("All", "USA", "CAN", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CapeBreton","HaliChan", "GrandBanks", "GBTail")) # We may want to adjust this to include more areas
+cell_size <- 25000 #here is where you could adjust the resolution of the extrpolation grid. Right now, this generates a grid that is roughly equivalent to the NOAA OISST data (25 km X 25 km)!!! 
 n_x_use <- 400  
 fine_scale_use<- TRUE
 bias_correct_use <- TRUE
 use_anisotropy_use <- TRUE
-fit_year_min<- 1985
-fit_year_max<- 2014 #!!!Kiyomi: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
-covariates <- c("Depth", "BT_seasonal", "SST_seasonal")
-hab_formula <- ~Season + bs(Depth, degree = 2, intercept = FALSE) + bs(BT_seasonal, degree = 2, intercept = FALSE)+ bs(SST_seasonal, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
-#degree denotes now widdly the model can be , runnin in a single curve makes sense 
+fit_year_min<- 1990
+fit_year_max<- 2019 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
+covariates <- c("Depth", "BT_monthly", "SST_monthly")
+hab_formula <- ~Season + bs(Depth, degree = 2, intercept = FALSE) + bs(BT_monthly, degree = 2, intercept = FALSE)+ bs(SST_monthly, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
+#degree denotes how wiggly the model can be , running in a single curve makes sense 
 smooth_hab_covs<- 2
 catch_formula <- ~ factor(Survey)
 
@@ -101,16 +97,21 @@ if(first_run){
   dir.create(date_dir, recursive = TRUE)
   
   # Load data
-  Data = read.csv(here::here("R/data/halibut_all_data.csv"))
-  
+  Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al3.csv"))
+  Data <- Data %>%
+    rename(Depth = Depth_value)
+ # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
   data_temp<- Data %>%
     mutate(., "VAST_SEASON" = case_when(
-      SURVEY == "DFO" & SEASON == "SPRING" ~ "SPRING",
-      SURVEY == "NMFS" & SEASON == "SPRING" ~ "SPRING",
-      SURVEY == "DFO" & SEASON == "SUMMER" ~ "SUMMER",
-      SURVEY == "NMFS" & SEASON == "FALL" ~ "FALL",
-      SURVEY == "DFO" & SEASON == "FALL" ~ NA_character_ # Not consistent enough to include
+      SURVEY == "DFO" & SEASON == "Spring" ~ "Spring",
+      SURVEY == "NEFSC" & SEASON == "Spring" ~ "Spring",
+      SURVEY == "NF" & SEASON == "Spring" ~ "Spring",
+      SURVEY == "DFO" & SEASON == "Summer" ~ "Summer",
+      SURVEY == "NF" & SEASON == "Summer" ~ "Summer",
+      SURVEY == "NEFSC" & SEASON == "Fall" ~ "Fall",
+      SURVEY == "DFO" & SEASON == "Fall" ~ "Fall",
+      SURVEY == "NF" & SEASON == "Fall" ~ "Fall",
     )) %>%
     drop_na(VAST_SEASON) 
   #%>%
@@ -120,7 +121,7 @@ if(first_run){
   
   # Set of years and seasons- all year/season combinations that exist. This isn't too crucial here, though would allow prediction to unsampled "springs" if necessary
   all_years <- seq(from = min(data_temp$EST_YEAR), to = max(data_temp$EST_YEAR), by = 1)
-  all_seasons<- c("SPRING", "SUMMER", "FALL")
+  all_seasons<- c("Spring", "Summer", "Fall")
   yearseason_set <- expand.grid("SEASON" = all_seasons, "EST_YEAR" = all_years)
   all_yearseason_levels <- apply(yearseason_set[, 2:1], MARGIN = 1, FUN = paste, collapse = "_")
   # yearseason_set <- expand.grid("SEASON" = seasons_run, "EST_YEAR" = all_years)
@@ -145,33 +146,34 @@ if(first_run){
   
   # Some quick organization
   data_temp <- data_temp %>%
-    dplyr::select("ID", "DATE", "EST_YEAR", "SEASON", "SURVEY", "SVVESSEL", "DECDEG_BEGLAT", "DECDEG_BEGLON", "NMFS_SVSPP", "DFO_SPEC", "PRESENCE", "BIOMASS", "ABUNDANCE", "PredTF", "VAST_YEAR_COV", "VAST_SEASON", "VAST_YEAR_SEASON", {{ covariates }})
+    dplyr::select("ID", "DATE", "EST_YEAR", "SEASON", "SURVEY", "survey_season", "DECDEG_BEGLAT", "DECDEG_BEGLON", "NMFS_SVSPP", "DFO_SPEC", "PRESENCE", "BIOMASS", "ABUNDANCE","Swept", "PredTF", "VAST_YEAR_COV", "VAST_SEASON", "VAST_YEAR_SEASON", {{ covariates }}) #replaced SVVESSELL with survey_season
   
   # Make dummy data for all year_seasons to estimate gaps in sampling if needed
-  dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(data_temp$DATE, size = 1), "EST_YEAR" = yearseason_set[, "EST_YEAR"], "SEASON" = yearseason_set[, "SEASON"], "SURVEY" = "NMFS", "SVVESSEL" = "DUMMY", "DECDEG_BEGLAT" = mean(data_temp$DECDEG_BEGLAT, na.rm = TRUE), "DECDEG_BEGLON" = mean(data_temp$DECDEG_BEGLON, na.rm = TRUE), "NMFS_SVSPP" = "NMFS", "DFO_SPEC" = "DUMMY", "PRESENCE" = 1, "BIOMASS" = 1, "ABUNDANCE" = 1, "PredTF" = TRUE, "VAST_YEAR_COV" = yearseason_set[, "EST_YEAR"], "VAST_SEASON" = yearseason_set[, "SEASON"], "VAST_YEAR_SEASON" = all_yearseason_levels, "Depth" = mean(data_temp$Depth), "BT_seasonal" = mean(data_temp$BT_seasonal), "SST_seasonal" = mean(data_temp$SST_seasonal))
-  
+  dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(data_temp$DATE, size = 1), "EST_YEAR" = yearseason_set[, "EST_YEAR"], "SEASON" = yearseason_set[, "SEASON"], "SURVEY" = "NEFSC", "survey_season" = "DUMMY", "DECDEG_BEGLAT" = mean(data_temp$DECDEG_BEGLAT, na.rm = TRUE), "DECDEG_BEGLON" = mean(data_temp$DECDEG_BEGLON, na.rm = TRUE), "NMFS_SVSPP" = "NEFSC", "DFO_SPEC" = "DUMMY", "PRESENCE" = 1, "BIOMASS" = 1, "ABUNDANCE" = 1, "Swept"= 0.0384,"PredTF" = TRUE, "VAST_YEAR_COV" = yearseason_set[, "EST_YEAR"], "VAST_SEASON" = yearseason_set[, "SEASON"], "VAST_YEAR_SEASON" = all_yearseason_levels, "Depth" = mean(data_temp$Depth), "BT_monthly" = mean(data_temp$BT_monthly), "SST_monthly" = mean(data_temp$SST_monthly))
+  names(dummy_data)
   # Combine them
   full_data <- rbind(data_temp, dummy_data) %>%
     arrange(EST_YEAR)
-  
+  full_data <- full_data %>%
+    filter(Swept != 0)
   # Now, generate the sample and covariate datasets
   vast_samp_dat <- data.frame(
     "Year" = as.numeric(full_data$VAST_YEAR_SEASON) - 1,
     "Lat" = full_data$DECDEG_BEGLAT,
     "Lon" = full_data$DECDEG_BEGLON,
     "Abundance" = full_data$ABUNDANCE,
-    "Swept" = ifelse(full_data$SURVEY == "NMFS", 0.0384, 0.0404),
+    "Swept" = full_data$Swept,
     "Pred_TF" = full_data$PredTF
   )
-  
+
   # Select columns we want from the "full" vast_seasonal_data dataset
   vast_cov_dat <- data.frame(
     "Year" = as.numeric(full_data$VAST_YEAR_SEASON) - 1,
     "Year_Cov" = full_data$VAST_YEAR_COV,
     "Season" = full_data$VAST_SEASON,
     "Depth" = full_data$Depth,
-    "BT_seasonal" = full_data$BT_seasonal,
-    "SST_seasonal" = full_data$SST_seasonal,
+    "BT_monthly" = full_data$BT_monthly,
+    "SST_monthly" = full_data$SST_monthly,
     "Lat" = full_data$DECDEG_BEGLAT,
     "Lon" = full_data$DECDEG_BEGLON
   )
@@ -182,7 +184,7 @@ if(first_run){
     "Season" = full_data$VAST_SEASON,
     "Lat" = full_data$DECDEG_BEGLAT,
     "Lon" = full_data$DECDEG_BEGLON,
-    "Survey" = factor(full_data$SURVEY, levels = c("NMFS", "DFO"))
+    "Survey" = factor(full_data$SURVEY, levels = c("NEFSC", "DFO", "NF"))
   )
   
   #####
@@ -198,7 +200,7 @@ if(first_run){
   #}
   
   # Read in region shapefile
-  region_wgs84 <- st_read(here::here( "R/data/region_shapefile/full_survey_region.shp"))
+  region_wgs84 <- st_read(here::here( "R/Shapefiles/IndexShapefiles/Full_RegionAl3.shp"))
   # Get UTM zone
   lon <- sum(st_bbox(region_wgs84)[c(1, 3)]) / 2
   utm_zone <- floor((lon + 180) / 6) + 1
@@ -220,10 +222,11 @@ if(first_run){
   
   # Now get only the points that fall within the shape polygon
   points_keep <- data.frame("pt_row" = seq(from = 1, to = nrow(region_sf), by = 1), "in_out" = st_intersects(region_sf, region_utm, sparse = FALSE))
+#  region_sf <- region_sf %>%
+#    mutate(., "in_poly" = st_intersects(region_sf, region_utm, sparse = FALSE)) %>%
+#    filter(., in_poly == TRUE)
   region_sf <- region_sf %>%
-    mutate(., "in_poly" = st_intersects(region_sf, region_utm, sparse = FALSE)) %>%
-    filter(., in_poly == TRUE)
-  
+    filter(lengths(st_within(region_sf, region_utm)) > 0)
   # Convert back to WGS84 lon/lat, as that is what VAST expects.
   extrap_grid <- region_sf %>%
     st_transform(., crs = 4326)
@@ -240,20 +243,23 @@ if(first_run){
   #  drive_download(shp_files$id[i], overwrite = TRUE)
   #}
   #ADD OTHER shapefiles here
-  all_shp <- st_read(here::here("R/data/index_shapefiles/All.shp"))
-  nmfs_shp <- st_read(here::here("R/data/index_shapefiles/NMFS.shp"))
-  dfo_shp<- st_read(here::here("R/data/index_shapefiles/DFO.shp"))
-  BB_shp<- st_read(here::here("R/data/index_shapefiles/Browns2.shp"))
-  BOF_shp<- st_read(here::here("R/data/index_shapefiles/BOF2.shp"))
-  CC_shp<- st_read(here::here("R/data/index_shapefiles/CapeCod2.shp"))
-  EGOM_shp<- st_read(here::here("R/data/index_shapefiles/EGOM2.shp"))
-  GB_shp<- st_read(here::here("R/data/index_shapefiles/Georges.shp"))
-  Gully_shp<- st_read(here::here("R/data/index_shapefiles/Gully2.shp"))
-  CB4Vn_shp<- st_read(here::here("R/data/index_shapefiles/CB4Vn.shp"))
-  Nant_shp<- st_read(here::here("R/data/index_shapefiles/Nantucket2.shp"))
-  Sable_shp<- st_read(here::here("R/data/index_shapefiles/Sable2.shp"))
+  all_shp <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl3.shp"))
+  USA_shp <- st_read(here::here("R/Shapefiles/IndexShapefiles/USA_RegionAl3.shp"))
+  CAN_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Canada_RegionAl3.shp"))
+  BB_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Browns2.shp"))#
+  BOF_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/BOF2.shp"))#
+  CC_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/CapeCod2.shp"))#
+  EGOM_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/EGOM2.shp"))#
+  GB_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Georges.shp"))#
+  Gully_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Gully2.shp"))#
+  CB_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/CapeBretonMR26.shp"))#
+  Nant_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Nantucket2.shp"))#
+  Sable_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Sable2.shp"))#
+  HaliChan_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/HaliChan.shp"))#
+  GrandBanks_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/GrandBanks.shp"))#
+  GBTail_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/GBTail.shp"))#
   
-  index_shapes <- bind_rows(all_shp, nmfs_shp, dfo_shp, BB_shp,BOF_shp, CC_shp, EGOM_shp, GB_shp, Gully_shp, CB4Vn_shp, Nant_shp, Sable_shp )
+  index_shapes <- bind_rows(all_shp, USA_shp, CAN_shp, BB_shp,BOF_shp, CC_shp, EGOM_shp, GB_shp, Gully_shp, CB_shp, Nant_shp, Sable_shp, HaliChan_shp, GrandBanks_shp, GBTail_shp)
   
   # Add this information to the extrapolation grid
   extrap_grid <- extrap_grid %>%
@@ -277,7 +283,8 @@ if(first_run){
            Area_km2 = ((cell_size / 1000)^2),
            STRATA = factor(Region, levels = index_shapes$Region, labels = index_shapes$Region)
     )
-  
+  extrap_df <- extrap_df %>%
+    filter(!is.na(Region))
   ## VAST settings
   # Null intercept only model- this way we can compare deviance explained relative to some of the other variables
   ## every year gets a value and 
@@ -366,7 +373,6 @@ if(first_run){
       "run_model" = FALSE,
       "PredTF_i" = vast_samp_dat[, "Pred_TF"]
     )
-    
     # If that all went okay..
     # Fit model and save it
     fit = fit_model(
