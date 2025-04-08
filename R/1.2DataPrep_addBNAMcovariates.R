@@ -268,7 +268,7 @@ names(catch_df2)
 catch_df2 <- catch_df2 %>%
   rename(Depth = Depth_value)
 
-write.csv(catch_df, here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
+write.csv(catch_df2, here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
 #END----
 
 

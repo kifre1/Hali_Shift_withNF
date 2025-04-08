@@ -71,7 +71,7 @@ root_dir<- paste0(here::here(), "/")
 ######
 # Global use case options
 #seasons_run<- c("SPRING") #!!!Kiyomi: adding this part to try to make it a bit more flexible and reduce chance of error if you do end up running more than just the spring. It comes into play with data filtering, setting up observation "times", etc.
-strata_use <- data.frame("STRATA" = c("All", "USA", "CAN", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CapeBreton","HaliChan", "GrandBanks", "GBTail")) # We may want to adjust this to include more areas
+strata_use <- data.frame("STRATA" = c("All", "USA", "Canada", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CapeBreton","HaliChan", "GrandBanks", "GBTail")) # We may want to adjust this to include more areas
 cell_size <- 25000 #here is where you could adjust the resolution of the extrpolation grid. Right now, this generates a grid that is roughly equivalent to the NOAA OISST data (25 km X 25 km)!!! 
 n_x_use <- 400  
 fine_scale_use<- TRUE
@@ -98,8 +98,7 @@ if(first_run){
   
   # Load data
   Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
-  Data <- Data %>%
-    rename(Depth = Depth_value)
+
  # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
   data_temp<- Data %>%
@@ -258,8 +257,8 @@ if(first_run){
   HaliChan_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/HaliChan.shp"))#
   GrandBanks_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/GrandBanks.shp"))#
   GBTail_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/GBTail.shp"))#
-  
   index_shapes <- bind_rows(all_shp, USA_shp, CAN_shp, BB_shp,BOF_shp, CC_shp, EGOM_shp, GB_shp, Gully_shp, CB_shp, Nant_shp, Sable_shp, HaliChan_shp, GrandBanks_shp, GBTail_shp)
+  plot(all_shp)
   
   # Add this information to the extrapolation grid
   extrap_grid <- extrap_grid %>%
@@ -390,7 +389,7 @@ if(first_run){
       "a_i" = as_units(vast_samp_dat[, "Swept"], "km2"),
       "X1config_cp" = X1config_cp_all[[i]],
       "X2config_cp" = X2config_cp_all[[i]],
-      "covariate_df" = vast_cov_dat,
+      "covariate_data" = vast_cov_dat,
       "X1_formula" = hab_formula_all[[i]],
       "X2_formula" = hab_formula_all[[i]],
       "catchability_data" = vast_catch_dat,
@@ -406,15 +405,15 @@ if(first_run){
 } 
 
 #lest save some extra output so that we have it 
-saveRDS(object = env_sp_st_sets, file = here::here("2024-10-04/Output/env_sp_st_sets.rds"))
-saveRDS(object = vast_extrap, file = here::here("2024-10-04/Output/vast_extrap.rds"))
-write.csv(extrap_df,(here::here("2024-10-04/Output/extrap_grid_df.csv")), row.names = FALSE)
-write.csv(vast_samp_dat,(here::here("2024-10-04/Output/vast_samp_dat.csv")), row.names = FALSE)
-st_write(region_grid, (here::here("2024-10-04/Output/region_grid.shp")))
-writeRaster(region_raster, here::here("2024-10-04/Output", "region_raster.tif"), format="GTiff", overwrite=TRUE)
+saveRDS(object = env_sp_st_sets, file = here::here("2025-04-04/Output/env_sp_st_sets.rds"))
+saveRDS(object = vast_extrap, file = here::here("2024-04-04/Output/vast_extrap.rds"))
+write.csv(extrap_df,(here::here("2025-04-04/Output/extrap_grid_df.csv")), row.names = FALSE)
+write.csv(vast_samp_dat,(here::here("2025-04-04/Output/vast_samp_dat.csv")), row.names = FALSE)
+st_write(region_grid, (here::here("2025-04-04/Output/region_grid.shp")))
+writeRaster(region_raster, here::here("2025-04-04/Output", "region_raster.tif"), format="GTiff", overwrite=TRUE)
 
 #####Bring the models back in for standard plotting
-Hali_SpSt<- readRDS( here::here("2024-10-04/Halibut_BC/SpST_mod_fit.rds")) 
+Hali_SpSt<- readRDS( here::here("2025-04-04/Halibut_BC/SpST_mod_fit.rds")) 
 Hali_Null<- readRDS( here::here("2024-10-04/Halibut_BC/Null_mod_fit.rds")) 
 Hali_Env<- readRDS( here::here("2024-10-04/Halibut_BC/EnvOnly_mod_fit.rds")) 
 Hali_Sp<- readRDS( here::here("2024-10-04/Halibut_BC/Sp_mod_fit.rds")) 

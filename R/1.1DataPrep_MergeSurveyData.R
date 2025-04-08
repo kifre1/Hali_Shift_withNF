@@ -252,7 +252,9 @@ names(catch_data)[names(catch_data) == "swept"] <-"Swept"
 names(catch_data)[names(catch_data) == "total_biomass"] <-"BIOMASS"       
 names(catch_data)[names(catch_data) == "total_abundance"] <-"ABUNDANCE"     
 catch_data <- catch_data %>%
-  dplyr::select(X, ID, DATE, EST_YEAR, SEASON, SURVEY, survey_season, DECDEG_BEGLAT, DECDEG_BEGLON, NMFS_SVSPP, DFO_SPEC, PRESENCE, BIOMASS, ABUNDANCE, Swept)
+  dplyr::select(X, ID, DATE, EST_YEAR, SEASON, 
+                SURVEY, survey_season, DECDEG_BEGLAT, DECDEG_BEGLON, NMFS_SVSPP, 
+                DFO_SPEC, PRESENCE, BIOMASS, ABUNDANCE, Swept)
 
 catch_data %>%
   group_by(SURVEY, PRESENCE) %>%
