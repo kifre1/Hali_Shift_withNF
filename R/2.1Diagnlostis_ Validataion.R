@@ -1,3 +1,4 @@
+
 # Covariate effects: object 'prior.weights' not found
 #Deviance explained is full of NAs
 #Canada was missed in the index= found error 
@@ -48,7 +49,7 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 # Model diagnostics, evaluation and validation statistics
 #1. Default plots
 #2. Covariate effects (+plots)
-#3. Deviance & AIC
+#3. Deviance* & AIC
 #4. Parameter Estimates
 #5. AUC
 #6. Taylor 
@@ -56,54 +57,62 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 #####
 #reopen each model output...we are going to compare them 
 #files are too large for GIT so having to read them in from my comp
-Hali_SpSt<- readRDS( here::here("2025-04-04/Halibut_BC/SpST_mod_fit.rds")) 
-Hali_Null<- readRDS( here::here("2025-04-04/Halibut_BC/Null_mod_fit.rds")) 
-Hali_Env<- readRDS( here::here("2025-04-04/Halibut_BC/EnvOnly_mod_fit.rds")) 
-Hali_Sp<- readRDS( here::here("2025-04-04/Halibut_BC/Sp_mod_fit.rds"))  
-vast_sample_data<- read.csv(here::here("2025-04-04/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
-Hali_SpSt$setting
+Hali_SpSt<- readRDS( here::here("2025-04-09/Halibut_BC/SpST_mod_fit.rds")) 
+Hali_Null<- readRDS( here::here("2025-04-09/Halibut_BC/Null_mod_fit.rds")) 
+Hali_Env<- readRDS( here::here("2025-04-09/Halibut_BC/EnvOnly_mod_fit.rds")) 
+Hali_Sp<- readRDS( here::here("2025-04-09/Halibut_BC/Sp_mod_fit.rds"))  
+vast_sample_data<- read.csv(here::here("2025-04-07/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
+Hali_Env$setting
 #1. Default plots
 #model plotting function writs plots to your folder,
 #but we need to do pull these functions apart later so that we can get at the indexed data for the shift analysis
-setwd(here::here("2025-04-04/Output/Plot/SpSt"))
+setwd(here::here("2025-04-09/Output/Plot/SpSt"))
 plot(Hali_SpSt)
-setwd(here::here("2025-04-04/Output/Plot/Sp"))
+setwd(here::here("2025-04-09/Output/Plot/Sp"))
 plot(Hali_Sp)
-setwd(here::here("2025-04-04/Output/Plot/Env"))
+setwd(here::here("2025-04-09/Output/Plot/Env"))
 plot(Hali_Env)
-setwd(here::here("2025-04-04/Output/Plot/Null"))
+setwd(here::here("2025-04-09/Output/Plot/Null"))
 plot(Hali_Null)
 
-
-
-#2. Covariate effects (+plots)#object 'prior.weights' not found
+print(Hali_Env$parameter_estimates$diagnostics)
+str(Hali_Env$Report)
+#2. Covariate effects (+plots)
 #plot the covariate effects and then look at the shape/strength of the response curves
-#season is in the model as a fixed effect, it does not come up here as a covatiate....
-out_dir<- here::here("2025-04-04/Output/Plot/Validation/")
+#season is in the model as a fixed effect.
+#columns are the covariates and then the rows are the linear predictors... 
+#X1 is presence/absence- probability of positive catch, 
+#X2 abundance...catch, given a positive X1
+out_dir<- here::here("2025-04-09/Output/Plot/ValidationData/")
 graphics.off() 
 dev.new()
 cov_effs<- get_vast_covariate_effects(vast_fit = Hali_SpSt, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_SpSt", out_dir = out_dir)
-cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Sp, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Sp", out_dir = out_dir)
-cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Env, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Env", out_dir = out_dir)
-
-
-#columns are the covariates and then the rows are the linear predictors... X1 is the density covariate, would X2 be abundance
-#they seem to have the same formula soo I'm not too sure 
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_SpSt, nice_category_names = "Halibut_SpSt", out_dir = out_dir)
+
+cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Sp, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Sp", out_dir = out_dir)
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_Sp, nice_category_names = "Halibut_Sp", out_dir = out_dir)
+
+cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Env, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Env", out_dir = out_dir)
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_Env, nice_category_names = "Halibut_Env", out_dir = out_dir)
-plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_Null, nice_category_names = "Halibut_Null", out_dir = out_dir)
+
 
 #3. Deviance & AIC--- full of NAs 
 #how well does the model fit the data, compare observed vs. predicted values
 #Get the deviance 
-Hali_SpSt$parameter_estimates$diagnostics
-Hali_SpSt$Report$Index_ctl
-
 Hali_Null$Report$deviance
 Hali_Env$Report$deviance
 Hali_Sp$Report$deviance
 Hali_SpSt$Report$deviance
+
+Hali_Env$parameter_estimates$diagnostics
+str(Hali_Env$Report)
+Hali_SpSt$Report$Index_ctl
+Hali_Env$parameter_estimates$opt$convergence
+Hali_Env$parameter_estimates$max_gradient
+Hali_Env$parameter_estimates$SD
+Hali_Env$parameter_estimates$SD$cov.fixed
+names(Hali_Env$Report)
+names(Hali_Env$parameter_estimates$Objective)
 #calculate the percent deviance explained 
 #0- the model explains no of the variablity, 1 model explains all of the variability 
 (Hali_Null$Report$deviance-Hali_Env$Report$deviance)/Hali_Null$Report$deviance #0.1159818
@@ -118,7 +127,7 @@ as.numeric(Hali_Null$parameter_estimates$AIC)#31812.25
 as.numeric(Hali_Env$parameter_estimates$AIC)#30553.27
 as.numeric(Hali_Sp$parameter_estimates$AIC)#25243.85
 as.numeric(Hali_SpSt$parameter_estimates$AIC)#24346.6
-
+names(Hali_Env$parameter_estimates$objective)
 # 4. Parameter Estimates-- leave for now
 # For the fixed effect parameters, we can get their MLE as well as standard errors.
 # Parameter estimates and standard errors..omega is spatial, epsilon is spatio-temporal
@@ -146,7 +155,7 @@ gamma1_cp
 # Get the observation and prediction dataframe (to the survey points not the grid)
 #the function defaults to renaming the predicted variable Biomass but we did this on abundance so just keep this in mind
 
-out_dir<- here::here("2025-04-04/Output/Plot/Validation/")
+out_dir<- here::here("2025-04-09/Output/Plot/ValidationData/")
 
 obs_pred0<- vast_get_point_preds(vast_fit = Hali_SpSt, use_PredTF_only = FALSE, nice_category_names = "Atlantic_halibut_SpSt", out_dir = out_dir)
 obs_pred1<- vast_get_point_preds(vast_fit = Hali_Sp, use_PredTF_only = FALSE, nice_category_names = "Atlantic_halibut_Sp", out_dir = out_dir)
@@ -168,6 +177,7 @@ auc2#0.7408 (Env)
 auc3#0.6958 (Null)
 
 #6. Taylor Diagram
+obs_pred0<-obs_pred2
 #to look at predictive skill in Abundance and Presence...not overly useful if we are not comparing models anymore
 names(obs_pred0)[names(obs_pred0) == "Biomass"] <- "Abundance" #lets get rid of this confusion
 names(obs_pred0)[names(obs_pred0) == "Predicted_Biomass"] <- "Predicted_Abundance"
@@ -188,7 +198,7 @@ crs(region_shape)
 land_use<-st_read(here::here("Data/land_shapefile/", "ne_50m_land.shp"))
 crs(land_use)
 #tidy_mod_data<- read.csv(here::here("R/data/tidy_data_for_SDM.csv"))
-vast_sample_data<- read.csv(here::here("2025-04-04/Output/vast_samp_dat.csv"), header=T)
+vast_sample_data<- read.csv(here::here("2025-04-09/Output/vast_samp_dat.csv"), header=T)
 xlim_use <- c(-78.5, -45)
 ylim_use <- c(35, 50.5)
 pred_label<-"test"

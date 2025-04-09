@@ -1,3 +1,4 @@
+
 #REworking the original model to include NFdata
 #to do list
 #change index shape files
@@ -98,10 +99,11 @@ if(first_run){
   
   # Load data
   Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
-  Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
+ # Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
   Data <- Data %>%
     group_by(YEAR, SEASON, SURVEY) %>%
-    sample_frac(0.7)
+    sample_frac(0.25)%>%
+    ungroup()
   # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
   data_temp<- Data %>%
@@ -411,12 +413,12 @@ if(first_run){
 } 
 
 #lest save some extra output so that we have it 
-saveRDS(object = env_sp_st_sets, file = here::here("2025-04-04/Output/env_sp_st_sets.rds"))
-saveRDS(object = vast_extrap, file = here::here("2024-04-04/Output/vast_extrap.rds"))
-write.csv(extrap_df,(here::here("2025-04-04/Output/extrap_grid_df.csv")), row.names = FALSE)
-write.csv(vast_samp_dat,(here::here("2025-04-04/Output/vast_samp_dat.csv")), row.names = FALSE)
-st_write(region_grid, (here::here("2025-04-04/Output/region_grid.shp")))
-writeRaster(region_raster, here::here("2025-04-04/Output", "region_raster.tif"), format="GTiff", overwrite=TRUE)
+saveRDS(object = env_sp_st_sets, file = here::here("2025-04-09/Output/env_sp_st_sets.rds"))
+saveRDS(object = vast_extrap, file = here::here("2024-04-09/Output/vast_extrap.rds"))
+write.csv(extrap_df,(here::here("2025-04-09/Output/extrap_grid_df.csv")), row.names = FALSE)
+write.csv(vast_samp_dat,(here::here("2025-04-09/Output/vast_samp_dat.csv")), row.names = FALSE)
+st_write(region_grid, (here::here("2025-04-09/Output/region_grid.shp")))
+writeRaster(region_raster, here::here("2025-04-09/Output", "region_raster.tif"), format="GTiff", overwrite=TRUE)
 
 #####Bring the models back in for standard plotting
 Hali_SpSt<- readRDS( here::here("2025-04-04/Halibut_BC/SpST_mod_fit.rds")) 
