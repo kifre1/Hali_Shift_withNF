@@ -25,7 +25,15 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
 
 ## Run Model and Diagnostics 
 - **2.1Fit_Model_March27.R**: 
-- **2.1Diagnlostis_ Validataion.R**: 
+  - 
+- **2.1Diagnlostis_ Validataion.R**: Model diagnostics, evaluation and validation statistics
+1. Default plots: For diagnostic purposes, model plotting function writs plots folder,but we need to do pull these functions apart later so that we can get at the indexed data 
+2. Covariate effects and plots: plot the covariate effects and then look at the shape/strength of the response curves 
+3. Deviance & AIC...how well does the model fit the data 
+4. Parameter Estimates: Pulled from the SD report and t test (Estimate / SE) to see which parameters are more likely to be statistically significant 
+5. AUC: measure model strength at distinguish between the positive and negative classes 
+6. Taylor diagram
+7. Plot random effects (Omega, Epsilon, R, P)...spatial
 <br> 
 
 ## Prepare model output for Shift analysis
