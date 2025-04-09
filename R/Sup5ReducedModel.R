@@ -37,7 +37,7 @@ library(patchwork)
 library(DHARMa)
 library(forecast)
 library(INLA)
-
+library(dplyr)
 aa<- TRUE #!!!Kiyomi set to FALSE!!!
 # Use edited functions?
 use_edited_funs<- TRUE
@@ -73,7 +73,7 @@ root_dir<- paste0(here::here(), "/")
 #seasons_run<- c("SPRING") #!!!Kiyomi: adding this part to try to make it a bit more flexible and reduce chance of error if you do end up running more than just the spring. It comes into play with data filtering, setting up observation "times", etc.
 strata_use <- data.frame("STRATA" = c("All", "USA", "Canada", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CapeBreton","HaliChan", "GrandBanks", "GBTail")) # We may want to adjust this to include more areas
 cell_size <- 25000 #here is where you could adjust the resolution of the extrpolation grid. Right now, this generates a grid that is roughly equivalent to the NOAA OISST data (25 km X 25 km)!!! 
-n_x_use <- 400  
+n_x_use <- 100 #down from 400 for faster processing  
 fine_scale_use<- TRUE
 bias_correct_use <- TRUE
 use_anisotropy_use <- TRUE
@@ -98,7 +98,11 @@ if(first_run){
   
   # Load data
   Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
-  
+  Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
+  Data <- Data %>%
+    group_by(YEAR, SEASON, SURVEY) %>%
+    sample_frac(0.7)
+  # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
   data_temp<- Data %>%
     mutate(., "VAST_SEASON" = case_when(
@@ -163,7 +167,7 @@ if(first_run){
     "Swept" = full_data$Swept,
     "Pred_TF" = full_data$PredTF
   )
-
+  
   # Select columns we want from the "full" vast_seasonal_data dataset
   vast_cov_dat <- data.frame(
     "Year" = as.numeric(full_data$VAST_YEAR_SEASON) - 1,
@@ -220,9 +224,9 @@ if(first_run){
   
   # Now get only the points that fall within the shape polygon
   points_keep <- data.frame("pt_row" = seq(from = 1, to = nrow(region_sf), by = 1), "in_out" = st_intersects(region_sf, region_utm, sparse = FALSE))
-#  region_sf <- region_sf %>%
-#    mutate(., "in_poly" = st_intersects(region_sf, region_utm, sparse = FALSE)) %>%
-#    filter(., in_poly == TRUE)
+  #  region_sf <- region_sf %>%
+  #    mutate(., "in_poly" = st_intersects(region_sf, region_utm, sparse = FALSE)) %>%
+  #    filter(., in_poly == TRUE)
   region_sf <- region_sf %>%
     filter(lengths(st_within(region_sf, region_utm)) > 0)
   # Convert back to WGS84 lon/lat, as that is what VAST expects.
@@ -340,7 +344,6 @@ if(first_run){
   X2config_cp_all<- X1config_cp_all
   
   # All contrast info
-  #similar to the Xconfig stuff, we can also adjust the Season part here as that isn't going to be an issue for us. 
   # Xcontrasts_all<- list("Null" = NULL, "EnvOnly" = list(Season = contrasts(vast_cov_dat$Season, contrasts = FALSE)), "Sp" = list(Season = contrasts(vast_cov_dat$Season, contrasts = FALSE)), "SpST" = list(Season = contrasts(vast_cov_dat$Season, contrasts = FALSE)))
   Xcontrasts_all<- list("Null" = NULL, "EnvOnly" = NULL, "Sp" = NULL, "SpST" = NULL)
   
@@ -370,12 +373,12 @@ if(first_run){
       "X_contrasts" = Xcontrasts_all[[i]],
       "run_model" = FALSE,
       "PredTF_i" = vast_samp_dat[, "Pred_TF"],
-       getReportCovariance = TRUE,#added AL9
+      getReportCovariance = TRUE,#added AL9
       check_fit = TRUE  #AL9: optional, for debugging fit issues
     )
     # If that all went okay..
     # Fit model and save it
-   # debugonce(fit_model)  # Debug interactively
+    # debugonce(fit_model)  # Debug interactively
     
     fit = fit_model(
       "working_dir" = date_dir,
