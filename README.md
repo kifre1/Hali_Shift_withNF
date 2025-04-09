@@ -10,15 +10,14 @@ Repository for Atlantic Halibut shift analysis about the Hague line, before and 
 <br>
 ## Data and Model Preparation 
 Data from multiple RV surveys, and environmental covariates are combined into a single dataframe 
-- **1.1DataPrep_MergeSurveyData.R**: combine survey data 
-  -*all_unique_towsAl4.rds*: a combined dataframe for each unique tow (longitude, latitude, trawl_id, season, year, survey, date, swept)
-  -*all_raw_halibut_catchAl4.rds*: a combined dataframe for Atlantic Halibut survey data at each unique tow
-  -*all_raw_halibut_catch_formattedAl4.rds*: reformated the survey catch data, suited to VAST input requirements 
-- **1.2DataPrep_addBNAMcovariates.R**:
-  - BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data.
-  - process_mat_to_raster_stack()- This function processes individual .mat files and converts the data into a raster stack 
-  - process_all_mat_files()- This function applies process_mat_to_raster_stack() to all .mat files in a  folder, and combines them into a single large raster stack.
-  - *all_raw_halibut_catch_with_covariates_Al4.csv*: Surface Temperature, Bottom Temperaturem, and Depth are extracted from the raster stacks and assigned to all_raw_halibut_catch_formattedAl4.rds based on the date and location.
+**1.1DataPrep_MergeSurveyData.R**: combine survey data   
+- *all_unique_towsAl4.rds*: a combined dataframe for each unique tow (longitude, latitude, trawl_id, season, year, survey, date, swept)
+- *all_raw_halibut_catchAl4.rds*: a combined dataframe for Atlantic Halibut survey data at each unique tow
+- *all_raw_halibut_catch_formattedAl4.rds*: reformated the survey catch data, suited to VAST input requirements 
+**1.2DataPrep_addBNAMcovariates.R**: BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data.
+- process_mat_to_raster_stack()- This function processes individual .mat files and converts the data into a raster stack 
+- process_all_mat_files()- This function applies process_mat_to_raster_stack() to all .mat files in a  folder, and combines them into a single large raster stack.
+- *all_raw_halibut_catch_with_covariates_Al4.csv*: Surface Temperature, Bottom Temperature, and Depth are extracted from the raster stacks and assigned to all_raw_halibut_catch_formattedAl4.rds based on the date and location.
 <br>
 ### Run Model and Diagnostics
 **2.1Fit_Model_March27.R**:
