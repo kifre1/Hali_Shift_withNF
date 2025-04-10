@@ -1,4 +1,4 @@
-
+look into bias correct 
 #REworking the original model to include NFdata
 #to do list
 #change index shape files
@@ -274,9 +274,9 @@ if(first_run){
     ) 
   
   # Plot check
-  ggplot(data = extrap_grid, aes(color = Region), alpha = 0.5) +
-    geom_sf() +
-    facet_wrap(~Region)
+#  ggplot(data = extrap_grid, aes(color = Region), alpha = 0.5) +
+#    geom_sf() +
+#    facet_wrap(~Region)
   
   
   # Convert to dataframe that VAST expects

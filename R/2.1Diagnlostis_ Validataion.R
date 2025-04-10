@@ -8,7 +8,6 @@
 #####
 R.version # several of the diagnostic functions only work with version 4.2.2
 
-
 library(VAST)
 
 # So d_i would be predicted density at that observation as an example. 
@@ -16,6 +15,10 @@ library(VAST)
 #season because the mesh and grid are constant. Those are indexed as “g” 
 #As an example, d_gct is the predicted density at a given grid location 
 #(g) for a given class (c) at a given time (t). 
+R.version
+packageVersion("TMB")
+packageVersion("INLA")
+packageVersion("VAST")
 
 ####
 library(here)
@@ -55,6 +58,14 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 #6. Taylor 
 #7. Plot random effects (Omega, Epsilon, R, P)
 #####
+Hali_Null<- readRDS( here::here("2025-04-10/Halibut_BC/Null_mod_fit.rds")) 
+Hali_Null$Report$deviance
+summary(Hali_Null)
+str(Hali_Null$Report)
+print(Hali_Null$parameter_estimates$diagnostics)
+print(Hali_Null$Report)
+Hali_Env<- readRDS( here::here("2025-04-10/Halibut_BC/EnvOnly_mod_fit.rds")) 
+
 #reopen each model output...we are going to compare them 
 #files are too large for GIT so having to read them in from my comp
 Hali_SpSt<- readRDS( here::here("2025-04-09/Halibut_BC/SpST_mod_fit.rds")) 
@@ -63,6 +74,18 @@ Hali_Env<- readRDS( here::here("2025-04-09/Halibut_BC/EnvOnly_mod_fit.rds"))
 Hali_Sp<- readRDS( here::here("2025-04-09/Halibut_BC/Sp_mod_fit.rds"))  
 vast_sample_data<- read.csv(here::here("2025-04-07/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
 Hali_Env$setting
+str(Hali_Env$Report)
+print(Hali_Env$Report)
+summary(Hali_Env)
+Hali_Env$parameter_estimates$diagnostics
+summary(Hali_Env$parameter_estimates)
+Hali_Env$Report$Index_ctl
+Hali_Env$parameter_estimates$opt$convergence
+Hali_Env$parameter_estimates$max_gradient
+Hali_Env$parameter_estimates$SD
+Hali_Env$parameter_estimates$SD$cov.fixed
+names(Hali_Env$Report)
+names(Hali_Env$parameter_estimates$Objective)
 #1. Default plots
 #model plotting function writs plots to your folder,
 #but we need to do pull these functions apart later so that we can get at the indexed data for the shift analysis
@@ -75,8 +98,8 @@ plot(Hali_Env)
 setwd(here::here("2025-04-09/Output/Plot/Null"))
 plot(Hali_Null)
 
-print(Hali_Env$parameter_estimates$diagnostics)
-str(Hali_Env$Report)
+
+
 #2. Covariate effects (+plots)
 #plot the covariate effects and then look at the shape/strength of the response curves
 #season is in the model as a fixed effect.
@@ -104,15 +127,7 @@ Hali_Env$Report$deviance
 Hali_Sp$Report$deviance
 Hali_SpSt$Report$deviance
 
-Hali_Env$parameter_estimates$diagnostics
-str(Hali_Env$Report)
-Hali_SpSt$Report$Index_ctl
-Hali_Env$parameter_estimates$opt$convergence
-Hali_Env$parameter_estimates$max_gradient
-Hali_Env$parameter_estimates$SD
-Hali_Env$parameter_estimates$SD$cov.fixed
-names(Hali_Env$Report)
-names(Hali_Env$parameter_estimates$Objective)
+
 #calculate the percent deviance explained 
 #0- the model explains no of the variablity, 1 model explains all of the variability 
 (Hali_Null$Report$deviance-Hali_Env$Report$deviance)/Hali_Null$Report$deviance #0.1159818

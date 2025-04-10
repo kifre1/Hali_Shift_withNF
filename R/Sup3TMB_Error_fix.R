@@ -28,5 +28,6 @@ fit = fit_model( settings = settings,
                  b_i = example$sampling_data[,'Catch_KG'], 
                  a_i = example$sampling_data[,'AreaSwept_km2'] )
 
+fit$Report$deviance 
 # Plot results
 plot( fit )
