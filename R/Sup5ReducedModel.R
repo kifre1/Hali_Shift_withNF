@@ -1,4 +1,3 @@
-look into bias correct 
 #REworking the original model to include NFdata
 #to do list
 #change index shape files
@@ -39,7 +38,7 @@ library(DHARMa)
 library(forecast)
 library(INLA)
 library(dplyr)
-aa<- TRUE #!!!Kiyomi set to FALSE!!!
+aa<- F #!!!Kiyomi set to FALSE!!!
 # Use edited functions?
 use_edited_funs<- TRUE
 if (use_edited_funs) {
@@ -74,14 +73,14 @@ root_dir<- paste0(here::here(), "/")
 #seasons_run<- c("SPRING") #!!!Kiyomi: adding this part to try to make it a bit more flexible and reduce chance of error if you do end up running more than just the spring. It comes into play with data filtering, setting up observation "times", etc.
 strata_use <- data.frame("STRATA" = c("All", "USA", "Canada", "Sable",  "Gully", "BOF",  "Browns", "CapeCod", "Nantucket", "EGOM", "Georges",  "CapeBreton","HaliChan", "GrandBanks", "GBTail")) # We may want to adjust this to include more areas
 cell_size <- 25000 #here is where you could adjust the resolution of the extrpolation grid. Right now, this generates a grid that is roughly equivalent to the NOAA OISST data (25 km X 25 km)!!! 
-n_x_use <- 100 #down from 400 for faster processing  
+n_x_use <- 400 #down from 400 for faster processing  
 fine_scale_use<- TRUE
 bias_correct_use <- TRUE
 use_anisotropy_use <- TRUE
-fit_year_min<- 1990
-fit_year_max<- 2019 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
-covariates <- c("Depth", "BT_monthly", "SST_monthly")
-hab_formula <- ~Season + bs(Depth, degree = 2, intercept = FALSE) + bs(BT_monthly, degree = 2, intercept = FALSE)+ bs(SST_monthly, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
+fit_year_min<- 1985
+fit_year_max<- 2000 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
+covariates <- c("Depth_sc", "BT_monthly_sc", "SST_monthly_sc")
+hab_formula <- ~Season + bs(Depth_sc, degree = 2, intercept = FALSE) + bs(BT_monthly_sc, degree = 2, intercept = FALSE)+ bs(SST_monthly_sc, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
 #degree denotes how wiggly the model can be , running in a single curve makes sense 
 smooth_hab_covs<- 2
 catch_formula <- ~ factor(Survey)
@@ -98,11 +97,12 @@ if(first_run){
   dir.create(date_dir, recursive = TRUE)
   
   # Load data
-  Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
+  Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al11.csv"))
  # Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
+  Data <- Data[Data$YEAR <= 2005, ]
   Data <- Data %>%
     group_by(YEAR, SEASON, SURVEY) %>%
-    sample_frac(0.25)%>%
+    sample_frac(0.50)%>%
     ungroup()
   # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
@@ -150,10 +150,20 @@ if(first_run){
   
   # Some quick organization
   data_temp <- data_temp %>%
-    dplyr::select("ID", "DATE", "EST_YEAR", "SEASON", "SURVEY", "survey_season", "DECDEG_BEGLAT", "DECDEG_BEGLON", "NMFS_SVSPP", "DFO_SPEC", "PRESENCE", "BIOMASS", "ABUNDANCE","Swept", "PredTF", "VAST_YEAR_COV", "VAST_SEASON", "VAST_YEAR_SEASON", {{ covariates }}) #replaced SVVESSELL with survey_season
+    dplyr::select("ID", "DATE", "EST_YEAR", "SEASON", "SURVEY", "survey_season", "DECDEG_BEGLAT", "DECDEG_BEGLON", 
+                  "NMFS_SVSPP", "DFO_SPEC", "PRESENCE", "BIOMASS", "ABUNDANCE","Swept", "PredTF", "VAST_YEAR_COV", 
+                  "VAST_SEASON", "VAST_YEAR_SEASON","Depth","BT_monthly","SST_monthly", {{ covariates }}) #replaced SVVESSELL with survey_season
   
   # Make dummy data for all year_seasons to estimate gaps in sampling if needed
-  dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(data_temp$DATE, size = 1), "EST_YEAR" = yearseason_set[, "EST_YEAR"], "SEASON" = yearseason_set[, "SEASON"], "SURVEY" = "NEFSC", "survey_season" = "DUMMY", "DECDEG_BEGLAT" = mean(data_temp$DECDEG_BEGLAT, na.rm = TRUE), "DECDEG_BEGLON" = mean(data_temp$DECDEG_BEGLON, na.rm = TRUE), "NMFS_SVSPP" = "NEFSC", "DFO_SPEC" = "DUMMY", "PRESENCE" = 1, "BIOMASS" = 1, "ABUNDANCE" = 1, "Swept"= 0.0384,"PredTF" = TRUE, "VAST_YEAR_COV" = yearseason_set[, "EST_YEAR"], "VAST_SEASON" = yearseason_set[, "SEASON"], "VAST_YEAR_SEASON" = all_yearseason_levels, "Depth" = mean(data_temp$Depth), "BT_monthly" = mean(data_temp$BT_monthly), "SST_monthly" = mean(data_temp$SST_monthly))
+  dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(data_temp$DATE, size = 1), 
+                           "EST_YEAR" = yearseason_set[, "EST_YEAR"], "SEASON" = yearseason_set[, "SEASON"], 
+                           "SURVEY" = "NEFSC", "survey_season" = "DUMMY", "DECDEG_BEGLAT" = mean(data_temp$DECDEG_BEGLAT, na.rm = TRUE), 
+                           "DECDEG_BEGLON" = mean(data_temp$DECDEG_BEGLON, na.rm = TRUE), "NMFS_SVSPP" = "NEFSC", "DFO_SPEC" = "DUMMY", 
+                           "PRESENCE" = 1, "BIOMASS" = 1, "ABUNDANCE" = 1, "Swept"= 0.0384,"PredTF" = TRUE, 
+                           "VAST_YEAR_COV" = yearseason_set[, "EST_YEAR"], "VAST_SEASON" = yearseason_set[, "SEASON"], 
+                           "VAST_YEAR_SEASON" = all_yearseason_levels, 
+                           "Depth" = mean(data_temp$Depth), "BT_monthly" = mean(data_temp$BT_monthly), "SST_monthly" = mean(data_temp$SST_monthly), 
+                           "Depth_sc" = mean(data_temp$Depth_sc), "BT_monthly_sc" = mean(data_temp$BT_monthly_sc), "SST_monthly_sc" = mean(data_temp$SST_monthly_sc))
   names(dummy_data)
   # Combine them
   full_data <- rbind(data_temp, dummy_data) %>%
@@ -175,6 +185,9 @@ if(first_run){
     "Year" = as.numeric(full_data$VAST_YEAR_SEASON) - 1,
     "Year_Cov" = full_data$VAST_YEAR_COV,
     "Season" = full_data$VAST_SEASON,
+    "Depth_sc" = full_data$Depth_sc,
+    "BT_monthly_sc" = full_data$BT_monthly_sc,
+    "SST_monthly_sc" = full_data$SST_monthly_sc,
     "Depth" = full_data$Depth,
     "BT_monthly" = full_data$BT_monthly,
     "SST_monthly" = full_data$SST_monthly,
@@ -204,7 +217,7 @@ if(first_run){
   #}
   
   # Read in region shapefile
-  region_wgs84 <- st_read(here::here( "R/Shapefiles/IndexShapefiles/Full_RegionAl3.shp"))
+  region_wgs84 <- st_read(here::here( "R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))
   # Get UTM zone
   lon <- sum(st_bbox(region_wgs84)[c(1, 3)]) / 2
   utm_zone <- floor((lon + 180) / 6) + 1
@@ -247,9 +260,9 @@ if(first_run){
   #  drive_download(shp_files$id[i], overwrite = TRUE)
   #}
   #ADD OTHER shapefiles here
-  all_shp <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl3.shp"))
+  all_shp <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))
   USA_shp <- st_read(here::here("R/Shapefiles/IndexShapefiles/USA_RegionAl3.shp"))
-  CAN_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Canada_RegionAl3.shp"))
+  CAN_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Canada_RegionAl14.shp"))
   BB_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/Browns2.shp"))#
   BOF_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/BOF2.shp"))#
   CC_shp<- st_read(here::here("R/Shapefiles/IndexShapefiles/CapeCod2.shp"))#
@@ -318,7 +331,7 @@ if(first_run){
   
   # Spatio-temporal #this one turns on spatial and spatio-temporal variability through the omegas and epsilon
   env_sp_st_sets <- env_sp_sets
-  env_sp_st_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 1, "Omega2" = 1, "Epsilon2" = 1)
+  env_sp_st_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 1, "Omega2" = 1, "Epsilon2" = 1)# 
   #env_sp_st_sets$RhoConfig <- c("Beta1" = 4, "Beta2" = 4, "Epsilon1" = 4, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
   env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 2, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
   
@@ -329,7 +342,13 @@ if(first_run){
   vast_extrap <- make_extrapolation_info(Region = null_sets$Region, projargs = NA, zone = null_sets$zone, strata.limits = strata_use, input_grid = extrap_df)
   
   ## VAST spatial info
-  vast_spatial<- make_spatial_info(n_x = null_sets$n_x, Lon_i = vast_samp_dat[, "Lon"], Lat_i = vast_samp_dat[, "Lat"], Extrapolation_List = vast_extrap, grid_size_km = null_sets$grid_size_km, fine_scale = fine_scale_use)
+  vast_spatial<- make_spatial_info(n_x = null_sets$n_x, 
+                                   Method = "Barrier",
+                                   Lon_i = vast_samp_dat[, "Lon"], 
+                                   Lat_i = vast_samp_dat[, "Lat"], 
+                                   Extrapolation_List = vast_extrap, 
+                                   grid_size_km = null_sets$grid_size_km, 
+                                   fine_scale = fine_scale_use)
   
   ## VAST formula info
   hab_formula_all<- list("Null" = ~0, "EnvOnly" = hab_formula, "Sp" = hab_formula, "SpST" = hab_formula)
@@ -375,8 +394,9 @@ if(first_run){
       "X_contrasts" = Xcontrasts_all[[i]],
       "run_model" = FALSE,
       "PredTF_i" = vast_samp_dat[, "Pred_TF"],
+      #calculate_loglikelihood = TRUE,#added AL11
       getReportCovariance = TRUE,#added AL9
-      check_fit = TRUE  #AL9: optional, for debugging fit issues
+      check_fit = F  #AL9: optional, for debugging fit issues
     )
     # If that all went okay..
     # Fit model and save it
@@ -405,8 +425,9 @@ if(first_run){
       "newtonsteps" = 1,
       "run_model" = TRUE,
       "PredTF_i" = vast_samp_dat[, "Pred_TF"],
+      #calculate_loglikelihood = TRUE,#added AL11
       getReportCovariance = TRUE,#added AL9
-      check_fit = TRUE  #AL9: optional, for debugging fit issues
+      check_fit = F  #AL9: optional, for debugging fit issues
     )
     saveRDS(object = fit, file = paste0(date_dir, names(settings_all)[i], "_mod_fit.rds"))
   }

@@ -194,3 +194,17 @@ FullRegion <- st_make_valid(FullRegion)  # Fix invalid geometries
 Canada <- Canada %>% select(-c("Shape_Area", "Shape_Leng"))
 Canada$Region <- "Canada"
 st_write(Canada, (here::here("R/Shapefiles/SurveyArea/Canada_Survey_RegionMR31.shp")))
+
+#remove 3M
+Canada <- st_read(here::here("R/shapefiles/IndexShapefiles/Canada_RegionAl3.shp"))
+ALL<- st_read(here::here("R/shapefiles/IndexShapefiles/Full_RegionAl3.shp"))
+NAFO<- st_read(here::here("Data/TempShapefiles/NAFO3M.shp"))
+# Ensure both are in the same CRS
+NAFO <- st_transform(NAFO, st_crs(ALL))
+
+# Subtract NAFO polygons from ALL
+ALL_minus_NAFO <- st_difference(ALL, st_union(NAFO))
+plot(Canada_minus_NAFO)
+Canada_minus_NAFO <- st_difference(Canada, st_union(NAFO))
+st_write(Canada_minus_NAFO, (here::here("R/Shapefiles/SurveyArea/Canada_RegionAl14.shp")))
+st_write(ALL_minus_NAFO, (here::here("R/Shapefiles/SurveyArea/Full_RegionAl14.shp")))

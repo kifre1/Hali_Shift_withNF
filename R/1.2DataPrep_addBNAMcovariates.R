@@ -209,7 +209,7 @@ for (i in 1:nrow(catch_data)) {
 catch_data$BT_monthly <- BottomT_extracted_values
 
 catch_df <- as.data.frame(catch_data)
-write.csv(catch_df, here("Data/Derived/all_raw_halibut_catch_with_st_BtAl4.csv"))
+write.csv(catch_df, here("Data/Derived/all_raw_halibut_catch_with_st_BtAl14.csv"))
 
 # DEPTH----
 depth_extracted_values <- numeric(nrow(catch_data))
@@ -268,7 +268,42 @@ names(catch_df2)
 catch_df2 <- catch_df2 %>%
   rename(Depth = Depth_value)
 
-write.csv(catch_df2, here("Data/Derived/all_raw_halibut_catch_with_covariates_Al4.csv"))
+write.csv(catch_df2, here("Data/Derived/all_raw_halibut_catch_with_covariates_Al14.csv"))
+library(ggplot2)
+library(dplyr)
+
+Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al14.csv"))
+ #identidy & remove covariate outliers
+ggplot(Data, aes(x = Depth)) + geom_histogram()
+ggplot(Data, aes(x = BT_monthly)) + geom_histogram()
+ggplot(Data, aes(x = SST_monthly)) + geom_histogram()#normal distribution
+range(Data$Depth)#9.42973 2014.53257
+summary(Data$Depth)
+range(Data$BT_monthly)#-1.46245 20.49377
+summary(Data$BT_monthly)
+range(Data$SST_monthly)#-1.63401 25.90371
+
+Data %>%
+  filter(Depth > 1300 ) %>%
+  count()#n186
+Data %>%
+  filter(Depth < 20 ) %>%
+  count()#n13
+Data %>%
+  filter(BT_monthly > 17) %>%
+  count()#n22
+
+Data_clean <- Data %>%
+  filter(Depth < 1300 | Depth >20 ,  BT_monthly < 17) # =57216-57194
+
+Data_scaled <- Data_clean %>%
+  mutate(
+    Depth_sc = scale(Depth)[,1],
+    BT_monthly_sc = scale(BT_monthly)[,1],
+    SST_monthly_sc = scale(SST_monthly)[,1]
+  )
+write.csv(Data_scaled, here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
+
 #END----
 
 

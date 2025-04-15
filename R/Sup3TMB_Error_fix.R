@@ -29,5 +29,7 @@ fit = fit_model( settings = settings,
                  a_i = example$sampling_data[,'AreaSwept_km2'] )
 
 fit$Report$deviance 
+str(fit$Report)
+str(Hali_Env$Report)
 # Plot results
 plot( fit )

@@ -1,4 +1,5 @@
 
+
 # Covariate effects: object 'prior.weights' not found
 #Deviance explained is full of NAs
 #Canada was missed in the index= found error 
@@ -58,44 +59,43 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 #6. Taylor 
 #7. Plot random effects (Omega, Epsilon, R, P)
 #####
-Hali_Null<- readRDS( here::here("2025-04-10/Halibut_BC/Null_mod_fit.rds")) 
-Hali_Null$Report$deviance
-summary(Hali_Null)
-str(Hali_Null$Report)
-print(Hali_Null$parameter_estimates$diagnostics)
-print(Hali_Null$Report)
-Hali_Env<- readRDS( here::here("2025-04-10/Halibut_BC/EnvOnly_mod_fit.rds")) 
 
 #reopen each model output...we are going to compare them 
 #files are too large for GIT so having to read them in from my comp
-Hali_SpSt<- readRDS( here::here("2025-04-09/Halibut_BC/SpST_mod_fit.rds")) 
-Hali_Null<- readRDS( here::here("2025-04-09/Halibut_BC/Null_mod_fit.rds")) 
-Hali_Env<- readRDS( here::here("2025-04-09/Halibut_BC/EnvOnly_mod_fit.rds")) 
-Hali_Sp<- readRDS( here::here("2025-04-09/Halibut_BC/Sp_mod_fit.rds"))  
+Hali_SpSt<- readRDS( here::here("2025-04-11/Halibut_BC/SpST_mod_fit.rds")) 
+Hali_Null<- readRDS( here::here("2025-04-11/Halibut_BC/Null_mod_fit.rds")) 
+Hali_Env<- readRDS( here::here("2025-04-11/Halibut_BC/EnvOnly_mod_fit.rds")) 
+Hali_Sp<- readRDS( here::here("2025-04-10/Halibut_BC/Sp_mod_fit.rds"))  
 vast_sample_data<- read.csv(here::here("2025-04-07/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
+
+
+summary(Hali_Env)
+Hali_Env$Report$deviance #is NaN
 Hali_Env$setting
 str(Hali_Env$Report)
-print(Hali_Env$Report)
-summary(Hali_Env)
-Hali_Env$parameter_estimates$diagnostics
-summary(Hali_Env$parameter_estimates)
-Hali_Env$Report$Index_ctl
-Hali_Env$parameter_estimates$opt$convergence
-Hali_Env$parameter_estimates$max_gradient
-Hali_Env$parameter_estimates$SD
-Hali_Env$parameter_estimates$SD$cov.fixed
 names(Hali_Env$Report)
-names(Hali_Env$parameter_estimates$Objective)
+print(Hali_Env$parameter_estimates$objective)
+#I can compute deviance from the reported objective using:
+#deviance = 2 * fit$parameter_estimates$objective
+# but first double check that the model converged and that the NaN is coming from the report stage, not the optimization itself
+#check convergence
+Hali_Env$parameter_estimates$Convergence_check # "There is no evidence that the model is not converged"
+print(Hali_Env$parameter_estimates$diagnostics)#Gradient should be < 0.001, no NAS or inf in MLE
+Hali_Env$parameter_estimates$SD# not null
+Report <- Hali_Env$tmb_list$Obj$report()
+Report$deviance#If this is NAN the problem is not with optimization, but rather in how VAST is reporting outputs.
+
+
 #1. Default plots
 #model plotting function writs plots to your folder,
 #but we need to do pull these functions apart later so that we can get at the indexed data for the shift analysis
-setwd(here::here("2025-04-09/Output/Plot/SpSt"))
+setwd(here::here("2025-04-11/Output/Plot/SpSt"))
 plot(Hali_SpSt)
-setwd(here::here("2025-04-09/Output/Plot/Sp"))
+setwd(here::here("2025-04-11/Output/Plot/Sp"))
 plot(Hali_Sp)
-setwd(here::here("2025-04-09/Output/Plot/Env"))
+setwd(here::here("2025-04-11/Output/Plot/Env"))
 plot(Hali_Env)
-setwd(here::here("2025-04-09/Output/Plot/Null"))
+setwd(here::here("2025-04-11/Output/Plot/Null"))
 plot(Hali_Null)
 
 
@@ -106,17 +106,22 @@ plot(Hali_Null)
 #columns are the covariates and then the rows are the linear predictors... 
 #X1 is presence/absence- probability of positive catch, 
 #X2 abundance...catch, given a positive X1
-out_dir<- here::here("2025-04-09/Output/Plot/ValidationData/")
+out_dir<- here::here("2025-04-11_3/Output/Plot/ValidationData/")
 graphics.off() 
 dev.new()
-cov_effs<- get_vast_covariate_effects(vast_fit = Hali_SpSt, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_SpSt", out_dir = out_dir)
+cov_effs<- get_vast_covariate_effects(vast_fit = Hali_SpSt, params_plot = c("Depth_sc", "SST_monthly_sc", "BT_monthly_sc"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_SpSt", out_dir = out_dir)
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_SpSt, nice_category_names = "Halibut_SpSt", out_dir = out_dir)
 
-cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Sp, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Sp", out_dir = out_dir)
+cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Sp, params_plot = c("Depth_sc", "SST_monthly_sc", "BT_monthly_sc"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Sp", out_dir = out_dir)
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_Sp, nice_category_names = "Halibut_Sp", out_dir = out_dir)
 
-cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Env, params_plot = c("Depth", "SST_monthly", "BT_monthly"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Env", out_dir = out_dir)
+cov_effs<- get_vast_covariate_effects(vast_fit = Hali_Env, params_plot = c("Depth_sc", "SST_monthly_sc", "BT_monthly_sc"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "Halibut_Env", out_dir = out_dir)
 plot_vast_covariate_effects(vast_covariate_effects = cov_effs, vast_fit = Hali_Env, nice_category_names = "Halibut_Env", out_dir = out_dir)
+
+cov_effs2<- get_vast_covariate_effects_kf(vast_fit = Hali_Sp, params_plot = c("Depth_sc", "SST_monthly_sc", "BT_monthly_sc"), params_plot_levels = 100, effects_pad_values = c(1), nice_category_names = "RaW_Halibut_Sp", out_dir = out_dir)
+plot_vast_covariate_effects(vast_covariate_effects = cov_effs2, vast_fit = Hali_Sp, nice_category_names = "rawHalibut_Sp", out_dir = out_dir)
+
+
 
 
 #3. Deviance & AIC--- full of NAs 

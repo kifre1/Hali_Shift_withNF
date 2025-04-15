@@ -46,19 +46,19 @@ source(here::here("R/VAST_functions/SDM_PredValidation_Functions.R"))#PresenceAb
 source(here::here("R/VAST_functions/vast_function_edits.R"))
 source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 
-fit<- readRDS( here::here("2025-04-04/Halibut_BC/SpST_mod_fit.rds")) 
+fit<- readRDS( here::here("2025-04-11/Halibut_BC/EnvOnly_mod_fit.rds")) 
 
-out_dir <- here::here("2025-04-04/Output/Index_Abundance")
+out_dir <- here::here("2025-04-11/")
 # Step 1: get and plot  stratified abundance and standard error estimates
 #Question: are the index estimates summed predicted abundance values calculated per strata...no standardization (ieper km2)
   #plot(fit) # Internal VAST one
 all_times<-unique(fit$data_frame$t_i)
-abundance_ind<- get_vast_index_timeseries(vast_fit = fit, nice_category_names = "Halibut", index_scale = c("raw"), all_times = all_times, out_dir = here::here("2025-04-04/Output/Index_Abundance"))
+abundance_ind<- get_vast_index_timeseries(vast_fit = fit, nice_category_names = "Halibut", index_scale = c("raw"), all_times = all_times, out_dir = here::here("2025-04-11_3"))
 unique(abundance_ind$Index_Region)
 abundance_ind_Region<-subset(abundance_ind, Index_Region == "All"| Index_Region == "USA"| Index_Region == "Canada")
 abundance_ind_CA <- subset(abundance_ind, !(Index_Region %in% c("All", "USA", "Canada")))
 
-ggplot(abundance_ind_Region<-, aes(x = Time, y = Index_Estimate, color = Index_Region)) +
+ggplot(abundance_ind_Region, aes(x = Time, y = Index_Estimate, color = Index_Region)) +
   geom_line() +
   geom_point() +
   theme_bw() +
