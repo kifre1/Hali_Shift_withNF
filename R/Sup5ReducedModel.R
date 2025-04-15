@@ -77,8 +77,8 @@ n_x_use <- 400 #down from 400 for faster processing
 fine_scale_use<- TRUE
 bias_correct_use <- TRUE
 use_anisotropy_use <- TRUE
-fit_year_min<- 1985
-fit_year_max<- 2000 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
+fit_year_min<- 2000
+fit_year_max<- 2005 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
 covariates <- c("Depth_sc", "BT_monthly_sc", "SST_monthly_sc")
 hab_formula <- ~Season + bs(Depth_sc, degree = 2, intercept = FALSE) + bs(BT_monthly_sc, degree = 2, intercept = FALSE)+ bs(SST_monthly_sc, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
 #degree denotes how wiggly the model can be , running in a single curve makes sense 
@@ -99,7 +99,7 @@ if(first_run){
   # Load data
   Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al11.csv"))
  # Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
-  Data <- Data[Data$YEAR <= 2005, ]
+  Data <- Data[Data$YEAR >= 2000 & Data$YEAR <= 2010, ]
   Data <- Data %>%
     group_by(YEAR, SEASON, SURVEY) %>%
     sample_frac(0.50)%>%

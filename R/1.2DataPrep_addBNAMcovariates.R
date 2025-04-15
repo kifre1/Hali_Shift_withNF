@@ -304,6 +304,17 @@ Data_scaled <- Data_clean %>%
   )
 write.csv(Data_scaled, here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
 
+install.packages("here")
+library(here)
+Data -> read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
+
+#Data are definitely 0 inflated, check for overdispersion for ObsModel Function 
+mean_count <- mean(Data$ABUNDANCE)
+var_count <- var(Data$ABUNDANCE)
+print(var_count / mean_count)  # 4.17 
+#c(7,0) for zero inflated poisson distribution (overrdispersion ratio ~1 )
+#c(8,0) for zero inflated negative binomial distribution (overrdispersion ratio >1 )
+
 #END----
 
 
