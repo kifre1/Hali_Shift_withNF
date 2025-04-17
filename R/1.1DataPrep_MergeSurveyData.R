@@ -109,7 +109,7 @@ extent <- tows_df |>
 ggplot() +
   geom_sf(data = extent)
 
-write_rds(tows_df, here("Data/Derived/all_unique_towsAl14.rds"), compress = "gz")
+#write_rds(tows_df, here("Data/Derived/all_unique_towsAl14.rds"), compress = "gz")
 
 #----------------------------------
 ## Load, filter and save catch
@@ -219,7 +219,7 @@ catch_df <- rbind(dfo_catch, nefsc_catch, nf_catch) |>
 summary(catch_df)
 table(tows_df$year, tows_df$season, tows_df$survey)
 
-write_rds(catch_df, here("Data/Derived/all_raw_halibut_catchAl14.rds"), compress = "gz")
+#write_rds(catch_df, here("Data/Derived/all_raw_halibut_catchAl14.rds"), compress = "gz")
 
 library(dplyr)
 library(lubridate)  
