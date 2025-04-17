@@ -68,6 +68,8 @@ Hali_Env<- readRDS( here::here("2025-04-11/Halibut_BC/EnvOnly_mod_fit.rds"))
 Hali_Sp<- readRDS( here::here("2025-04-10/Halibut_BC/Sp_mod_fit.rds"))  
 vast_sample_data<- read.csv(here::here("2025-04-07/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
 
+Hali_Null$Report$jnll
+print(Hali_Null$parameter_estimates$objective)
 
 summary(Hali_Env)
 Hali_Env$Report$deviance #is NaN
