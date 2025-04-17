@@ -1,3 +1,5 @@
+Sys.setenv(OMP_NUM_THREADS = 6)#increase the amount of cores delegated to this script
+
 #REworking the original model to include NFdata
 #to do list
 #change index shape files
@@ -313,11 +315,12 @@ dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(
     strata.limits = strata_use,
     purpose = "index2",
     FieldConfig = c("Omega1" = 0, "Epsilon1" = 0, "Omega2" = 0, "Epsilon2" = 0),
-    # RhoConfig = c("Beta1" = 0, "Beta2" = 0, "Epsilon1" = 0, "Epsilon2" = 0),
-    RhoConfig = c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0),
+    RhoConfig = c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 0, "Epsilon2" = 0),#Al15: "Beta2" = 4, means AR1 = TRUE, to help account for the space/time autocorrelation witbout including other complexites 
+    #RhoConfig = c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0),
     bias.correct = FALSE,
     use_anisotropy = FALSE,
-    ObsModel = c(7,0)
+    Overdispersion = TRUE,#AL15
+    ObsModel = c(7,0) ##AL15for zero inflated poisson dist, c(5,0) for zero inflated negative binomial 
   )
   
   # Environment only model - same as above, but would include habitat covariates specified by X1/X2 formula
@@ -326,16 +329,16 @@ dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(
   # Spatial# this one brings in habitat covaiates and spatial variability through omegas
   env_sp_sets <- env_only_sets
   env_sp_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 0, "Omega2" = 1, "Epsilon2" = 0)
-  #env_sp_sets$RhoConfig <- c("Beta1" = 4, "Beta2" = 4, "Epsilon1" = 0, "Epsilon2" = 0) #!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, just let me know and we can revert back to trying something else. 
-  env_sp_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0) #!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, just let me know and we can revert back to trying something else. 
+  env_sp_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 0, "Epsilon2" = 0) #!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, just let me know and we can revert back to trying something else. 
+  #env_sp_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0) #!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, just let me know and we can revert back to trying something else. 
   env_sp_sets$bias.correct<- TRUE
   env_sp_sets$use_anisotropy<- TRUE
   
   # Spatio-temporal #this one turns on spatial and spatio-temporal variability through the omegas and epsilon
   env_sp_st_sets <- env_sp_sets
   env_sp_st_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 1, "Omega2" = 1, "Epsilon2" = 1)
-  #env_sp_st_sets$RhoConfig <- c("Beta1" = 4, "Beta2" = 4, "Epsilon1" = 4, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
-  env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 2, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
+  env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 2, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
+  #env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 2, "Epsilon2" = 4) #!!!Kiyomi: Same comment as above
   
   # Bundle together in a list that we can loop through
   settings_all<- list("Null" = null_sets, "EnvOnly" = env_only_sets, "Sp" = env_sp_sets, "SpST" = env_sp_st_sets)
@@ -345,7 +348,7 @@ dummy_data <- data.frame("ID" = sample(data_temp$ID, size = 1), "DATE" = sample(
   
   ## VAST spatial info
   vast_spatial<- make_spatial_info(n_x = null_sets$n_x, 
-                                   Method = "Barrier",
+                                   Method = "Barrier",# AL15
                                    Lon_i = vast_samp_dat[, "Lon"], 
                                    Lat_i = vast_samp_dat[, "Lat"], 
                                    Extrapolation_List = vast_extrap, 

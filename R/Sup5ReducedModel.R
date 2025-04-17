@@ -1,3 +1,5 @@
+Sys.setenv(OMP_NUM_THREADS = 6)#increase the amount of cores delegated to this script
+
 #REworking the original model to include NFdata
 #to do list
 #change index shape files
@@ -77,8 +79,8 @@ n_x_use <- 400 #down from 400 for faster processing
 fine_scale_use<- TRUE
 bias_correct_use <- TRUE
 use_anisotropy_use <- TRUE
-fit_year_min<- 2000
-fit_year_max<- 2005 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
+fit_year_min<- 1990
+fit_year_max<- 2019 #!!! change to 2019: this piece is just for the model validation side of things, so it will basically go in and filter out any data after 2014 and use those as hold out observations. We then internally get "predictions" for those points and can then look at the predictive skill of the model by comparing the model predictions to the held out observations. It doesn't influence the "projection" part (i.e., projecting out to 2100)
 covariates <- c("Depth_sc", "BT_monthly_sc", "SST_monthly_sc")
 hab_formula <- ~Season + bs(Depth_sc, degree = 2, intercept = FALSE) + bs(BT_monthly_sc, degree = 2, intercept = FALSE)+ bs(SST_monthly_sc, degree = 2, intercept = FALSE) #repeat with left our variables and degrree=3
 #degree denotes how wiggly the model can be , running in a single curve makes sense 
@@ -97,12 +99,12 @@ if(first_run){
   dir.create(date_dir, recursive = TRUE)
   
   # Load data
-  Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al11.csv"))
+  Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
  # Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
-  Data <- Data[Data$YEAR >= 2000 & Data$YEAR <= 2010, ]
+  #Data <- Data[Data$YEAR >= 2000 & Data$YEAR <= 2010, ]
   Data <- Data %>%
     group_by(YEAR, SEASON, SURVEY) %>%
-    sample_frac(0.50)%>%
+    sample_frac(0.22)%>%
     ungroup()
   # Data<-subset(Data, YEAR==1990 | YEAR == 1991)
   # Prep and processing to accomodate the seasonal model
@@ -311,22 +313,22 @@ if(first_run){
     strata.limits = strata_use,
     purpose = "index2",
     FieldConfig = c("Omega1" = 0, "Epsilon1" = 0, "Omega2" = 0, "Epsilon2" = 0),
-    RhoConfig = c("Beta1" = 0, "Beta2" = 0, "Epsilon1" = 0, "Epsilon2" = 0),#Defaults for AR1=TRUE
-    #RhoConfig = c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0),
+    RhoConfig = c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 0, "Epsilon2" = 0),#Al15: "Beta2" = 4, means AR1 = TRUE, to help account for the space/time autocorrelation witbout including other complexites 
+    #RhoConfig = c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0),#!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, then adjust the autocorrelation strength in the RHoconfigs
     bias.correct = FALSE,
     use_anisotropy = FALSE,
-    AR1 = TRUE, # help account for the space/time autocorrelation witbout including other complexites...!!!Kiyomi: In the ideal case, we would be able to estimate the autoressive structure among yearly intercepts (betas) as an AR1 process, so trying that. If there are errors about these terms, then adjust the autocorrelation strength in the RHoconfigs  
-    Overdispersion = TRUE,
-    ObsModel = c(8,0) #c(7,0) for zero inflated poisson dist, c(8,0) for zero inflated negative binomial 
+    #OverdispersionConfig = c("eta1" = 0, "eta2" = 1),
+    ObsModel = c(7,0) #c(7,0) for zero inflated poisson dist, c(5,0) for zero inflated negative binomial, c(7,0) for zero inflated poisson with overdispersion 
   )
   
   # Environment only model - same as above, but would include habitat covariates specified by X1/X2 formula
+  #covariates fully explain spatial patterns
   env_only_sets <- null_sets
   
-  # Spatial# this one brings in habitat covaiates and spatial variability through omegas
+  # Environmental Spatial# this one brings in habitat covaiates and spatial variability through omegas (Spatial random fields: Latent spatial patterns not explained by covariates)
   env_sp_sets <- null_sets
   env_sp_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 0, "Omega2" = 1, "Epsilon2" = 0)
-  env_sp_sets$RhoConfig <- c("Beta1" = 1, "Beta2" = 0, "Epsilon1" = 1, "Epsilon2" = 0) ##Defaults for AR1=TRUE
+  env_sp_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 0, "Epsilon2" = 0) ##Defaults for AR1=TRUE
   #env_sp_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 0, "Epsilon2" = 0) #
   env_sp_sets$bias.correct<- TRUE
   env_sp_sets$use_anisotropy<- TRUE
@@ -334,7 +336,7 @@ if(first_run){
   # Spatio-temporal #this one turns on spatial and spatio-temporal variability through the omegas and epsilon
   env_sp_st_sets <- env_sp_sets
   env_sp_st_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 1, "Omega2" = 1, "Epsilon2" = 1)# 
-  env_sp_st_sets$RhoConfig <- c("Beta1" = 1, "Beta2" = 1, "Epsilon1" = 1, "Epsilon2" = 1) #Defaults for AR1=TRUE
+  env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 2, "Epsilon2" = 4) #Defaults for AR1=TRUE
   #env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 2, "Epsilon2" = 4) #
   
   # Bundle together in a list that we can loop through

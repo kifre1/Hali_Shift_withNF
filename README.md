@@ -10,7 +10,7 @@ Repository for Atlantic Halibut shift analysis about the Hague line, before and 
 <br> 
 
 ## Data Preparation  
-Data from multiple RV surveys, and environmental covariates are combined into a single dataframe  
+Data from multiple RV surveys, and environmental covariates are combined into a single dataframe (Halibut_Catch_Covariates_Scaled_*date*.csv: Al11 includes the flemmish cap (NAFO 3M), Al14 does not...removed due do very sparse data challenging model fitting process, this can be re-visited late but because NF is not focus here, ok) 
 - **1.1DataPrep_MergeSurveyData.R**: combine survey data   
   - **all_unique_towsAl4.rds**: a combined dataframe for each unique tow (longitude, latitude, trawl_id, season, year, survey, date, swept) 
   - **all_raw_halibut_catchAl4.rds**: a combined dataframe for Atlantic Halibut survey data at each unique tow 
