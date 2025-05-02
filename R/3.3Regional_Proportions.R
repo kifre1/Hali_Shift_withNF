@@ -1,9 +1,14 @@
-#Percent biomass (abundance) per region & CA
+#Preparing Estimated Abundance data and plotting the time series to compare the abundance trends of National and Core Area stratum. 
+#Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
+
+#Paste workflow from readme 
+
+#Percent Abundance per region & CA
 #Proportion of Estimated Abundance per region & CA
 #Proportional density per CA (Relative Density)
 #TO DO: incorporate "other" it CA data, representing areas unallocated to a CA
 
-#Create regional proportions data for USA each of the Core areas, Canada, andUSA
+
 
 # Load packages----
 library(VAST)
@@ -45,18 +50,18 @@ source(here::here("R/VAST_functions/vast_function_edits.R"))
 source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 
 
-#STEP 1: get annual regional proportions----
-
-#prep data----
-fit<- readRDS( here::here("2024-10-04/Halibut_BC/SpST_mod_fit.rds")) 
+#STEP 1: get annual regional proportionsr ----
+#1.1 prep data----
+fit<- readRDS( here::here("2025-04-23/Halibut_BC/SpST_mod_fit.rds")) 
 
 all_times<-unique(fit$data_frame$t_i)
-abundance_ind<- get_vast_index_timeseries(vast_fit = fit, nice_category_names = "Halibut", index_scale = c("raw"), all_times = all_times, out_dir = here::here("2024-10-04/Output/Index_Abundance"))
+abundance_ind<- get_vast_index_timeseries(vast_fit = fit, nice_category_names = "Halibut", index_scale = c("raw"), all_times = all_times, out_dir = here::here("2025-04-23/Output/IndexAbundanceFun"))
 
+summary(abundance_ind)
 #lets add season and Year to these data and subset the core areas from the region so that we can plot them properly 
-years_Spring <- as.numeric(seq(0, 104, by = 3))
-years_Summer <- as.numeric(seq(1, 104, by = 3))
-years_Fall <- as.numeric(seq(2, 104, by = 3))
+years_Spring <- as.numeric(seq(0, 101, by = 3))
+years_Summer <- as.numeric(seq(1, 101, by = 3))
+years_Fall <- as.numeric(seq(2, 101, by = 3))
 abundance_ind$Season <- ifelse(abundance_ind$Year %in% years_Fall, "Fall",
                                ifelse(abundance_ind$Year %in% years_Spring, "Spring",
                                       ifelse(abundance_ind$Year %in% years_Summer, "Summer", NA)))
@@ -69,38 +74,22 @@ abundance_ind <- abundance_ind %>%
 head(abundance_ind)
 #Assign actual years to these groups
 abundance_ind <- abundance_ind %>%
-  mutate(Year = (YearGroup + 1984))
+  mutate(Year = (YearGroup + 1989))
 head(abundance_ind)
-
-# make a proportional abundance (Percent abuncance) df for canada vs us counts, as well as for each CA relative to the whole stdy region
-abundance_ind_proportions <- abundance_ind[, !names(abundance_ind) %in% c("Time", "Category")] #remove unneeded vars
-#tidy up some of the region/CA names for consistency
-abundance_ind_proportions <- abundance_ind_proportions %>%
-  mutate(Index_Region = ifelse(Index_Region == "NMFS", "USA", Index_Region))
-abundance_ind_proportions <- abundance_ind_proportions %>%
-  mutate(Index_Region = ifelse(Index_Region == "DFO", "Canada", Index_Region))
-abundance_ind_proportions <- abundance_ind_proportions %>%
-  mutate(Index_Region = ifelse(Index_Region == "CB4Vn", "CapeBreton", Index_Region))
-
-#add a column for square area
-#get the data from the Prediction data df
-SDM_data<- read.csv(here::here("2024-10-04/Output/PredictionData_for_ShiftAnalysis.csv"))
-# Isolate core areas
-filtered_data <- SDM_data[!is.na(SDM_data$Core_Area), ]
+summary(abundance_ind)
+#time steps to not represent years because they include seasons (3 per year)
+#1.2 add a column for square area----
+#get the data from the Prediction data df (already added these data there)
+Reg_data<-read.csv(here::here("2025-04-23/Output/Abun_Est_GridData/AbundanceEstimates_GridCentriods_Reg.csv"))
+CA_data<-read.csv(here::here("2025-04-23/Output/Abun_Est_GridData/AbundanceEstimates_GridCentriods_CA.csv"))
 # Select the unique combinations of CA_Area_km2 and Core_Area
-CA_square_area <- unique(filtered_data[, c("CA_Area_km2", "Core_Area")])
-filtered_dataR <- SDM_data[!is.na(SDM_data$survey), ]
-R_square_area <- unique(filtered_dataR[, c("Reg_Area_km2", "survey")])
-#rename some of the vars
-R_square_area <- R_square_area %>%
-  mutate(survey = ifelse(survey == "NMFS", "USA", survey))
-R_square_area <- R_square_area %>%
-  mutate(survey = ifelse(survey == "DFO", "Canada", survey))
+CA_square_area <- unique(CA_data[, c("Area_km2", "Stratum")])
+R_square_area <- unique(Reg_data[, c("Area_km2", "Stratum")])
 #Rename the columns to match the abundance data
-CA_square_area$Km2 <- CA_square_area$CA_Area_km2
-CA_square_area$Index_Region <- CA_square_area$Core_Area
-R_square_area$Km2 <- R_square_area$Reg_Area_km2
-R_square_area$Index_Region <- R_square_area$survey  
+CA_square_area$Km2 <- CA_square_area$Area_km2
+CA_square_area$Index_Region <- CA_square_area$Stratum
+R_square_area$Km2 <- R_square_area$Area_km2
+R_square_area$Index_Region <- R_square_area$Stratum  
 #Combine the two  data frames
 combined_areas <- rbind(
   CA_square_area[, c("Index_Region", "Km2")],
@@ -109,21 +98,30 @@ combined_areas <- rbind(
 
 # Merge with the abundance df
 abundance_ind_proportions <- merge(
-  abundance_ind_proportions,
+  abundance_ind,
   combined_areas,
   by = "Index_Region",
   all.x = TRUE
 )
+
+
 # select for region and CA, and Group by Year and Season to calculate total estimates and proportions
-abundance_ind_proportions_Region<-subset(abundance_ind_proportions, abundance_ind_proportions$Index_Region=="USA"|abundance_ind_proportions$Index_Region=="Canada")
-abundance_ind_proportions_CA<-subset(abundance_ind_proportions,abundance_ind_proportions$Index_Region== "All"| abundance_ind_proportions$Index_Region=="CapeCod" |abundance_ind_proportions$Index_Region=="EGOM"|abundance_ind_proportions$Index_Region=="BOF" |
-                           abundance_ind_proportions$Index_Region=="Nantucket" |abundance_ind_proportions$Index_Region=="Georges"|abundance_ind_proportions$Index_Region=="Browns" |
-                           abundance_ind_proportions$Index_Region=="Sable" |abundance_ind_proportions$Index_Region=="Gully"|abundance_ind_proportions$Index_Region=="CapeBreton")
+abundance_ind_proportions_Region<-subset(
+  abundance_ind_proportions, 
+  abundance_ind_proportions$Index_Region=="USA"|abundance_ind_proportions$Index_Region=="Canada")
+abundance_ind_proportions_CA <- subset(
+  abundance_ind_proportions, 
+  !(Index_Region == "USA" | Index_Region == "Canada"
+    )
+)
+unique(abundance_ind_proportions_Region$Index_Region)
+unique(abundance_ind_proportions_CA$Index_Region)
 
-
-#calculate regional proportional abundance and density----
+str(abundance_ind_proportions_Region) 
+#1.3 calculate annual regional proportional abundance and density for each stratum grouping (National, Core Area) ----
+#proportional abundance
 abundance_ind_proportions_Region <- abundance_ind_proportions_Region %>%
-  group_by(Year, Season) %>%  #if i include indes_region here, all proportions will be 1 because the other region will not be included in the Total_estimate                             
+  group_by(Year, Season) %>%                               
   mutate(
     Total_Estimate = sum(Index_Estimate),#total catch for the year
     Proportion =  round(Index_Estimate / Total_Estimate, 3),  # Proportion per region rounded to 3 decimals
@@ -131,26 +129,27 @@ abundance_ind_proportions_Region <- abundance_ind_proportions_Region %>%
   ) %>%
   ungroup()   
 
-#proportional density 
+#proportional density : same as above but standardized by square area
+unique(abundance_ind_proportions_Region$Km2)
+TotalArea<- 705009.0 + 147581.2 #total area
 abundance_ind_proportions_Region <- abundance_ind_proportions_Region %>%
   group_by(Year, Season) %>%                               
   mutate(
     # Standardize Index_Estimate and Total_Estimate by Km2
-    Regional_Standardized_Index_Estimate = Index_Estimate / Km2, #standardize per region by square area
-    Total_Standardized_Estimate = sum(Regional_Standardized_Index_Estimate),  # Total standardized catch for the year/season
-    Standardized_SD = Index_SD/ Km2, #the SD also needs to be scaled by the same factor in order to remain consistent
-    
+    Regional_density_Estimate = Index_Estimate / Km2, # Total regional standardized catch for the year/season
+    Total_density_Estimate = sum(Regional_density_Estimate),  # Total standardized catch for the year/season
+    Regional_density_SD = Index_SD/ Km2, #the SD also needs to be scaled by the same factor in order to remain consistent
     # Calculate proportions using standardized values
-    ST_Proportion = round(Regional_Standardized_Index_Estimate / Total_Standardized_Estimate, 3),
-    ST_Proportion_SD = round(Standardized_SD /  Total_Standardized_Estimate, 3)
+    ProportionalDensity = round(Regional_density_Estimate / Total_density_Estimate, 3),
+    ProportionalDensity_SD = round(Regional_density_SD /  Total_density_Estimate, 3)
   ) %>%
   ungroup()
 
 #as a percentage
 abundance_ind_proportions_Region$Proportion <- abundance_ind_proportions_Region$Proportion * 100
 abundance_ind_proportions_Region$Proportion_SD <- abundance_ind_proportions_Region$Proportion_SD * 100
-abundance_ind_proportions_Region$ST_Proportion <- abundance_ind_proportions_Region$ST_Proportion * 100
-abundance_ind_proportions_Region$ST_Proportion_SD <- abundance_ind_proportions_Region$ST_Proportion_SD * 100
+abundance_ind_proportions_Region$ProportionalDensity <- abundance_ind_proportions_Region$ProportionalDensity * 100
+abundance_ind_proportions_Region$ProportionalDensity_SD <- abundance_ind_proportions_Region$ProportionalDensity_SD * 100
 #just spring
 abundance_ind_proportions_Region_Spring<-abundance_ind_proportions_Region%>%filter(Season=="Spring")
 
@@ -164,10 +163,8 @@ abundance_ind_proportions_CA <- abundance_ind_proportions_CA %>%
   ) %>%
   ungroup()    
 
-unique(abundance_ind_proportions_Region$Km2)
-TotalArea<- 214703.7 + 189358.5 #total area
 
-#redo this one because my ST_Proportion_SD is off
+
 abundance_ind_proportions_CA <- abundance_ind_proportions_CA %>%
   group_by(Year, Season) %>%                               
   mutate(
@@ -185,26 +182,27 @@ abundance_ind_proportions_CA$Proportion <- abundance_ind_proportions_CA$Proporti
 abundance_ind_proportions_CA$Proportion_SD <- abundance_ind_proportions_CA$Proportion_SD * 100
 abundance_ind_proportions_CA$ProportionalDensity <- abundance_ind_proportions_CA$ProportionalDensity * 100
 abundance_ind_proportions_CA$ProportionalDensity_SD <- abundance_ind_proportions_CA$ProportionalDensity_SD * 100
+str(abundance_ind_proportions_CA)
+str(abundance_ind_proportions_Region)
+abundance_ind_proportions_CA<-subset(abundance_ind_proportions_CA, abundance_ind_proportions_CA$Index_Region!="All")#not needed anymore
 
 #save----
-write.csv(abundance_ind_proportions_CA, (here::here("2024-10-04/Output/proportions_CA.csv")))
-write.csv(abundance_ind_proportions_Region, (here::here("2024-10-04/Output/proportions_Regional.csv")))
-write.csv(abundance_ind_proportions_Region_Spring,(here::here("2024-10-04/Output/proportions_Regional_Spring.csv")))
+write.csv(abundance_ind_proportions_CA, (here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv")))
+write.csv(abundance_ind_proportions_Region, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv")))
 
 
 #STEP 2: Compare these data between before and during warming timeframes ----
 #incorporate timeframes----
-CA_Proportion<-read.csv(here::here("2024-10-04/Output/proportions_CA.csv"))
-Regional_Proportion<- read.csv(here::here("2024-10-04/Output/proportions_Regional.csv"))
-CA_Proportion<-subset(CA_Proportion, CA_Proportion$Index_Region!="All")#not needed anymore
+CA_Proportion<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv"))
+Regional_Proportion<- read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
 
 
 # add the timeframe to the data
 CA_Proportion <- CA_Proportion %>%
   mutate(
     timeframe = case_when(
-      Year %in% 1985:2005 ~ "Before",
-      Year %in% 2006:2019 ~ "After",
+      Year %in% 1990:2005 ~ "Before",
+      Year %in% 2006:2023 ~ "After",
       TRUE ~ NA_character_  # Handles any years outside these ranges
     )
   )
@@ -212,14 +210,14 @@ CA_Proportion <- CA_Proportion %>%
 Regional_Proportion <- Regional_Proportion %>%
   mutate(
     timeframe = case_when(
-      Year %in% 1985:2005 ~ "Before",
-      Year %in% 2006:2019 ~ "After",
+      Year %in% 1990:2005 ~ "Before",
+      Year %in% 2006:2023 ~ "After",
       TRUE ~ NA_character_  # Handles any years outside these ranges
     )
   )
 
 
-# Regional: Calculate the mean proportion for each Region and timeframe----
+#Regional: Calculate the mean proportion for each Region and timeframe----
 TF_Avg_R <- Regional_Proportion %>%
   group_by(Index_Region, timeframe, Season) %>%
   summarize(
@@ -250,21 +248,46 @@ SD_R <- SD_R %>%
 
 Regional_Proportions_TF <- TF_Avg_R %>% inner_join(SD_R, by = c("Index_Region", "Season"))
 head(Regional_Proportions_TF)
-class(Regional_Proportions_TF)
 
-Regional_Proportions_TF_Spring<-
-  as_tibble(Regional_Proportions_TF)%>% filter(Season=="Spring")
+#Regional repeat for proportional density ----
+names(CA_Proportion)
 
-Regional_Proportions_TF_table<-Regional_Proportions_TF_Spring[,c(1,3,4,6)]
-names(Regional_Proportions_TF_table)<-c("Nation","Before","During","PerChange")
-Regional_Proportions_TF_table<-Regional_Proportions_TF_table%>%mutate(across(where(is.numeric), ~ round(.x, 2)))
+PD_Avg_REG <- Regional_Proportion %>%
+  group_by(Index_Region, timeframe, Season) %>%
+  summarize(
+    Mean_ProportionalDensity = mean(ProportionalDensity, na.rm = TRUE)
+  ) %>%
+  pivot_wider(names_from = timeframe, values_from = Mean_ProportionalDensity) %>%
+  ungroup()
+PD_Avg_REG$PD_PercentChange = ((PD_Avg_REG$After - PD_Avg_REG$Before) / PD_Avg_REG$Before) * 100
+PD_Avg_REG$PD_Difference = PD_Avg_REG$After - PD_Avg_REG$Before
+PD_Avg_REG <- PD_Avg_REG[, c("Index_Region", "Season", "Before", "After", "PD_Difference", "PD_PercentChange")]
+names(PD_Avg_REG)[3] <- "PD_Before"
+names(PD_Avg_REG)[4] <- "PD_After"
+PD_Avg_REG <- PD_Avg_REG %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
 
-library(gridExtra)
-library(grid)
-table_grobPROP <- tableGrob(Regional_Proportions_TF_table, rows = NULL)
+#add the SD
+ST_SD_REG <- Regional_Proportion %>%
+  group_by(Index_Region, timeframe, Season) %>%
+  summarize(
+    Mean_PD_SD = mean(ProportionalDensity_SD, na.rm = TRUE)
+  ) %>%
+  pivot_wider(names_from = timeframe, values_from = Mean_PD_SD) %>%
+  ungroup()
+ST_SD_REG$PD_PercentChangeSD = ((ST_SD_REG$After - ST_SD_REG$Before) / ST_SD_REG$Before) * 100
+ST_SD_REG$PD_DifferenceSD = ST_SD_REG$After - ST_SD_REG$Before
+ST_SD_REG <- ST_SD_REG[, c("Index_Region", "Season", "Before", "After", "PD_DifferenceSD", "PD_PercentChangeSD")]
+names(ST_SD_REG)[3] <- "PD_BeforeSD"
+names(ST_SD_REG)[4] <- "PD_AfterSD"
+ST_SD_REG <- ST_SD_REG %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
 
+REG_ST_Proportions_TF <- PD_Avg_REG %>% inner_join(ST_SD_REG, by = c("Index_Region", "Season"))
+str(REG_ST_Proportions_TF)
+str(Regional_Proportions_TF)
 
-# Per CA: Calculate the mean proportion for each CA and timeframe----
+# Core areas: Calculate the mean proportion for each CA and timeframe----
 
 TF_Avg_CA <- CA_Proportion %>%
   group_by(Index_Region, timeframe, Season) %>%
@@ -296,7 +319,7 @@ SD_CA <- SD_CA %>%
 
 CA_Proportions_TF <- TF_Avg_CA %>% inner_join(SD_CA, by = c("Index_Region", "Season"))
 
-#repeat for proportional density 
+#Core areas, repeat for proportional density ----
 names(CA_Proportion)
 
 PD_Avg_CA <- CA_Proportion %>%
@@ -330,28 +353,28 @@ ST_SD_CA <- ST_SD_CA %>%
   mutate(across(where(is.numeric), ~ round(.x, 2)))
 
 CA_ST_Proportions_TF <- PD_Avg_CA %>% inner_join(ST_SD_CA, by = c("Index_Region", "Season"))
+str(CA_ST_Proportions_TF)
+str(CA_Proportions_TF)
 
-#save----
-write.csv(Regional_Proportions_TF, (here::here("2024-10-04/Output/Reg_Proportions_TF.csv")))
-write.csv(CA_ST_Proportions_TF, (here::here("2024-10-04/Output/CA_ProportionalDensity_TF.csv")))
-write.csv(CA_Proportions_TF, (here::here("2024-10-04/Output/CA_Proportions_TF.csv")))
-
-
+#save----mean proportion for each grouping and timeframe----
+write.csv(Regional_Proportions_TF, (here::here("2025-04-23/Output/Proportions/Mean_Timeframes/Reg_Proportions_TF.csv")))
+write.csv(REG_ST_Proportions_TF, (here::here("2025-04-23/Output/Proportions/Mean_Timeframes/Reg_RelativeDensity_TF.csv")))
+write.csv(CA_ST_Proportions_TF, (here::here("2025-04-23/Output/Proportions/Mean_Timeframes/CA_RelativeDensity_TF.csv")))
+write.csv(CA_Proportions_TF, (here::here("2025-04-23/Output/Proportions/Mean_Timeframes/CA_Proportions_TF.csv")))
 
 #STEP 3: visualize and compare averaged proportional abundance and proportional density values----
 require(DT)
 
-
 #load data and plotting settings----
 #timeseries: proportional abundance and density
-Reg_Prop<-read.csv(here::here("2024-10-04/Output/proportions_Regional.csv"))
-CA_Prop<-read.csv(here::here("2024-10-04/Output/proportions_CA.csv"))
-CA_Prop<-subset(CA_Prop, CA_Prop$Index_Region!="All")#not needed anymore
+Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
+CA_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv"))
 
 #timeseries data aggregated by before vs after/during warming period timeframes
-Reg_Proportions_TF<-read.csv(here::here("2024-10-04/Output/Reg_Proportions_TF.csv"))
-CA_ProportionalDensity_TF<-read.csv(here::here("2024-10-04/Output/CA_ProportionalDensity_TF.csv"))
-CA_Proportions_TF<-read.csv(here::here("2024-10-04/Output/CA_Proportions_TF.csv"))
+Reg_RelativeDensity_TF<-read.csv(here::here("2025-04-23/Output/Proportions/Mean_Timeframes/Reg_RelativeDensity_TF.csv"))
+Reg_Proportions_TF<-read.csv(here::here("2025-04-23/Output/Proportions/Mean_Timeframes/Reg_Proportions_TF.csv"))
+CA_RelativeDensity_TF<-read.csv(here::here("2025-04-23/Output/Proportions/Mean_Timeframes/CA_RelativeDensity_TF.csv"))
+CA_Proportions_TF<-read.csv(here::here("2025-04-23/Output/Proportions/Mean_Timeframes/CA_Proportions_TF.csv"))
 
 
 library(dplyr)
@@ -389,18 +412,19 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
               
               strip.background=element_rect(colour="black",fill="white"),
               
-              axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=1,size=10,family="serif"),
+              axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=1,size = 10,family="serif"),
               
-              axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=10,family="serif"),
+              axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size = 10,family="serif"),
               
               axis.title.x=element_text(size=10,hjust=0.5,vjust=-2,family="serif"))
 
 pd <- position_dodge(.5)
 
 
-#plot 1: plotting the regional trends  of estimated abundance across the time series ----
+#plot 1: plotting the regional trends of estimated abundance across the time series ----
 regpal<- c("orange", "darkblue")
 
+str(Reg_Prop)
 RegionalPlot<- ggplot(data = Reg_Prop, aes(x = Year, y = Proportion, color = Index_Region))+
   geom_point()+
  # scale_y_continuous(labels = scales::scientific) +
@@ -413,44 +437,107 @@ RegionalPlot<- ggplot(data = Reg_Prop, aes(x = Year, y = Proportion, color = Ind
   facet_wrap(.~Season)
 
 RegionalPlot
-#regional seasonal proportion, stacked area
-ggplot(Reg_Prop, aes(x = Year, y = Proportion, fill = Index_Region)) +
+
+#lets group this seasonal data by year (mean )
+Reg_Prop_avg <- Reg_Prop %>%
+  group_by(Year, Index_Region) %>%
+  summarise(Proportion = mean(Proportion, na.rm = TRUE),
+            ProportionalDensity = mean(ProportionalDensity, na.rm = TRUE), .groups = "drop")
+  
+Regiona_Proportion_Plot<-ggplot(Reg_Prop_avg, aes(x = Year, y = Proportion, fill = Index_Region)) +
   geom_area() +
-  facet_wrap(~ Season) + 
-  scale_fill_manual(values = c("orange", "darkblue"))+
+  scale_fill_manual(values = c("orange", "darkblue")) +
   labs(
-    title = "Regional Proportion of Estimated Abundance",
+    title = "Mean Proportion of Total Est. Abun.",
     x = "Year",
     y = "Proportion of Total (%)",
     fill = NULL
   ) +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+Regiona_RelativeDensity_Plot<-ggplot(Reg_Prop_avg, aes(x = Year, y = ProportionalDensity, fill = Index_Region)) +
+  geom_area() +
+  scale_fill_manual(values = c("orange", "darkblue")) +
+  labs(
+    title = "Mean Relative Density",
+    x = "Year",
+    y = "Proportion of Total (%)",
+    fill = NULL
+  ) +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+library(patchwork)
+Regiona_Proportion_Plot+Regiona_RelativeDensity_Plot
 
 #plot 2: basic  trends for each CA across the time series with the percent change noted in the legend----
-CA_TF_Spring<-subset(CA_Proportions_TF, CA_ProportionalDensity_TF$Season=="Spring")
-#(this will print the difference between timeframes in the legend )
-custom_labels <- with(CA_TF_Spring, 
-                      paste(
-                        Index_Region, 
-                        "(", 
-                        ifelse(Difference > 0, paste0("+", round(Difference, 2)), round(Difference, 2)), 
-                        ")", 
-                        sep = ""
-                      )
+names(CA_Proportions_TF)
+#get mean annual data
+#before v after absolute %
+CA_Prop_TF_avg <- CA_Proportions_TF %>%
+  group_by(Index_Region) %>%
+  summarise(Before = mean(Before, na.rm = TRUE),
+            After = mean(After, na.rm = TRUE),
+            Difference = mean(Difference, na.rm = TRUE),
+            PercentChange = mean(PercentChange, na.rm = TRUE),  .groups = "drop")
+#before v after relative density
+CA_Relative_TF_avg <- CA_RelativeDensity_TF %>%
+  group_by(Index_Region) %>%
+  summarise(PD_Before = mean(PD_Before, na.rm = TRUE),
+            PD_After = mean(PD_After, na.rm = TRUE),
+            PD_Difference = mean(PD_Difference, na.rm = TRUE),
+            PD_PercentChange = mean(PD_PercentChange, na.rm = TRUE),  .groups = "drop")
+#timeseries: proportional abundance and density
+CA_Prop_avg <- CA_Prop %>%
+  group_by(Year, Index_Region) %>%
+  summarise(Proportion = mean(Proportion, na.rm = TRUE),
+            Proportion_SD = mean(Proportion_SD, na.rm = TRUE),
+            ProportionalDensity = mean(ProportionalDensity, na.rm = TRUE),
+            ProportionalDensity_SD = mean(ProportionalDensity_SD, na.rm = TRUE), .groups = "drop")
+
+names(CA_Prop_TF_avg)
+unique(CA_Prop_avg$Index_Region)
+#Make a custom colour pallet in the order that i would like to factor 
+region_colors <- c(
+  "EGOM" ="#004995",
+  "BOF"  = "#8C510A",
+  "CapeBreton" ="#4D4D4D",
+  "HaliChan" ="#00441B",
+  "CapeCod" ="#2171B5",
+  "Browns" ="#D8781D",
+  "Gully"="#7F7F7F",
+  "GrandBanks" ="#238B45",
+  "Nantucket" = "#56B4E9",
+  "Georges" ="#EDA752",
+  "Sable"  ="#C0C0C0",
+  "GBTail" = 	"#81C784"
 )
 
-# Ensure the names of the vector match the values in CA_Proportion$Index_Region
-names(custom_labels) <- CA_TF_Spring$Index_Region
 
-CA_Prop_Spring<-subset(CA_Prop, CA_Prop$Season=="Spring")
 
-names(CA_Prop_Spring)
+CA_Prop_TF_avg$Index_Region <- factor(CA_Prop_TF_avg$Index_Region, levels = names(region_colors))
+CA_Relative_TF_avg$Index_Region <- factor(CA_Relative_TF_avg$Index_Region, levels = names(region_colors))
+CA_Prop_avg$Index_Region <- factor(CA_Prop_avg$Index_Region, levels = names(region_colors))
+
+
+#(this will print the difference between timeframes in the legend )
+custom_labels <- paste(
+  levels(CA_Prop_TF_avg$Index_Region),  # Factor levels in the correct order
+  "(", 
+  # Extract Difference values corresponding to each factor level
+  with(CA_Prop_TF_avg, 
+       round(Difference[match(levels(CA_Prop_TF_avg$Index_Region), Index_Region)], 2)
+  ), 
+  ")", 
+  sep = ""
+)
+
+print(custom_labels)
+
+
 # Plot with custom legend labels
-ggplot(data = CA_Prop_Spring, aes(x = Year, y = Proportion, color = Index_Region)) +
+ggplot(data = CA_Prop_avg, aes(x = Year, y = Proportion, color = Index_Region)) +
   geom_point(size = 2) +
   geom_line(linewidth = 1) +
   geom_errorbar(
-    data = CA_Prop_Spring,
+    data = CA_Prop_avg,
     aes(
       x = Year,
       ymin = (Proportion - Proportion_SD),
@@ -460,9 +547,9 @@ ggplot(data = CA_Prop_Spring, aes(x = Year, y = Proportion, color = Index_Region
     ),
     alpha = 0.65
   ) +
-  scale_color_brewer(palette = "Set1", labels = custom_labels) +  # Add custom labels here
+  scale_color_manual(values = region_colors, labels = custom_labels)+
   labs(
-    title = "Proportion of Estimated Abundance \n per Core Area, Spring",
+    title = "Proportion of Estimated Abundance \n per Core Area",
     y = "Percent",
     x = "Year"
   ) +
@@ -470,10 +557,20 @@ ggplot(data = CA_Prop_Spring, aes(x = Year, y = Proportion, color = Index_Region
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
 
 #Stacked area: CA seasonal proportion
-ggplot(CA_Prop, aes(x = Year, y = Proportion, fill = Index_Region)) +
+# This orders from largest to smallest
+CA_Prop_avg$Index_Region <- factor(CA_Prop_avg$Index_Region, 
+                                   levels = CA_Prop_avg %>% 
+                                     group_by(Index_Region) %>% 
+                                     summarise(Total_Proportion = sum(Proportion)) %>%
+                                     arrange(desc(Total_Proportion)) %>%
+                                     pull(Index_Region))  
+#plot stacked
+ggplot(CA_Prop_avg, aes(x = Year, y = Proportion, fill = Index_Region)) +
   geom_area() +
-  facet_wrap(~ Season) + 
-  scale_fill_brewer(palette = "Set1") +  # Add custom labels here
+  scale_fill_manual(values = region_colors)+
+
+  #facet_wrap(~ Season) + 
+  #scale_fill_brewer(palette = "Set1") +  # Add custom labels here
   labs(
     title = "Proportion of Estimated Abundance \n per Core Area",
     x = "Year",
@@ -481,43 +578,31 @@ ggplot(CA_Prop, aes(x = Year, y = Proportion, fill = Index_Region)) +
     fill = NULL
   ) +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+#reset factor
+CA_Prop_avg$Index_Region <- factor(CA_Prop_avg$Index_Region, levels = names(region_colors))
 
-#Stacked Area: CA seasonal proportion, spring
-CA_Prop_Spring<-subset(CA_Prop, CA_Prop$Season=="Spring")
-ggplot(CA_Prop_Spring, aes(x = Year, y = Proportion, fill = Index_Region)) +
-  geom_area() +
-  scale_fill_brewer(palette = "Set1", labels = custom_labels) +  # Add custom labels here
-  labs(
-    title = "Proportion of Estimated Abundance \n per Core Area, Spring",
-    x = "Year",
-    y = "Proportion of Total (%)",
-    fill = NULL
-  ) +
-  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
 #Plot 3:relative density----
-CA_PD_TF_Spring<-subset(CA_ProportionalDensity_TF, CA_ProportionalDensity_TF$Season=="Spring")
-
 #(this will print the difference between timeframes in the legend )
-PD_custom_labels <- with(CA_PD_TF_Spring, 
-                      paste(
-                        Index_Region, 
-                        "(", 
-                        ifelse(PD_Difference > 0, paste0("+", round(PD_Difference, 2)), round(PD_Difference, 2)), 
-                        ")", 
-                        sep = ""
-                      )
+custom_labels_Relative <- paste(
+  levels(CA_Relative_TF_avg$Index_Region),  # Factor levels in the correct order
+  "(", 
+  # Extract Difference values corresponding to each factor level
+  with(CA_Relative_TF_avg, 
+       round(PD_Difference[match(levels(CA_Relative_TF_avg$Index_Region), Index_Region)], 2)
+  ), 
+  ")", 
+  sep = ""
 )
 
-# Ensure the names of the vector match the values in CA_Proportion$Index_Region
-names(PD_custom_labels) <- CA_PD_TF_Spring$Index_Region
+print(custom_labels_Relative)
 
-names(CA_Prop_Spring)
+
 # Plot with custom legend labels
-ggplot(data = CA_Prop_Spring, aes(x = Year, y = ProportionalDensity, color = Index_Region)) +
+ggplot(data = CA_Prop_avg, aes(x = Year, y = ProportionalDensity, color = Index_Region)) +
   geom_point(size = 2) +
   geom_line(linewidth = 1) +
   geom_errorbar(
-    data = CA_Prop_Spring,
+    data = CA_Prop_avg,
     aes(
       x = Year,
       ymin = (ProportionalDensity - ProportionalDensity_SD),
@@ -527,9 +612,9 @@ ggplot(data = CA_Prop_Spring, aes(x = Year, y = ProportionalDensity, color = Ind
     ),
     alpha = 0.65
   ) +
-  scale_color_brewer(palette = "Set1", labels = PD_custom_labels) +  # Add custom labels here
+  scale_color_manual(values = region_colors, labels = custom_labels_Relative)+
   labs(
-    title = "Relative Density of Estimated Abundance \n per Core Area, Spring",
+    title = "Relative Density \n per Core Area",
     y = "Percent",
     x = "Year"
   ) +
@@ -537,40 +622,36 @@ ggplot(data = CA_Prop_Spring, aes(x = Year, y = ProportionalDensity, color = Ind
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
 
 #Stacked area: CA seasonal proportion
-ggplot(CA_Prop, aes(x = Year, y = ProportionalDensity, fill = Index_Region)) +
+# This orders from largest to smallest
+CA_Prop_avg$Index_Region <- factor(CA_Prop_avg$Index_Region, 
+                                   levels = CA_Prop_avg %>% 
+                                     group_by(Index_Region) %>% 
+                                     summarise(Total_Proportion = sum(ProportionalDensity)) %>%
+                                     arrange(desc(Total_Proportion)) %>%
+                                     pull(Index_Region))  
+#plot stacked
+ggplot(CA_Prop_avg, aes(x = Year, y = ProportionalDensity, fill = Index_Region)) +
   geom_area() +
-  facet_wrap(~ Season) + 
-  scale_fill_brewer(palette = "Set1") +  # Add custom labels here
+  scale_fill_manual(values = region_colors)+
+  
+  #facet_wrap(~ Season) + 
+  #scale_fill_brewer(palette = "Set1") +  # Add custom labels here
   labs(
-    title = "Relative Density of Estimated Abundance per Core Area",
+    title = "Relative Density \n per Core Area",
     x = "Year",
-    y = "Relative Density (%)",
+    y = "(%)",
     fill = NULL
   ) +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
-
-#Stacked Area: CA seasonal proportion, spring
-CA_Prop_Spring<-subset(CA_Prop, CA_Prop$Season=="Spring")
-ggplot(CA_Prop_Spring, aes(x = Year, y = ProportionalDensity, fill = Index_Region)) +
-  geom_area() +
-  scale_fill_brewer(palette = "Set1", labels = PD_custom_labels) +  # Add custom labels here
-  labs(
-    title = "Relative Density of Estimated Abundance \n per Core Area, Spring",
-    x = "Year",
-    y = "Relative Density (%)",
-    fill = NULL
-  ) +
-  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
-
-
+#reset factor
+CA_Prop_avg$Index_Region <- factor(CA_Prop_avg$Index_Region, levels = names(region_colors))
 
 #Plot 4: gain/loss maps----
 #first run Sup4_Map_+GenericSettings
-# want to colour it based on %change from CA_PD_TF_Spring$PD_PercentChange and CA_TF_Spring$PercentChang
 #Relative Density
 ggplot() +
   geom_sf(data = contours, color = "lightblue") +
-  geom_sf(data = CA_df, aes(fill = CA_PD_TF_Spring$PD_PercentChange[match(geometry.Region, CA_PD_TF_Spring$Index_Region)])) +
+  geom_sf(data = CoreAreas_df, aes(fill = CA_Relative_TF_avg$PD_PercentChange[match(geometry.Region, CA_Relative_TF_avg$Index_Region)])) +
   geom_sf(data = All_region_df, fill = NA) +
   geom_sf(data = EEZ, color = "blue") +
   geom_sf(data = NAFO, fill = NA) +
@@ -578,16 +659,15 @@ ggplot() +
   scale_fill_gradientn(
     name = "% Change",
     colors = c("darkred", "gray94", "darkblue"), # Transition from red to blue
-    values = scales::rescale(c(min(CA_PD_TF_Spring$PD_PercentChange), 0, max(CA_PD_TF_Spring$PD_PercentChange))),
-    limits = c(min(CA_PD_TF_Spring$PD_PercentChange), max(CA_PD_TF_Spring$PD_PercentChange)) # Set limits to the range of your data
+    values = scales::rescale(c(min(CA_Relative_TF_avg$PD_PercentChange), 0, max(CA_Relative_TF_avg$PD_PercentChange))),
+    limits = c(min(CA_Relative_TF_avg$PD_PercentChange), max(CA_Relative_TF_avg$PD_PercentChange)) # Set limits to the range of your data
   ) +
   labs(title = "Percent Change in Relative Density") +
-  xlim(-73, -55) + 
-  ylim(39.355, 47.2) 
+  xlim(-73, -48) + ylim(39.355, 48)
 #Proportion of estimated abundance
 ggplot() +
   geom_sf(data = contours, color = "lightblue") +
-  geom_sf(data = CA_df, aes(fill = CA_TF_Spring$PercentChange[match(geometry.Region, CA_TF_Spring$Index_Region)])) +
+  geom_sf(data = CoreAreas_df, aes(fill = CA_Prop_TF_avg$PercentChange[match(geometry.Region, CA_Prop_TF_avg$Index_Region)])) +
   geom_sf(data = All_region_df, fill = NA) +
   geom_sf(data = EEZ, color = "blue") +
   geom_sf(data = NAFO, fill = NA) +
@@ -595,16 +675,17 @@ ggplot() +
   scale_fill_gradientn(
     name = "% Change",
     colors = c("darkred", "gray94", "darkblue"), # Transition from red to blue
-    values = scales::rescale(c(min(CA_TF_Spring$PercentChange), 0, max(CA_TF_Spring$PercentChange))),
-    limits = c(min(CA_TF_Spring$PercentChange), max(CA_TF_Spring$PercentChange)) # Set limits to the range of your data
+    values = scales::rescale(c(min(CA_Prop_TF_avg$PercentChange), 0, max(CA_Prop_TF_avg$PercentChange))),
+    limits = c(min(CA_Prop_TF_avg$PercentChange), max(CA_Prop_TF_avg$PercentChange)) # Set limits to the range of your data
   ) +
   labs(title = "Percent Change in Proportion of Estimated Abundance") +
-  xlim(-73, -55) + 
-  ylim(39.355, 47.2) 
-#slopes, estimate LM: rate of change in proportional abundance per time period----
+  xlim(-73, -48) + ylim(39.355, 48)
+
+#Step 4: slopes, estimate LM: rate of change in proportional abundance per time period----
 #load timeseries data for proportional abundance and density
-Reg_Prop<-read.csv(here::here("2024-10-04/Output/proportions_Regional.csv"))
-CA_Prop<-read.csv(here::here("2024-10-04/Output/proportions_CA.csv"))
+proportions_and_density_CA.csv, proportions_and_density_Regional.csv
+Reg_Prop<-read.csv(here::here("2025-04-23/Output/proportions_Regional.csv"))
+CA_Prop<-read.csv(here::here("2025-04-23/Output/proportions_CA.csv"))
 CA_Prop<-subset(CA_Prop, CA_Prop$Index_Region!="All")#not needed anymore
 
 #Assign Period

@@ -7,20 +7,20 @@
   #add NF
   #Plot presence only 
 
-All_region <- st_read(here::here("", "R/data/region_shapefile/full_survey_region.shp"))
+All_region <- st_read(here::here("", "R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))
 crs <- st_crs(All_region)
 
 #bounding box for plotting
-study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -53, ymax = 48))
+study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -44, ymax = 48))
 study_area_polygon <- st_as_sfc(study_area_bbox)
 st_crs(study_area_polygon) <- crs
 
 #Mapping shapefiles
-EEZ <- st_read(here::here("", "R/data/Mapping_shapefiles/EEZ.shp"))
-land <- st_read(here::here("", "R/data/Mapping_shapefiles/poly_NAD83.shp"))
-contours <- st_read(here::here("", "R/data/Mapping_shapefiles/DepthContours.shp"))
-NAFO <- st_read(here::here("", "R/data/Mapping_shapefiles/Divisions.shp"))
-Hague <- st_read(here::here("", "R/data/HagueLine/HagueLine.shp"))
+EEZ <- st_read(here::here("", "Data/Mapping_shapefiles/EEZ.shp"))
+land <- st_read(here::here("", "Data/Mapping_shapefiles/poly_NAD83.shp"))
+contours <- st_read(here::here("", "Data/Mapping_shapefiles/DepthContours.shp"))
+NAFO <- st_read(here::here("", "Data/Mapping_shapefiles/Divisions.shp"))
+Hague <- st_read(here::here("", "Data/Mapping_shapefiles/HagueLine.shp"))
 
 EEZ <- st_transform (EEZ, crs)
 land <- st_transform (land, crs)
@@ -35,14 +35,32 @@ contours <- st_intersection(contours, study_area_polygon)
 NAFO <- st_intersection(NAFO, study_area_polygon)
 
 #Core areas 
-CAs <- st_read(here::here("", "R/data/CoreAreas/CoreAreas_Oc15.shp"))
+CAs <- st_read(here::here("", "R/Shapefiles/CoreAreas/CoreAreas_Al14.shp"))
 CAs <- st_transform (CAs, crs)
 # Convert to data frames
 All_region_df <- st_as_sf(data.frame(geometry = All_region))
 CoreAreas_df <- st_as_sf(data.frame(geometry = CAs))
+
 unique(CoreAreas_df$geometry.Region)
+region_colors <- c(
+  "EGOM" ="#004995",
+  "BOF"  = "#8C510A",
+  "CapeBreton" ="#4D4D4D",
+  "HaliChan" ="#00441B",
+  "CapeCod" ="#2171B5",
+  "Browns" ="#D8781D",
+  "Gully"="#7F7F7F",
+  "GrandBanks" ="#238B45",
+  "Nantucket" = "#56B4E9",
+  "Georges" ="#EDA752",
+  "Sable"  ="#C0C0C0",
+  "GBTail" = 	"#81C784"
+)
 #factor the order 
-CoreAreas_df$geometry.Region<-factor(CA_df$geometry.Region,levels=c("EGOM","BOF","CapeBreton", "CapeCod","Browns","Sable","Nantucket","Georges","Gully"))
+CoreAreas_df$geometry.Region <- factor(CoreAreas_df$geometry.Region, levels = names(region_colors))
+
+library(sf)
+library(ggrepel)
 
 # Plot CoreArea
 CAMAP<-ggplot() +
@@ -53,9 +71,10 @@ CAMAP<-ggplot() +
   geom_sf(data = EEZ, color="navy", linetype = "dashed", size = 1.2) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
   geom_sf(data = land, fill="lightgrey") +
-  scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
+  scale_fill_manual(values = region_colors)+
+  #scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
   labs(title="Core Areas")+
-  xlim(-73, -55) + ylim(39.355, 47)+
+  xlim(-73, -48) + ylim(39.355, 48)+
   theme_bw()
 CAMAP
 

@@ -272,8 +272,10 @@ write.csv(catch_df2, here("Data/Derived/all_raw_halibut_catch_with_covariates_Al
 library(ggplot2)
 library(dplyr)
 
+#April 14, 2025
+#Remove outliers and scale covariates (mean of 0 and standard deviation of 1)
 Data = read.csv(here::here("Data/Derived/all_raw_halibut_catch_with_covariates_Al14.csv"))
- #identidy & remove covariate outliers
+ #identify & remove covariate outliers
 ggplot(Data, aes(x = Depth)) + geom_histogram()
 ggplot(Data, aes(x = BT_monthly)) + geom_histogram()
 ggplot(Data, aes(x = SST_monthly)) + geom_histogram()#normal distribution
@@ -294,7 +296,7 @@ Data %>%
   count()#n22
 
 Data_clean <- Data %>%
-  filter(Depth < 1300 | Depth >20 ,  BT_monthly < 17) # =57216-57194
+  filter(Depth < 1300 & Depth >20 ,  BT_monthly < 17) # =57216-57194
 
 Data_scaled <- Data_clean %>%
   mutate(
@@ -314,6 +316,38 @@ var_count <- var(Data$ABUNDANCE)
 print(var_count / mean_count)  # 4.17 
 #c(7,0) for zero inflated poisson distribution (overrdispersion ratio ~1 )
 #c(8,0) for zero inflated negative binomial distribution (overrdispersion ratio >1 )
+
+#April 22, 2025, remove most of  NF (spatially)
+#clip data to survey area
+
+
+library(sf)
+library(dplyr)
+library(here)
+
+#below was for if i had to remove NF from the model 
+#read in the data and extend all a bit to have some extra data to inform around the edges 
+data <- read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
+shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/ALL.shp"))
+shape_proj <- st_transform(shape, crs = 5070)  # EPSG:5070
+shape_buffered_proj <- st_buffer(shape_proj, dist = 50000)# extends data by 50 km rather than a hard border
+shape_buffered <- st_transform(shape_buffered_proj, crs = 4326)
+
+#Spatially filter: only include points within the shape
+data_sf <- st_as_sf(data, coords = c("DECDEG_BEGLON", "DECDEG_BEGLAT"), crs = 4326)
+st_crs(shape_buffered) == st_crs(data_sf)#coordinate systems match
+data_within <- st_join(data_sf, shape_buffered, join = st_within, left = FALSE)
+
+data_within_Df <- as.data.frame(data_within) 
+data_within_Df <- data_within_Df %>% select(-geometry)
+attr(data_within_Df, "sf_column") <- NULL
+attr(data_within_Df, "agr") <- NULL
+data_within_Df <- data_within_Df %>% select(-Region)
+data_within_Df <- merge(data_within_Df, data[, c("X.2", "DECDEG_BEGLON", "DECDEG_BEGLAT")], by = "X.2", all.x = TRUE)
+
+names(data_within_Df)
+names(data)
+write.csv(data_within_Df, here("Data/Derived/Halibut_Catch_Covariates_Scaled_USNS_Al22.csv"))
 
 #END----
 
