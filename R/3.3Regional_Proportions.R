@@ -206,7 +206,6 @@ CA_Proportion <- CA_Proportion %>%
       TRUE ~ NA_character_  # Handles any years outside these ranges
     )
   )
-
 Regional_Proportion <- Regional_Proportion %>%
   mutate(
     timeframe = case_when(
@@ -683,10 +682,16 @@ ggplot() +
 
 #Step 4: slopes, estimate LM: rate of change in proportional abundance per time period----
 #load timeseries data for proportional abundance and density
-proportions_and_density_CA.csv, proportions_and_density_Regional.csv
-Reg_Prop<-read.csv(here::here("2025-04-23/Output/proportions_Regional.csv"))
-CA_Prop<-read.csv(here::here("2025-04-23/Output/proportions_CA.csv"))
-CA_Prop<-subset(CA_Prop, CA_Prop$Index_Region!="All")#not needed anymore
+library(dplyr)
+library(tidyverse)
+library(broom)
+library(ggplot2)
+library(patchwork)
+library(forcats)
+library(grid) # For unit() function 
+
+Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
+CA_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv"))
 
 #Assign Period
 #Regional
@@ -694,15 +699,6 @@ Reg_Prop$Period<-NULL
 Reg_Prop$Period[Reg_Prop$Year<2006]<-"Earlier 1985-2005"
 Reg_Prop$Period[Reg_Prop$Year>2005]<-"Later 2006-2019"
 
-
-library(dplyr)
-library(tidyverse)
-library(broom)
-library(ggplot2)
-library(patchwork)
-library(forcats)
-
-library(grid)  # For unit() function
 Regional_Proportion_coefficients_df <- Reg_Prop %>%
   group_by(Season,Index_Region,Period) %>%
   do({
@@ -752,7 +748,8 @@ CA_Proportion_coefficients_df <- CA_Prop_Spring %>%
 
 CA_Proportion_coefficients_df <- CA_Proportion_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_Proportion_coefficients_df$ordRegion<-factor(CA_Proportion_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton", "CapeCod","Browns","Sable","Nantucket","Georges","Gully"))
+CA_Proportion_coefficients_df$ordRegion<-factor(CA_Proportion_coefficients_df$Index_Region,levels=c("BOF", "Browns","CapeBreton", "CapeCod", "EGOM", "GBTail", "Georges", "GrandBanks", "Gully",     
+                                                                                                    "HaliChan", "Nantucket",  "Sable"))
 
 ggplot(CA_Proportion_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
@@ -793,13 +790,4 @@ ggplot(CA_PD_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimat
   ggtitle("Rate of change in Relative Density \n Before warming and Warming, Spring ")
 
 
-#how to transform proportion data for linear regression 
-#modelling change in proportion
-#logistic regression with logodds
-# it lis a logit transformation
 
-#methods, find some thorson refs to make an outline for writing the methods
-#range edge
-#look to alexa's Git to show range edge as one graph
-#looking for a north/east vector
-each plot to have a temporal pattern and the rates of change within the period 

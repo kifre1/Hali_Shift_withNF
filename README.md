@@ -75,7 +75,7 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       - Plot 3: Plot 2 for relative density
       - Plot 4: Gain/loss maps  
     - STEP4: slopes, estimate LM
-    
+      - Fit a linear model predicting proportion as a function of Year, within each region/period groupimg
 
 
 <br> 
