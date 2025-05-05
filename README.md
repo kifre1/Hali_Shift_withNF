@@ -32,9 +32,9 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
   - **Data**NEFSC, DFO Maritimes, and DFO Newfoundland RV surveys combined using catchability formula (survey is treated as a factor )
     - Years 1990- 2023, Spring, Summer, Fall 
     - Strata: whole area, USA, Canada, and the 12 core areas, this allows the model to calculate some shift analysis statistics at each of these levels 
-  - **Output**: *Null_mod_fit.rds, EnvOnly_mod_fit.rds, Sp_mod_fit.rds, SpST_mod_fit.rds, vast_samp_dat.csv*
+  - **Output**: *Null_mod_fit.rds, EnvOnly_mod_fit.rds, Sp_mod_fit.rds, SpST_mod_fit.rds, vast_samp_dat.csv*  
 <br> 
-- **2.1DiagnosticsValidataion.R**: Model diagnostics, evaluation and validation statistics
+- **2.1DiagnosticsValidataion.R**: Model diagnostics, evaluation and validation statistics  
   1. Default plots: For diagnostic purposes, model plotting function writs plots folder,but we need to do pull these functions apart later so that we can get at the indexed data 
   2. Co-variate effects and plots: plot the co-variate effects and then look at the shape/strength of the response curves for each linear predictor
   3. Deviance & AIC...how well does the model fit the data 
@@ -54,8 +54,9 @@ Model output are huge .rds files that contain everything (input, estimates, indi
 <br>
 
   - **3.2Binned_density_plot.R**:   
-
+    - text  
 <br>
+
   - **3.3Regional_Proportions.R**: Preparing Estimated Abundance data and plotting the timeseries to compare the abundance trends of National and Core Area stratum. Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
     - STEP 1: get annual regional proportions (as percentages)
       - 1.1 general data prep
