@@ -34,6 +34,7 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
     - Strata: whole area, USA, Canada, and the 12 core areas, this allows the model to calculate some shift analysis statistics at each of these levels 
   - **Output**: *Null_mod_fit.rds, EnvOnly_mod_fit.rds, Sp_mod_fit.rds, SpST_mod_fit.rds, vast_samp_dat.csv*  
 <br> 
+
 - **2.1DiagnosticsValidataion.R**: Model diagnostics, evaluation and validation statistics  
   1. Default plots: For diagnostic purposes, model plotting function writs plots folder,but we need to do pull these functions apart later so that we can get at the indexed data 
   2. Co-variate effects and plots: plot the co-variate effects and then look at the shape/strength of the response curves for each linear predictor
