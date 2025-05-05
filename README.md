@@ -50,8 +50,12 @@ Model output are huge .rds files that contain everything (input, estimates, indi
     - step 1: get and plot generated stratified abundance and standard error estimates  
     - step 2: get the abundance estimates per grid location and compare to Step 1  
     - step 3, Add season, Year, and the area (km2) of the Stratum, and save data
-    - **Output:* AbundanceEstimates_GridCentriods_All.csv,AbundanceEstimates_GridCentriods_Reg.csv, AbundanceEstimates_GridCentriods_CA.csv
+    - **Output:* AbundanceEstimates_GridCentriods_All.csv,AbundanceEstimates_GridCentriods_Reg.csv, AbundanceEstimates_GridCentriods_CA.csv 
+<br>
+
   - **3.2Binned_density_plot.R**:   
+
+<br>
   - **3.3Regional_Proportions.R**: Preparing Estimated Abundance data and plotting the timeseries to compare the abundance trends of National and Core Area stratum. Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
     - STEP 1: get annual regional proportions (as percentages)
       - 1.1 general data prep
@@ -70,10 +74,7 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       - Plot 4: Gain/loss maps  
     - STEP4: slopes, estimate LM
     
-  Proportion of Estimated Abundance per region
-  Proportional density per stratum (Relative Density)
-    - Porportion(Index_Estimate / Total_Estimate) 
-    - density(Index_Estimate/ Km2),proportional density (density_Estimate / Total_density_Estimate)
+
 
 <br> 
 
