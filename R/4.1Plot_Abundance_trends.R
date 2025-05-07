@@ -48,14 +48,12 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
 
 # Figure 2, 
 
-abundance_ind_Region<-read.csv(here::here("2024-10-04/Output/abundance_ind_Region.csv"))
-abundance_ind_CA<-read.csv(here::here("2024-10-04/Output/abundance_ind_CA.csv"))
+abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))
+abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
 #plot the regional abundance seasonally 
 #remove "all", isolate spring, rename regions
-abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="NMFS"|abundance_ind_Region$Index_Region=="DFO")
+abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
-abundance_ind_Region$Index_Region[abundance_ind_Region$Index_Region == "NMFS"] <- "USA"
-abundance_ind_Region$Index_Region[abundance_ind_Region$Index_Region == "DFO"] <- "Canada"
 
 regpal<- c("orange", "darkblue")
 RegionalPlot<- ggplot(data = abundance_ind_Region, aes(x = Year, y = Index_Estimate, color = Index_Region))+
@@ -64,20 +62,71 @@ RegionalPlot<- ggplot(data = abundance_ind_Region, aes(x = Year, y = Index_Estim
   geom_line()+
   geom_errorbar(data = abundance_ind_Region, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
   labs(title="Estimated Abundance \nAggregated by Region: Spring", y="Count", x="Year")+
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
   scale_color_manual(values = regpal) +
 guides(color = guide_legend(title = NULL))
 RegionalPlot
 
-abundance_ind_CA$Index_Region[abundance_ind_CA$Index_Region == "CB4Vn"] <- "CapeBreton"
+#Calculate the change in slope
+abundance_ind_Region$Period<-NULL
+abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"Before"
+abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"After"
+
+Reg_Abundance_coefficients_df <- abundance_ind_Region %>%
+  group_by(Index_Region,Period) %>%
+  do({
+    model <- lm((Index_Estimate) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+Reg_Abundance_coefficients_df <- Reg_Abundance_coefficients_df%>%
+  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+Reg_Abundance_coefficients_df$ordRegion<-factor(Reg_Abundance_coefficients_df$Index_Region,levels=c("Canada", "USA"))
+pd <- position_dodge(.5)
+
+ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
+  geom_point(shape=21, size = 3,position=pd) +
+  coord_flip()+
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  # ylim(-0.018,0.018)+
+  xlab("")+  ylab("Rate of change in Abundance count/yr")+
+  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
+
+
+#Core Areas
 abundance_ind_CA<-subset(abundance_ind_CA, abundance_ind_CA$Season=="Spring")
+region_colours <- c(
+  "EGOM" ="#004995",
+  "BOF"  = "#8C510A",
+  "CapeBreton" ="#4D4D4D",
+  "HaliChan" ="#00441B",
+  "CapeCod" ="#2171B5",
+  "Browns" ="#D8781D",
+  "Gully"="#7F7F7F",
+  "GrandBanks" ="#238B45",
+  "Nantucket" = "#56B4E9",
+  "Georges" ="#EDA752",
+  "Sable"  ="#C0C0C0",
+  "GBTail" = 	"#81C784"
+)
+#factor the order 
+abundance_ind_CA$Index_Region <- factor(abundance_ind_CA$Index_Region, levels = names(region_colours))
+
 CAPlot<- ggplot(data = abundance_ind_CA, aes(x = Year, y = Index_Estimate, color = Index_Region))+
   geom_point(size=2)+
   scale_y_continuous(labels = scales::scientific) +
-  geom_line(size=1)+
+  geom_line(size=.8)+
   geom_errorbar(data = abundance_ind_CA, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
   #facet_grid(.~Season)+
-  scale_color_brewer(palette = "Set1") +  # Try "Set1", "Dark2", etc.
-  labs(title="Estimated Abundance \nAggregated by CoreArea: Spring", y="Count", x="Year")+
+  scale_color_manual(values = region_colours)+
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
+labs(title="Estimated Abundance \nAggregated by CoreArea: Spring", y="Count", x="Year")+
   guides(color = guide_legend(title = NULL))
 #theme(legend.position = "none")  # Remove legend
 CAPlot
@@ -87,74 +136,33 @@ CAPlot
 (CAMAP / CAPlot)+ plot_layout(heights = c(1,1))
 
 #Calculate the change in slope
-#Fit a linear regression to the slope to calculate the rate of change
-# the data are abundance_ind_Region, abundance_ind_CA
+abundance_ind_CA$Period<-NULL
+abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"Before"
+abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"After"
 
-#the coefficient for Year represents the slope of the regression line, which will indicate how Index_Estimate changes over time.
-# CA
-CA_whole <- lm(Index_Estimate ~ Year, data = abundance_ind_CA)
-summary(CA_whole)
-#only years since 2005
-abundance_ind_CA_since2005 <- subset(abundance_ind_CA, Year >= 2005)
-CA_since2005 <- lm(Index_Estimate ~ Year, data = abundance_ind_CA_since2005)
-summary(CA_since2005)
-# Regional
-R_whole <- lm(Index_Estimate ~ Year, data = abundance_ind_Region)
-summary(R_whole)
-#only years since 2005
-abundance_ind_R_since2005 <- subset(abundance_ind_Region, Year >= 2005)
-R_since2005 <- lm(Index_Estimate ~ Year, data = abundance_ind_R_since2005)
-summary(R_since2005)
+CA_Abundance_coefficients_df <- abundance_ind_CA %>%
+  group_by(Index_Region,Period) %>%
+  do({
+    model <- lm((Index_Estimate) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
 
-library(dplyr)
-#weighted least squares regression:By doing this, data points with more confidence will have more influence 
-#CA
-CA_weighted <- abundance_ind_CA %>%
-  group_by(Index_Region) %>%
-  do(model = lm(Index_Estimate ~ Year, data = ., weights = 1 / (Index_SD^2)))
-# Extract the coefficients for each CA
-CA_coefficients <- CA_weighted %>%
-  summarise(
-    Index_Region = first(Index_Region),  # Include Index_Region in the summary
-    Intercept = coef(model)[1],          # Intercept of the model
-    Slope = coef(model)[2]               # Slope of the model
-  )
-print(CA_coefficients)
-#only years since 2005
-abundance_ind_CA_since2005 <- subset(abundance_ind_CA, Year >= 2005)
-CA_since2005_weighted <- abundance_ind_CA_since2005 %>%
-  group_by(Index_Region) %>%
-  do(model = lm(Index_Estimate ~ Year, data = ., weights = 1 / (Index_SD^2)))
-CA_since2005_coefficients <- CA_since2005_weighted %>%
-  summarise(
-    Index_Region = first(Index_Region), 
-    Intercept = coef(model)[1],     
-    Slope = coef(model)[2]              
-  )
-print(CA_since2005_coefficients)
+CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
+  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("BOF", "Browns","CapeBreton", "CapeCod", "EGOM", "GBTail", "Georges", "GrandBanks", "Gully",     
+                                                                                                  "HaliChan", "Nantucket",  "Sable"))
+pd <- position_dodge(.5)
 
-#Regional
-R_weighted <- abundance_ind_Region %>%
-  group_by(Index_Region) %>%
-  do(model = lm(Index_Estimate ~ Year, data = ., weights = 1 / (Index_SD^2)))
-# Extract the coefficients for each CA
-R_coefficients <- R_weighted %>%
-  summarise(
-    Index_Region = first(Index_Region),  # Include Index_Region in the summary
-    Intercept = coef(model)[1],          # Intercept of the model
-    Slope = coef(model)[2]               # Slope of the model
-  )
-print(R_coefficients)
-#only years since 2005
-abundance_ind_R_since2005 <- subset(abundance_ind_Region, Year >= 2005)
-R_since2005_weighted <- abundance_ind_R_since2005 %>%
-  group_by(Index_Region) %>%
-  do(model = lm(Index_Estimate ~ Year, data = ., weights = 1 / (Index_SD^2)))
-R_since2005_coefficients <- R_since2005_weighted %>%
-  summarise(
-    Index_Region = first(Index_Region), 
-    Intercept = coef(model)[1],     
-    Slope = coef(model)[2]              
-  )
-print(R_since2005_coefficients)
-
+ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
+  geom_point(shape=21, size = 3,position=pd) +
+  coord_flip()+
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  # ylim(-0.018,0.018)+
+  xlab("")+  ylab("Rate of change in Abundance count/yr")+
+  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
