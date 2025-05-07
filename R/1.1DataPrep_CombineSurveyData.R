@@ -1,5 +1,3 @@
-#save to archive for data prep
-#al14 removed 3M
 
 #----------------------------------
 ## Libraries

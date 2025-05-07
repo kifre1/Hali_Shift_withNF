@@ -1,5 +1,6 @@
-# Mapping the predicted density from knot locations, smoothed over a regular grid. 
-#group …come up with 3-4 sensible bins 
+# Interpolate and map the predicted density (log+1) from grid centroids,  over a regular grid. Plot two bins: before and after accelerated warming period (2005)
+
+
 
 # Load package
 library(VAST)
@@ -45,35 +46,221 @@ source(here::here("R/VAST_functions/vast_functions.R"))#the file is different wh
 source(here::here("R/VAST_functions/kf_vast_function_edits.R"))
 
 
-# Extracting and plotting predicted density at knot locations, smooth over a regular grid, bin the years meaningfully
-fit<- readRDS( here::here("2024-10-04/Halibut_BC/SpST_mod_fit.rds")) 
+# Extracting and plotting predicted density at grid locs, smooth over a regular grid, bin the years based on timeframe
+fit<- readRDS( here::here("2025-04-23/Halibut_BC/SpST_mod_fit.rds")) 
+land_use<-st_read(here::here("Data/land_shapefile/", "ne_50m_land.shp")) #for plotting
+region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
+region_shape <- st_make_valid(region_shape)
+crs <- st_crs(region_shape)
 
-region_shape <- st_read(here::here("R/data/region_shapefile", "full_survey_region_simple.shp"))
-all_times<-as.character(0:104)
-spring_times<- as.character(seq(0, 104, by = 3)) 
-
+all_times<-unique(fit$data_frame$t_i)#range format
+all_times<-as.character(0:101)
+#select for spring 
+spring_times<- as.character(seq(0, 101, by = 3)) #because there are 3 seasons for each year in the model 
 spring_range <- range(as.numeric(spring_times))
-bin_edges <- c(spring_range[1], 57, spring_range[2])# Bin 1: 1985 to 2004 # Bin 2: 2005 to 2019
+#set up the timeframes to plot (before and after accelerated warming period (2005))
+bin_edges <- c(spring_range[1], 47, spring_range[2])# Bin 1: 1990 to 2005 (47) # Bin 2: 2006 to 2023
 bin_years <- cut(as.numeric(spring_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
 print(bin_years)
 print(spring_times)
 print(table(bin_years))
 
-land_use<-st_read(here::here("R/data/land_shapefile/", "ne_50m_land.shp"))
+#settings for pred_df_interp(), 
+#get values blank raster for interpolation to reflect the max/min lat/lon, across an even grid 
+loc_data <- if (fit$spatial_list$fine_scale == TRUE) fit$extrapolation_list else fit$spatial_list
+loc_df <- if (fit$spatial_list$fine_scale == TRUE) loc_data$Data_Extrap[which(loc_data$Data_Extrap[, "Include"] > 0),
+                                                                       c("Lon", "Lat")] else loc_data$latlon_s[1:loc_data$n_x, ]
+x1 <- min(loc_df$Lon)
+x2 <- max(loc_df$Lon)
+y1 <- min(loc_df$Lat)
+y2 <- max(loc_df$Lat)
+buffer <- 0.1 # degrees
+x1 <- x1 - buffer
+x2 <- x2 + buffer
+y1 <- y1 - buffer
+y2 <- y2 + buffer
+aspect_ratio <- (x2 - x1) / (y2 - y1)
+n2 <- 150  # number of y-grid cells (latitude)
+n1 <- round(n2 * aspect_ratio)
+#set in function: xo = seq(x1, x2, length = n1)
+#set in function: yo = seq(y1, y2, length = n2)
 
-xlim_use <- c(-73, -55)
-ylim_use <- c(36, 48.25)
+#set map boundaries 
+xlim_use <- c(-74, -46)
+ylim_use <- c(36, 53)
 
-out_dir <- here::here("2024-10-04/Output/GridPlot")
+out_dir <- here::here("2025-04-23/Output/GridPlot")#for output
 
-lab_lat = 37
-lab_lon = -70 
-start_year<-1985
+#where to print the timeframe label
+lab_lat = 38
+lab_lon = -65 
+start_year<-1990
 season_increment <- 3 
 legend_title<- "Log(Density)" 
 
+
 vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, 
-                                                climate_scenario = "", mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, 
+                                                climate_scenario = "", mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, crs,
+                                                lab_lat = NULL, lab_lon = NULL, panel_or_gif = "panel", out_dir, land_color = "#d9d9d9", 
+                                                panel_cols = NULL, panel_rows = NULL, bins = NULL, bin_years = NULL, start_year = NULL, 
+                                                season_increment = NULL, legend_title = NULL, ...) {
+  
+  # If the user has not provided custom year ranges for bins, auto-calculate based on the data
+  if (is.null(bin_years)) {
+    year_range <- range(as.numeric(all_times))
+    bin_years <- cut(as.numeric(all_times), breaks = bins, labels = FALSE)
+  } else {
+    bin_years <- bin_years
+  }
+  # Ensure plot_times corresponds to the time bins
+  if (!is.null(plot_times)) {
+    plot_times <- plot_times[plot_times %in% all_times]
+    bin_years <- cut(as.numeric(plot_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
+  } else {
+    plot_times <- all_times
+    bin_years <- cut(as.numeric(all_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
+  }
+  message("plot_times", paste(plot_times))
+  message("bin_years", paste(bin_years))
+  
+  spatial_var <- "Index_gctl"
+  
+  # Updated list to include "Index_gctl"
+  valid_vars <- c("D_gct", "R1_gct", "R2_gct", "P1_gct", "P2_gct", 
+                  "Omega1_gc", "Omega2_gc", "Epsilon1_gct", "Epsilon2_gct", 
+                  "Index_gctl")
+  
+  if (!spatial_var %in% valid_vars) {
+    stop("Check `spatial_var` input. Must be one of: ", paste(valid_vars, collapse = ", "))
+  }
+  
+  # Extract prediction array with condition for "Index_gctl"
+  if (spatial_var == "Index_gctl") {
+    index_data <- vast_fit$Report[[spatial_var]]
+    
+    # Filter where Stratum == "Stratum_1"
+    index_data_filtered <- index_data[, , , "Stratum_1", drop = FALSE]
+    
+    # Remove 'Stratum' column
+    pred_array <- array(index_data_filtered, dim = dim(index_data_filtered)[1:3], 
+                        dimnames = dimnames(index_data_filtered)[1:3])
+    #pred_array <- log(pmax(pred_array, 1e-10))
+    pred_array <- log(pred_array + 1)
+  } else {
+    pred_array <- vast_fit$Report[[spatial_var]]
+    
+    if (spatial_var == "D_gct") {
+      pred_array <- log(pred_array)
+    }
+  }
+  spring_indices <- match(spring_times, all_times)
+  message("spring_indices", paste(spring_indices))
+  
+  # Binning time_indices into the corresponding years
+  bin_means <- lapply(1:max(bin_years, na.rm = TRUE), function(bin_idx) {
+    time_indices <- spring_indices[which(bin_years == bin_idx)]
+    mean_pred_array <- apply(pred_array[, , time_indices, drop = FALSE], c(1, 2), mean, na.rm = TRUE)
+    list(bin_idx = bin_idx, mean_data = mean_pred_array)
+  })
+
+ 
+  # Determine spatial location data
+  spat_data <- if (vast_fit$spatial_list$fine_scale == TRUE) vast_fit$extrapolation_list else vast_fit$spatial_list
+  locs <- if (vast_fit$spatial_list$fine_scale == TRUE) spat_data$Data_Extrap[which(spat_data$Data_Extrap[, "Include"] > 0), c("Lon", "Lat")] else spat_data$latlon_s[1:spat_data$n_x, ]
+  row.names(locs) <- NULL
+  CRS_orig <- crs
+  land_sf <- st_crop(land_sf, xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2])
+  land_sf <- st_make_valid(land_sf)
+  land_sf <- st_transform (land_sf, CRS_orig)
+  # Loop through the bins, generate plots for each bin
+  rasts_out <- vector("list", bins)
+  rast_lims <- c(min(pred_array), max(pred_array))
+  
+  for (bin_idx in 1:bins) {
+    mean_data <- bin_means[[bin_idx]]$mean_data
+    data_df <- data.frame(locs, z = as.vector(mean_data)) %>%
+      distinct(Lon, Lat, z)
+    
+    pred_df <- na.omit(data.frame("x" = data_df$Lon, "y" = data_df$Lat, "layer" = data_df$z))
+    pred_df_interp <- interp(pred_df[, 1], pred_df[, 2], pred_df[, 3],
+                             duplicate = "mean", extrap = TRUE,
+                             xo = seq(-73.4, -46.4, length = 293),
+                             yo = seq(38.5, 52.3, length = 150))
+    
+    pred_df_interp_final <- data.frame(expand.grid(x = pred_df_interp$x, y = pred_df_interp$y), z = c(round(pred_df_interp$z, 2)))
+    pred_sp <- st_as_sf(pred_df_interp_final, coords = c("x", "y"), crs = CRS_orig)
+    pred_df_temp <- pred_sp[which(st_intersects(pred_sp, mask, sparse = FALSE) == TRUE), ]
+    coords_keep <- as.data.frame(st_coordinates(pred_df_temp))
+    row.names(coords_keep) <- NULL
+    pred_df_use <- data.frame(cbind(coords_keep, "z" = as.numeric(pred_df_temp$z)))
+    names(pred_df_use) <- c("x", "y", "z")
+    
+    # Year range for title
+    spring_years_in_bin <- as.numeric(spring_times[which(bin_years == bin_idx)])
+    if (length(spring_years_in_bin) == 0 || all(is.na(spring_years_in_bin))) {
+      bin_year_range <- c(NA, NA)
+    } else {
+      actual_years <- start_year + (spring_years_in_bin %/% season_increment)
+      bin_year_range <- range(actual_years, na.rm = TRUE)
+    }
+    #   if (!any(is.na(bin_year_range))) {
+    #     plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])
+    #   } else {
+    #     plot_title <- "Years: NA"
+    #   }
+    if (bin_idx == 1) {
+      plot_title <- "Before Warming"
+    } else if (bin_idx == 2) {
+      plot_title <- "After Warming"
+    } else {
+      plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])  # Fallback if more bins exist
+    }   
+    # Add custom legend title
+    legend_title_final <- ifelse(is.null(legend_title), spatial_var, legend_title)
+    
+    rasts_out[[bin_idx]] <- ggplot() +
+      geom_tile(data = pred_df_use, aes(x = x, y = y, fill = z)) +
+      #scale_fill_viridis_c(name = legend_title_final, option = "viridis", na.value = "transparent", limits = rast_lims) +
+      #  scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2", "orangered2"), na.value = "transparent", limits = rast_lims) +
+      scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "darkorange1","orangered", "red"), na.value = "transparent", limits = rast_lims, name=legend_title) +
+      annotate("text", x = lab_lon, y = lab_lat, label = plot_title) +
+      geom_sf(data = land_sf, fill = land_color, lwd = 0.2, na.rm = TRUE) +
+      coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
+      theme(panel.background = element_rect(fill = "white"), panel.border = element_rect(fill = NA), 
+            axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), 
+            axis.title = element_blank(), plot.margin = margin(t = 0.05, r = 0.05, b = 0.05, l = 0.05, unit = "pt"))
+  }
+  
+  if (panel_or_gif == "panel") {
+    all_plot <- wrap_plots(rasts_out, ncol = panel_cols, nrow = panel_rows, guides = "collect", 
+                           theme(plot.margin = margin(t = 0.05, r = 0.05, b = 0.05, l = 0.05, unit = "pt")))
+    ggsave(filename = paste0(out_dir, "/", nice_category_names, "_", pred_label, "_", spatial_var, ".png"), 
+           all_plot, width = 11, height = 8, units = "in")
+    return(all_plot)
+  } else {
+    plot_loop_func <- function(plot_list) {
+      for (i in seq_along(plot_list)) {
+        plot_use <- plot_list[[i]]
+        print(plot_use)
+      }
+    }
+    invisible(save_gif(plot_loop_func(rasts_out), paste0(out_dir, "/", nice_category_names, "_", pred_label, "_", spatial_var, ".gif"), delay = 0.75, progress = FALSE))
+  }
+}
+
+
+vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",spatial_var = "Index_gctl", 
+                                    nice_category_names = "Atlantic Halibut_Index_gctl", mask = region_shape, all_times = all_times, 
+                                    plot_times = spring_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
+                                    lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
+                                    panel_cols = 2, panel_rows = 1, bins=2, start_year=start_year, season_increment=season_increment,legend_title=legend_title )    
+
+
+#archive: 
+#this one is for plotting the statistics that have Time, category, site dimensions (no stratum).
+#the above was alters so that when pred_array is made, we select for Stratum1 (All) and then remove the Stratum dimension
+vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, 
+                                                climate_scenario = "", mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, crs,
                                                 lab_lat = NULL, lab_lon = NULL, panel_or_gif = "panel", out_dir, land_color = "#d9d9d9", 
                                                 panel_cols = NULL, panel_rows = NULL, bins = NULL, bin_years = NULL, start_year = NULL, 
                                                 season_increment = NULL, legend_title = NULL, ...) {
@@ -121,9 +308,10 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
   spat_data <- if (vast_fit$spatial_list$fine_scale == TRUE) vast_fit$extrapolation_list else vast_fit$spatial_list
   locs <- if (vast_fit$spatial_list$fine_scale == TRUE) spat_data$Data_Extrap[which(spat_data$Data_Extrap[, "Include"] > 0), c("Lon", "Lat")] else spat_data$latlon_s[1:spat_data$n_x, ]
   row.names(locs) <- NULL
-  CRS_orig <- sp::CRS("+proj=longlat")
+  CRS_orig <- crs
   land_sf <- st_crop(land_sf, xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2])
-  
+  land_sf <- st_make_valid(land_sf)
+  land_sf <- st_transform (land_sf, CRS_orig)
   # Loop through the bins, generate plots for each bin
   rasts_out <- vector("list", bins)
   rast_lims <- c(min(pred_array), max(pred_array))
@@ -136,8 +324,8 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     pred_df <- na.omit(data.frame("x" = data_df$Lon, "y" = data_df$Lat, "layer" = data_df$z))
     pred_df_interp <- interp(pred_df[, 1], pred_df[, 2], pred_df[, 3],
                              duplicate = "mean", extrap = TRUE,
-                             xo = seq(-87.99457, -57.4307, length = 113),
-                             yo = seq(22.27352, 48.11657, length = 133))
+                             xo = seq(-73.4, -46.4, length = 293),
+                             yo = seq(38.5, 52.3, length = 150))
     
     pred_df_interp_final <- data.frame(expand.grid(x = pred_df_interp$x, y = pred_df_interp$y), z = c(round(pred_df_interp$z, 2)))
     pred_sp <- st_as_sf(pred_df_interp_final, coords = c("x", "y"), crs = CRS_orig)
@@ -155,11 +343,11 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
       actual_years <- start_year + (spring_years_in_bin %/% season_increment)
       bin_year_range <- range(actual_years, na.rm = TRUE)
     }
- #   if (!any(is.na(bin_year_range))) {
- #     plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])
- #   } else {
- #     plot_title <- "Years: NA"
- #   }
+    #   if (!any(is.na(bin_year_range))) {
+    #     plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])
+    #   } else {
+    #     plot_title <- "Years: NA"
+    #   }
     if (bin_idx == 1) {
       plot_title <- "Before Warming"
     } else if (bin_idx == 2) {
@@ -173,7 +361,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     rasts_out[[bin_idx]] <- ggplot() +
       geom_tile(data = pred_df_use, aes(x = x, y = y, fill = z)) +
       #scale_fill_viridis_c(name = legend_title_final, option = "viridis", na.value = "transparent", limits = rast_lims) +
-    #  scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2", "orangered2"), na.value = "transparent", limits = rast_lims) +
+      #  scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2", "orangered2"), na.value = "transparent", limits = rast_lims) +
       scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2"), na.value = "transparent", limits = rast_lims, name=legend_title) +
       annotate("text", x = lab_lon, y = lab_lat, label = plot_title) +
       geom_sf(data = land_sf, fill = land_color, lwd = 0.2, na.rm = TRUE) +
@@ -202,7 +390,8 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
 
 
 vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",spatial_var = "D_gct", 
-                                    nice_category_names = "Atlantic Halibut_2_27", mask = region_shape, all_times = all_times, 
-                                    plot_times = spring_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, bin_years = bin_years,
+                                    nice_category_names = "Atlantic Halibut_D_gct", mask = region_shape, all_times = all_times, 
+                                    plot_times = spring_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
                                     lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
                                     panel_cols = 2, panel_rows = 1, bins=2, start_year=start_year, season_increment=season_increment,legend_title=legend_title )    
+

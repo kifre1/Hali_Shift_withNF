@@ -696,9 +696,10 @@ CA_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_dens
 #Assign Period
 #Regional
 Reg_Prop$Period<-NULL
-Reg_Prop$Period[Reg_Prop$Year<2006]<-"Earlier 1985-2005"
-Reg_Prop$Period[Reg_Prop$Year>2005]<-"Later 2006-2019"
+Reg_Prop$Period[Reg_Prop$Year<2006]<-"Before"
+Reg_Prop$Period[Reg_Prop$Year>2005]<-"After"
 
+#Proportion
 Regional_Proportion_coefficients_df <- Reg_Prop %>%
   group_by(Season,Index_Region,Period) %>%
   do({
@@ -728,11 +729,39 @@ ggplot(Regional_Proportion_coefficients_df.Spring  , aes(x = factor(ordRegion), 
 RPC<- Regional_Proportion_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 
+#Abundance
+Regional_Abundance_coefficients_df <- Reg_Prop %>%
+  group_by(Season,Index_Region,Period) %>%
+  do({
+    model <- lm((Index_Estimate) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+names(Regional_Abundance_coefficients_df)
+
+Regional_Abundance_coefficients_df.Spring <- Regional_Abundance_coefficients_df[Regional_Abundance_coefficients_df$Season=="Spring",]%>%
+  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+Regional_Abundance_coefficients_df.Spring$ordRegion<-factor(Regional_Abundance_coefficients_df.Spring$Index_Region,levels=c("USA", "Canada"))
+names(Regional_Abundance_coefficients_df.Spring)
+
+ggplot(Regional_Abundance_coefficients_df.Spring  , aes(x = factor(ordRegion), y = estimate,fill=Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
+  geom_point(shape=21, size = 3,position=pd) +
+  coord_flip()+
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  # ylim(-0.018,0.018)+
+  xlab("")+  ylab("Rate of change in  Abundance count/yr")+
+  ggtitle("Rate of change in  Abundance \n Before warming and during accelerated Warming, Spring ")
+
 #Per COre Area
 
 CA_Prop$Period<-NULL
-CA_Prop$Period[CA_Prop$Year<2006]<-"Earlier 1985-2005"
-CA_Prop$Period[CA_Prop$Year>2005]<-"Later 2006-2019"
+CA_Prop$Period[CA_Prop$Year<2006]<-"Before"
+CA_Prop$Period[CA_Prop$Year>2005]<-"After"
 
 CA_Prop_Spring<-subset(CA_Prop, CA_Prop$Season=="Spring")
 
@@ -775,7 +804,8 @@ CA_PD_coefficients_df <- CA_Prop_Spring %>%
 
 CA_PD_coefficients_df <- CA_PD_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_PD_coefficients_df$ordRegion<-factor(CA_PD_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton", "CapeCod","Browns","Sable","Nantucket","Georges","Gully"))
+CA_PD_coefficients_df$ordRegion<-factor(CA_PD_coefficients_df$Index_Region,levels=c("BOF", "Browns","CapeBreton", "CapeCod", "EGOM", "GBTail", "Georges", "GrandBanks", "Gully",     
+                                                                                    "HaliChan", "Nantucket",  "Sable"))
 
 ggplot(CA_PD_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
@@ -788,6 +818,33 @@ ggplot(CA_PD_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimat
   # ylim(-0.018,0.018)+
   xlab("")+  ylab("Rate of change in Relative Density %/yr")+
   ggtitle("Rate of change in Relative Density \n Before warming and Warming, Spring ")
+
+# Abundance
+CA_Abundance_coefficients_df <- CA_Prop_Spring %>%
+  group_by(Index_Region,Period) %>%
+  do({
+    model <- lm((Index_Estimate) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
+  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("BOF", "Browns","CapeBreton", "CapeCod", "EGOM", "GBTail", "Georges", "GrandBanks", "Gully",     
+                                                                                                    "HaliChan", "Nantucket",  "Sable"))
+
+ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
+  geom_point(shape=21, size = 3,position=pd) +
+  coord_flip()+
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  # ylim(-0.018,0.018)+
+  xlab("")+  ylab("Rate of change in Abundance count/yr")+
+  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
 
 
 

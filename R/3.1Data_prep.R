@@ -45,12 +45,31 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 
 fit<- readRDS( here::here("2025-04-23/Halibut_BC/SpSt_mod_fit.rds")) 
 
-out_dir <- here::here("2025-04-23/")
+out_dir <- here::here("2025-04-23/Output/IndexAbundance/")
 # Step 1: get and plot  stratified abundance and standard error estimates
 all_times<-unique(fit$data_frame$t_i)
 #function gets total abundance for each time step and index region
 abundance_ind<- get_vast_index_timeseries(vast_fit = fit, nice_category_names = "Halibut", index_scale = c("raw"), all_times = all_times, out_dir = here::here("2025-04-23"))
 unique(abundance_ind$Index_Region)
+#lets add season and Year to these data and subset the core areas from the region so that we can plot them properly 
+years_Spring <- as.numeric(seq(0, 101, by = 3))
+years_Summer <- as.numeric(seq(1, 101, by = 3))
+years_Fall <- as.numeric(seq(2, 101, by = 3))
+abundance_ind$Season <- ifelse(abundance_ind$Year %in% years_Fall, "Fall",
+                               ifelse(abundance_ind$Year %in% years_Spring, "Spring",
+                                      ifelse(abundance_ind$Year %in% years_Summer, "Summer", NA)))
+
+# Group the data into threes and reassign values starting at 1985
+increment_value <- 3
+#group Time intervals by year
+abundance_ind <- abundance_ind %>%
+  mutate(YearGroup = (Time %/% increment_value) + 1)
+head(abundance_ind)
+#Assign actual years to these groups
+abundance_ind <- abundance_ind %>%
+  mutate(Year = (YearGroup + 1989))
+head(abundance_ind)
+
 abundance_ind_Region<-subset(abundance_ind, Index_Region == "All"| Index_Region == "USA"| Index_Region == "Canada")
 abundance_ind_CA <- subset(abundance_ind, !(Index_Region %in% c("All", "USA", "Canada")))
 
@@ -76,33 +95,10 @@ ggplot(abundance_ind_CA, aes(x = Time, y = Index_Estimate, color = Index_Region)
   )
 #plot just to check 
 unique(abundance_ind$Time)
-#aa_ind_plot<- plot_vast_index_timeseries(index_res_df= abundance_ind, index_scale = "raw", nice_category_names = "Halibut", nice_xlab = "Year", nice_ylab = "Index_Estimate", paneling = "none", color_pal = NULL,out_dir = here::here("2025-04-23/Output/Index_Abundance"))
-#lets add season and Year to these data and subset the core areas from the region so that we can plot them properly 
-years_Spring <- as.numeric(seq(0, 101, by = 3))
-years_Summer <- as.numeric(seq(1, 101, by = 3))
-years_Fall <- as.numeric(seq(2, 101, by = 3))
-abundance_ind$Season <- ifelse(abundance_ind$Year %in% years_Fall, "Fall",
-                                   ifelse(abundance_ind$Year %in% years_Spring, "Spring",
-                                          ifelse(abundance_ind$Year %in% years_Summer, "Summer", NA)))
-
-# Group the data into threes and reassign values starting at 1985
-increment_value <- 3
-#group Time intervals by year
-abundance_ind <- abundance_ind %>%
-  mutate(YearGroup = (Time %/% increment_value) + 1)
-head(abundance_ind)
-#Assign actual years to these groups
-abundance_ind <- abundance_ind %>%
-  mutate(Year = (YearGroup + 1989))
-head(abundance_ind)
-
-#plot_vast_index_timeseries_seasonal(index_res_df = abundance_ind_CA, index_scale = "raw", nice_category_names = "CA_Atlantic_halibut_Spring", nice_xlab = "Year", nice_ylab= "Abundance index", paneling = "none", color_pal = c("#1f77b4","#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#17becf", "#8c564b","#e377c2", "yellow3"), out_dir = out_dir)
-#Core Areas,spring, abundance time series
-#plot_vast_index_timeseries_subest_season(index_res_df = abundance_ind_CA, index_scale = "raw", nice_category_names = "CA_Atlantic_halibut_Spring", nice_xlab = "Year", nice_ylab= "Abundance index", paneling = "none", color_pal = c("#1f77b4","#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#17becf", "#8c564b","#e377c2", "yellow3"), out_dir = out_dir, subsetseason="Spring")
 
 #save these data for calculating slope from regression
-write.csv(abundance_ind_Region, (here::here("2025-04-23/Output/abundance_ind_Region.csv")))
-write.csv(abundance_ind_CA, (here::here("2025-04-23/Output/abundance_ind_CA.csv")))
+write.csv(abundance_ind_Region, (here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv")))
+write.csv(abundance_ind_CA, (here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv")))
 
 #step 2: get the density estimates per grid location 
 # Importantly, we are not going to be able to get the same standard errors as those are going to be calculated internally by TMB and will also include bias correction if turned on. 
@@ -169,7 +165,7 @@ pred_df_ind <- pred_df_ind %>%
 head(pred_df_ind)
 
 str(pred_df_ind)#Abundance (count) per: Site(grid centriod), Category, Time,  Stratum, Lon, Lat
-write.csv(pred_df_ind, (here::here("2025-04-23/Output/Mod_Pred_Abundance_grid_Locs.csv")))
+write.csv(pred_df_ind, (here::here("2025-04-23/Output/IndexAbundance/Mod_Pred_Abundance_grid_Locs.csv")))
 
 #Summarize these counts for indexed totals 
 Pred_df_all<-subset(pred_df_ind, Stratum == "All")#start with just "all" and check against the 
@@ -249,8 +245,6 @@ raster_data <- subset(raster_data, select = -X)
 unique(raster_data$Core_Area)
 str(raster_data)
 
-#write.csv(raster_data, (here::here("2025-04-23/Output/PredictionData_for_ShiftAnalysis_temp.csv")))
-#raster_data<-read.csv(here::here("2025-04-23/Output/PredictionData_for_ShiftAnalysis_temp.csv"))
 #CORE AREA (and respective km2)
 #Individual core areas were drawn in ArcGIS,
 CoreAreas <- st_read(here::here("R/Shapefiles/CoreAreas/CoreAreas_Al14.shp"))
@@ -271,7 +265,7 @@ unique(Core_Area_data$Stratum)#check
 Core_Area_data <- Core_Area_data[ , !(names(Core_Area_data) %in% "X.1")]
 summary(Core_Area_data)
 str(Core_Area_data)
-write.csv(Core_Area_data, (here::here("2025-04-23/Output/AbundanceEstimates_GridCentriods_CA.csv")))
+write.csv(Core_Area_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA.csv")))
 
 #REGION KM2
 Regional_data<-subset(raster_data, raster_data$Stratum =="Canada" | raster_data$Stratum =="USA")
@@ -301,7 +295,7 @@ Regional_data <- merge(Regional_data, Regions_combined, by = "Stratum", all.x = 
 summary(Regional_data)
 str(Regional_data)
 unique(Regional_data$Stratum)
-write.csv(Regional_data, (here::here("2025-04-23/Output/AbundanceEstimates_GridCentriods_Reg.csv")))
-write.csv(All_data, (here::here("2025-04-23/Output/AbundanceEstimates_GridCentriods_All.csv")))
+write.csv(Regional_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg.csv")))
+write.csv(All_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All.csv")))
 
 

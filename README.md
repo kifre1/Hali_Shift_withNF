@@ -11,7 +11,7 @@ Repository for Atlantic Halibut shift analysis about the Hague line, before and 
 
 ## Data Preparation  
 Data from multiple RV surveys, and environmental covariates are combined into a single dataframe (Halibut_Catch_Covariates_Scaled_*date*.csv: Al11 includes the flemmish cap (NAFO 3M), Al14 does not...removed due do very sparse data challenging model fitting process, this can be re-visited late but because NF is not focus here, ok) 
-- **1.1DataPrep_MergeSurveyData.R**: combine survey data   
+- **1.1DataPrep_CombineSurveyData.R**: combine survey data   
   - **all_unique_towsAl4.rds**: a combined dataframe for each unique tow (longitude, latitude, trawl_id, season, year, survey, date, swept) 
   - **all_raw_halibut_catchAl4.rds**: a combined dataframe for Atlantic Halibut survey data at each unique tow 
   - **all_raw_halibut_catch_formattedAl4.rds**: reformatted the survey catch data, suited to VAST input requirements 
@@ -49,13 +49,14 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
 Model output are huge .rds files that contain everything (input, estimates, indices, diagnostics...) so they need to be reorganized  
   - **3.1Data_prep.R**:  Prepare data for use in the development of shift indicator data.  Grouped by All, Nation, and Core Area
     - step 1: get and plot generated stratified abundance and standard error estimates  
-    - step 2: get the abundance estimates per grid location and compare to Step 1  
+      - **Output**: abundance_ind_Region.csv, abundance_ind_CA.csv
+    - step 2: get the abundance estimates per grid location and compare to Step 1    
+      - **Output**: Mod_Pred_Abundance_grid_Locs.csv 
     - step 3, Add season, Year, and the area (km2) of the Stratum, and save data
-    - **Output:* AbundanceEstimates_GridCentriods_All.csv,AbundanceEstimates_GridCentriods_Reg.csv, AbundanceEstimates_GridCentriods_CA.csv 
+    - **Output:** AbundanceEstimates_GridCentriods_All.csv,AbundanceEstimates_GridCentriods_Reg.csv, AbundanceEstimates_GridCentriods_CA.csv 
 <br>
 
-  - **3.2Binned_density_plot.R**:   
-    - text  
+  - **3.2Binned_density_plot.R**: *vast_fit_plot_spatial_kf_binned_new()*function to interpolate and map the predicted density (log+1) of grid centroids estimates,  over a regular grid. Plot two bins: before and after accelerated warming period (2005)  
 <br>
 
   - **3.3Regional_Proportions.R**: Preparing Estimated Abundance data and plotting the timeseries to compare the abundance trends of National and Core Area stratum. Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
@@ -68,16 +69,15 @@ Model output are huge .rds files that contain everything (input, estimates, indi
         - *Output*: proportions_and_density_CA.csv, proportions_and_density_Regional.csv
     - STEP 2: Compare these data using means before vs during warming timeframes (1990-2005, 2006-2023) 
       - Calculate the mean proportion for each Region, season, and timeframe as well as the difference and percent change
-      - *Output*: Reg_Proportions_TF.csv,  Reg_ProportionalDensity_TF.csv,CA_Proportions_TF.csv, CA_ProportionalDensity_TF.csv
+      - *Output*: Reg_Proportions_TF.csv,  Reg_ProportionalDensity_TF.csv, CA_Proportions_TF.csv, CA_ProportionalDensity_TF.csv
     - STEP3: Plotting
       - plot 1: canada vs USA trends of estimated proportion of abundance and relative density across the time serie
       - plot 2: basic trends for each CA across the time series with the percent change noted in the legend
       - Plot 3: Plot 2 for relative density
       - Plot 4: Gain/loss maps  
     - STEP4: slopes, estimate LM
-      - Fit a linear model predicting proportion as a function of Year, within each region/period groupimg
-
-
+      - Fit a linear model predicting proportion as a function of Year, within each region/period grouping
+      -Completed and plotted for Abundance, Proportion, and relative density 
 <br> 
 
 ## Shift Analysis 
@@ -85,7 +85,10 @@ For each shift indicator, create data, fit LM, and plot
 <br> 
 
 ###  Trends in Abundance  
-**3.2Plot_Abundance_trends.R**: Using Regionally and per Core Area abundance and standard error estimates 
+**4.1 Plot_Abundance_trends.R**: Using stratified abundance and standard error estimates (regional and per core area)
+  - Plots estimated abundance time series 
+  - Plots change in slope bevore v after accelerated warming period 
+<br> 
 
 ### Effective Area Occupied 
 ### Centre of Gravity 

@@ -42,7 +42,7 @@ All_region_df <- st_as_sf(data.frame(geometry = All_region))
 CoreAreas_df <- st_as_sf(data.frame(geometry = CAs))
 
 unique(CoreAreas_df$geometry.Region)
-region_colors <- c(
+region_colours <- c(
   "EGOM" ="#004995",
   "BOF"  = "#8C510A",
   "CapeBreton" ="#4D4D4D",
@@ -57,7 +57,7 @@ region_colors <- c(
   "GBTail" = 	"#81C784"
 )
 #factor the order 
-CoreAreas_df$geometry.Region <- factor(CoreAreas_df$geometry.Region, levels = names(region_colors))
+CoreAreas_df$geometry.Region <- factor(CoreAreas_df$geometry.Region, levels = names(region_colours))
 
 library(sf)
 library(ggrepel)
