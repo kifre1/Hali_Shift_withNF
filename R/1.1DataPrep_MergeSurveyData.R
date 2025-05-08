@@ -1,5 +1,5 @@
 #save to archive for data prep
-
+#al14 removed 3M
 
 #----------------------------------
 ## Libraries
@@ -71,7 +71,7 @@ nefsc_tows <- read_rds(here("Data/TrawlSurvey_data/nefsc_both_weight_at_length.r
 
 nf_all <- get(load(here("Data/TrawlSurvey_data/abun_nl_all85to24.Rdata"))) |>
   ungroup() |>
-  filter(NAFOdiv %in% c("3M","3K", "3L", "3P", "3N", "3O", "4V", "4U")) |> #take out the stuff that is super north (cut at 3K, 2J border )
+  filter(NAFOdiv %in% c("3K", "3L", "3P", "3N", "3O", "4V", "4U")) |> #take out the stuff that is super north (cut at 3K, 2J border )
   distinct(year, month, day, lat.start, long.start, NAFOdiv, dist.towed) |>
   mutate(trawl_id = as.character(row_number()), survey = "NF")
 # Yankee or Engel wing spread is roughly 45 feet (up to 1995)
@@ -109,7 +109,7 @@ extent <- tows_df |>
 ggplot() +
   geom_sf(data = extent)
 
-write_rds(tows_df, here("Data/Derived/all_unique_towsAl4.rds"), compress = "gz")
+#write_rds(tows_df, here("Data/Derived/all_unique_towsAl14.rds"), compress = "gz")
 
 #----------------------------------
 ## Load, filter and save catch
@@ -219,13 +219,13 @@ catch_df <- rbind(dfo_catch, nefsc_catch, nf_catch) |>
 summary(catch_df)
 table(tows_df$year, tows_df$season, tows_df$survey)
 
-write_rds(catch_df, here("Data/Derived/all_raw_halibut_catchAl4.rds"), compress = "gz")
+#write_rds(catch_df, here("Data/Derived/all_raw_halibut_catchAl14.rds"), compress = "gz")
 
 library(dplyr)
 library(lubridate)  
 #structure that i am aiming for 
 SampleData <- read.csv("C:/Users/fergusonk/Documents/Halibut/CA_Halibut_Shift/R/data/halibut_all_data.csv")
-catch_data <- read_rds("Data/Derived/all_raw_halibut_catchAl4.rds") 
+catch_data <- read_rds("Data/Derived/all_raw_halibut_catchAl14.rds") 
 
 
 str(SampleData)
@@ -252,7 +252,9 @@ names(catch_data)[names(catch_data) == "swept"] <-"Swept"
 names(catch_data)[names(catch_data) == "total_biomass"] <-"BIOMASS"       
 names(catch_data)[names(catch_data) == "total_abundance"] <-"ABUNDANCE"     
 catch_data <- catch_data %>%
-  dplyr::select(X, ID, DATE, EST_YEAR, SEASON, SURVEY, survey_season, DECDEG_BEGLAT, DECDEG_BEGLON, NMFS_SVSPP, DFO_SPEC, PRESENCE, BIOMASS, ABUNDANCE, Swept)
+  dplyr::select(X, ID, DATE, EST_YEAR, SEASON, 
+                SURVEY, survey_season, DECDEG_BEGLAT, DECDEG_BEGLON, NMFS_SVSPP, 
+                DFO_SPEC, PRESENCE, BIOMASS, ABUNDANCE, Swept)
 
 catch_data %>%
   group_by(SURVEY, PRESENCE) %>%
@@ -295,7 +297,7 @@ catch_data %>%
   summarize(count = n(), .groups = "drop")
 hist(catch_data$Swept)
 
-write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_formattedAl4.rds"), compress = "gz")
+write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_formattedAl14.rds"), compress = "gz")
 #go to 1.2 data_prep_ExtractBNAM to get covariates 
 
 
