@@ -643,3 +643,221 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     invisible(save_gif(plot_loop_func(rasts_out), paste0(out_dir, "/", nice_category_names, "_", pred_label, "_", spatial_var, ".gif"), delay = 0.75, progress = FALSE))
   }
 }
+
+#' @title Plot predicted density surfaces from data frame
+#'
+#' @description Creates either a panel plot or a gif of predicted density surfaces from a data frame that has location and time information
+#'
+#' @param pred_df = A dataframe with Lat, Lon, Time and Pred columns
+#' @param nice_category_names = A character string to define species/model run and used in naming the output prediction file.
+#' @param mask = Land mask
+#' @param plot_times = Either NULL to make a plot for each time in `pred_df$Time` or a vector of all of the times to plot, which must be a subset of `pred_df$Time`
+#' @param land_sf = Land sf object
+#' @param xlim = A two element vector with the min and max longitudes
+#' @param ylim = A two element vector with the min and max latitudes
+#' @param panel_or_gif = A character string of either "panel" or "gif" indicating how the multiple plots across time steps should be displayed
+#' @param out_dir = Output directory to save the panel plot or gif
+#'
+#' @return NULL. Panel or gif plot is saved in out_dir.
+#'
+#' @export
+
+vast_df_plot_density_kf <- function(pred_df, nice_category_names, mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, panel_or_gif = "gif", out_dir, land_color = "#d9d9d9", panel_cols = NULL, panel_rows = NULL, ...) {
+  if (FALSE) {
+    tar_load(vast_predictions)
+    pred_df <- vast_predictions
+    plot_times <- NULL
+    tar_load(land_sf)
+    tar_load(region_shapefile)
+    mask <- region_shapefile
+    land_color <- "#d9d9d9"
+    res_data_path <- "~/Box/RES_Data/"
+    xlim <- c(-80, -55)
+    ylim <- c(35, 50)
+    panel_or_gif <- "gif"
+    panel_cols <- NULL
+    panel_rows <- NULL
+  }
+  
+  # Time ID column for filtering
+  pred_df <- pred_df %>%
+    mutate(., "Time_Filter" = as.numeric(Time))
+  
+  # Log transform pred_df$Pred
+  #pred_df$Pred <- log(pred_df$Pred + 1)
+  
+  
+  # Getting all unique times
+  all_times <- unique(pred_df$Time)
+  
+  # Getting time info
+  if (!is.null(plot_times)) {
+    # plot_times <- all_times[which(all_times) %in% plot_times]
+    plot_times <- all_times[all_times %in% plot_times]#kiyomi edit
+    
+  } else {
+    #plot_times <- all_times
+    plot_times <- plot_times#kiyomi edits
+    
+  }
+  
+  # Getting spatial information
+  land_sf <- st_crop(land_sf, xmin = xlim[1], ymin = ylim[1], xmax = xlim[2], ymax = ylim[2])
+  
+  # Looping through...
+  rasts_out <- vector("list", length(plot_times))
+  rasts_range <- pred_df$Pred
+  rast_lims <- c(0, round(max(rasts_range) + 0.0000001, 2))
+  
+  for (tI in 1:length(plot_times)) {
+    pred_df_temp <- pred_df %>%
+      dplyr::filter(., Time_Filter == tI)
+    
+    # Interpolation
+    pred_df_temp <- na.omit(data.frame("x" = pred_df_temp$Lon, "y" = pred_df_temp$Lat, "layer" = pred_df_temp$Pred))
+    pred_df_interp <- interp(pred_df_temp[, 1], pred_df_temp[, 2], pred_df_temp[, 3],
+                             duplicate = "mean", extrap = TRUE,
+                             xo = seq(-87.99457, -57.4307, length = 115),
+                             yo = seq(22.27352, 48.11657, length = 133)
+    )
+    pred_df_interp_final <- data.frame(expand.grid(x = pred_df_interp$x, y = pred_df_interp$y), z = c(round(pred_df_interp$z, 2)))
+    pred_sp <- st_as_sf(pred_df_interp_final, coords = c("x", "y"), crs = 4326)
+    
+    pred_df_temp2 <- pred_sp[which(st_intersects(pred_sp, mask, sparse = FALSE) == TRUE), ]
+    coords_keep <- as.data.frame(st_coordinates(pred_df_temp2))
+    row.names(coords_keep) <- NULL
+    pred_df_use <- data.frame(cbind(coords_keep, "z" = as.numeric(pred_df_temp2$z)))
+    names(pred_df_use) <- c("x", "y", "z")
+    
+    # raster_proj<- raster::rasterize(as_Spatial(points_ll), template, field = "z", fun = mean)
+    # raster_proj<- as.data.frame(raster_proj, xy = TRUE)
+    #
+    time_plot_use <- plot_times[tI]
+    
+    rasts_out[[tI]] <- ggplot() +
+      geom_tile(data = pred_df_use, aes(x = x, y = y, fill = z)) +
+      scale_fill_viridis_c(name = "Log (density+1)", option = "viridis", na.value = "transparent", limits = rast_lims) +
+      annotate("text", x = -65, y = 37.5, label = time_plot_use) +
+      geom_sf(data = land_sf, fill = land_color, lwd = 0.2, na.rm = TRUE) +
+      coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
+      theme(panel.background = element_rect(fill = "white"), panel.border = element_rect(fill = NA), axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), axis.title = element_blank(), plot.margin = margin(t = 0.05, r = 0.05, b = 0.05, l = 0.05, unit = "pt"))
+  }
+  
+  if (panel_or_gif == "panel") {
+    # Panel plot
+    all_plot <- wrap_plots(rasts_out, ncol = panel_cols, nrow = panel_rows, guides = "collect", theme(plot.margin = margin(t = 0.05, r = 0.05, b = 0.05, l = 0.05, unit = "pt")))
+    ggsave(filename = paste0(out_dir, "/", nice_category_names, "_LogDensity.png", sep = ""), all_plot, width = 11, height = 8, units = "in")
+  } else {
+    # Make a gif
+    plot_loop_func <- function(plot_list) {
+      for (i in seq_along(plot_list)) {
+        plot_use <- plot_list[[i]]
+        print(plot_use)
+      }
+    }
+    invisible(save_gif(plot_loop_func(rasts_out), paste0(out_dir, "/", nice_category_names, "_LogDensity.gif"), delay = 0.75, progress = FALSE))
+  }
+}
+
+
+###To plot the co-variate effects on the unscaled values 
+plot_vast_covariate_effects_kf <- function (vast_covariate_effects, vast_fit, nice_category_names, 
+                                         out_dir, ...) 
+{
+  if (FALSE) {
+    tar_load(vast_covariate_effects_Offshore_hake_full_69)
+    vast_covariate_effects<- vast_covariate_effects_Offshore_hake_full_69
+    tar_load(vast_fit_Offshore_hake_full_69)
+    vast_fit<- vast_fit_Offshore_hake_full_69
+    nice_category_names <- "American lobster"
+    plot_rows <- 2
+    res_root <- "/Users/aallyn/Library/CloudStorage/Box-Box/Mills Lab/Projects/sdm_workflow/targets_output/"
+    out_dir <- paste0(res_root, "tables")
+  }
+  names_stay <- c("fit", "se", "lower", "upper", "Lin_pred")
+  # vast_cov_eff_l <- vast_covariate_effects %>% pivot_longer(.,
+  #     names_to = "Variable", values_to = "Covariate_Value",
+  #     -{
+  #         {
+  #             names_stay
+  #         }
+  #     }) %>% drop_na(Covariate_Value)
+  vast_cov_eff_l <- vast_covariate_effects %>%
+    drop_na(Real_Value)
+  # ylim_dat <- vast_cov_eff_l %>% group_by(., Lin_pred, Variable) %>%
+  #     summarize(., Min = min(lower, na.rm = TRUE), Max = max(upper,
+  #         na.rm = TRUE))
+  ylim_dat <- vast_cov_eff_l %>%
+    group_by(., Lin_pred, Covariate) %>%
+    summarize(., Min = min(lower, na.rm = TRUE), Max = max(upper, na.rm = TRUE))
+  
+  plot_out <- ggplot() +
+    geom_ribbon(data = vast_cov_eff_l, aes(x = Real_Value, ymin = lower, ymax = upper), fill = "#bdbdbd") +
+    geom_line(data = vast_cov_eff_l, aes(x = Real_Value, y = fit)) +
+    xlab("Covariate value") +
+    ylab("Linear predictor fitted value") +
+    facet_grid(Lin_pred ~ Covariate, scales = "free") +
+    theme_bw() +
+    theme(strip.background = element_blank())
+  
+  names_keep <- unique(vast_cov_eff_l$Covariate)
+  samp_dat <- vast_fit$covariate_data %>% dplyr::select({
+    {
+      names_keep
+    }
+  }) %>% gather(., "Covariate", "Real_Value")
+  plot_out2 <- plot_out +
+    geom_rug(data = samp_dat, aes(x = Real_Value))
+  ggsave(plot_out2, filename = paste(out_dir, "/", nice_category_names, 
+                                     "_covariate_effects.jpg", sep = ""))
+  return(plot_out2)
+}
+
+plot_vast_covariate_effects_kf2 <- function(vast_covariate_effects, vast_fit, nice_category_names, 
+                                           out_dir, ...) 
+{
+  if (FALSE) {
+    tar_load(vast_covariate_effects_Offshore_hake_full_69)
+    vast_covariate_effects <- vast_covariate_effects_Offshore_hake_full_69
+    tar_load(vast_fit_Offshore_hake_full_69)
+    vast_fit <- vast_fit_Offshore_hake_full_69
+    nice_category_names <- "American lobster"
+    plot_rows <- 2
+    res_root <- "/Users/aallyn/Library/CloudStorage/Box-Box/Mills Lab/Projects/sdm_workflow/targets_output/"
+    out_dir <- paste0(res_root, "tables")
+  }
+  
+  names_stay <- c("fit", "se", "lower", "upper", "Lin_pred")
+  
+  vast_cov_eff_l <- vast_covariate_effects %>%
+    drop_na(Real_Value)
+  
+  ylim_dat <- vast_cov_eff_l %>%
+    group_by(., Lin_pred, Covariate) %>%
+    summarize(., Min = min(lower, na.rm = TRUE), Max = max(upper, na.rm = TRUE))
+  
+  plot_out <- ggplot() +
+    geom_ribbon(data = vast_cov_eff_l, aes(x = Real_Value, ymin = lower, ymax = upper), fill = "#bdbdbd") +
+    geom_line(data = vast_cov_eff_l, aes(x = Real_Value, y = fit)) +
+    xlab("Covariate value") +
+    ylab("Linear predictor fitted value") +
+    facet_grid(Lin_pred ~ Covariate, scales = "free") +
+    theme_bw() +
+    theme(strip.background = element_blank())
+  
+  # Ensure to use Real_Value for the rug plot
+  names_keep <- unique(vast_cov_eff_l$Covariate)
+  
+  # Extract Real_Value for the rug plot
+  samp_dat <- vast_fit$covariate_data %>%
+    dplyr::select({{ names_keep }}) %>%
+    gather(., "Covariate", "Real_Value")  # Ensure we're using Real_Value here
+  
+  plot_out2 <- plot_out +
+    geom_rug(data = samp_dat, aes(x = Real_Value))  # Use Real_Value for rug ticks
+  
+  ggsave(plot_out2, filename = paste(out_dir, "/", nice_category_names, 
+                                     "_covariate_effects.jpg", sep = ""))
+  
+  return(plot_out2)
+}
