@@ -71,7 +71,7 @@ CAMAP<-ggplot() +
   geom_sf(data = EEZ, color="navy", linetype = "dashed", size = 1.2) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
   geom_sf(data = land, fill="lightgrey") +
-  scale_fill_manual(values = region_colors)+
+  scale_fill_manual(values = region_colours)+
   #scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
   labs(title="Core Areas")+
   xlim(-73, -48) + ylim(39.355, 48)+
