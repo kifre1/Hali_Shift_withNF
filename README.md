@@ -90,11 +90,25 @@ For each shift indicator, create data, fit LM, and plot
   - Plots change in slope bevore v after accelerated warming period 
 <br> 
 
-### Effective Area Occupied 
 ### Centre of Gravity 
+**5.1Centre_of Gravity.R**  
+  - Uses the Abundance Estimates Grid Centriods data to calculate the  mean, median and 0.05 and 0.95 quantile, lobgitude and latitide,  weighted by Abundance  
+  - Plots and maps temporal trends in COG
+  - **Output:** seasonal_centroid_data_CA.csv, seasonal_centroid_data_regional.csv, seasonal_centroid_data.csv
+  
+<br>
+
+**5.2Fit_LM_COG_PlotSlopes** 
+  - Uses seasonal_centroid_data data, adds a field for period (before vs after accelerated warming)
+  - Perform lm on each group (region and CA) and extract coefficients, and filter on Year  
+  - Plots: Rate of change in Centre of Gravity per year, by Time Period and Core Area or region  
+  - *Output:* COGSlopeCI_Regional.csv, COGSlopeCI_CoreAreas.csv
+
+<br>
 ### Distance from Hague 
 ### Range Edge 
 ### Deepening 
+### Effective Area Occupied 
 
 ## Supplemental 
 **Sup1install_INLA.R** 
