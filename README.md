@@ -119,8 +119,13 @@ For each shift indicator, create data, fit LM, and plot
    - Regional COG Distance from Hague Line (Spring)  
    - EGOM vs BOF  
 <br> 
+**6.2Fit_LM_Distance_From_Hague_PlotSlopes.R**:  
+ - Statistics that fall in the US (regional and CA) are transformed to have negative values (hague being zero) 
+ -**Output:** DistHagCASpringTransformedforFig.csv  
+ - Plot Distance from Hague line (km) per core area  
+ - Perform lm on each group and extract coefficients, and plot
 
-
+# Perform lm on each group and extract coefficients----
 
 ### Range Edge 
 ### Deepening 
