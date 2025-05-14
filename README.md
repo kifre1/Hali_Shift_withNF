@@ -92,20 +92,36 @@ For each shift indicator, create data, fit LM, and plot
 
 ### Centre of Gravity 
 **5.1Centre_of Gravity.R**  
-  - Uses the Abundance Estimates Grid Centriods data to calculate the  mean, median and 0.05 and 0.95 quantile, lobgitude and latitide,  weighted by Abundance  
-  - Plots and maps temporal trends in COG
-  - **Output:** seasonal_centroid_data_CA.csv, seasonal_centroid_data_regional.csv, seasonal_centroid_data.csv
-  
-<br>
-
+  - Uses the Abundance Estimates Grid Centriods data to calculate the  mean/median/Q5/Q95, longitude and latitide,  weighted by Abundance, for each year/season/grouping   
+  - Plots and maps temporal trends in COG  
+  - **Output:** seasonal_centroid_data_CA.csv, seasonal_centroid_data_regional.csv, seasonal_centroid_data.csv  
+<br>  
+ 
 **5.2Fit_LM_COG_PlotSlopes** 
-  - Uses seasonal_centroid_data data, adds a field for period (before vs after accelerated warming)
+  - Uses seasonal_centroid_data data, adds a field for period (before vs after accelerated warming)  
   - Perform lm on each group (region and CA) and extract coefficients, and filter on Year  
-  - Plots: Rate of change in Centre of Gravity per year, by Time Period and Core Area or region  
-  - *Output:* COGSlopeCI_Regional.csv, COGSlopeCI_CoreAreas.csv
+  - Plots: Rate of change in Centre of Gravity per year, by Time Period and Core Area or region   
+  - *Output:* COGSlopeCI_Regional.csv, COGSlopeCI_CoreAreas.csv  
+<br> 
 
-<br>
 ### Distance from Hague 
+**6.1Distance_From_Hague.R**: Calculate Distance from a fixed point on the hague line to the Centre of gravity (Mean, Median, Q5 and Q95) for timeserie and grouping using seasonal_centroid_data  
+ - **Part 1:** Data Prep   
+  1. Hague line and centriod data are turned to spatial points. A subset of the Hague line is also made to prevent Browns, Sable, CB, and Gully from estimating across land 
+  2. *find_nearest_point():* function identifies the nearest hague_point to each centroid in the timeseries and creates a df that has a "closest" point for each year/season/grouping 
+  3. *calculate_distances():* function created df by calculating the distance between each "closest" point and the corresponding centriod 
+  4. **Output** for Mean, Median, Q5 and Q95 (by year/season/grouping) are joined into one dataframe: dist_hague_all_seasonal.csv, dist_hague_Reg_seasonal.csv, dist_hague_CA_seasonal.csv  
+<br> 
+
+ - **Part 2:** Plotting   
+   - Overall COG Distance from Hague Line (Spring)  
+   - COG Distance from Hague Line: Spring,  per core area  
+   - Regional COG Distance from Hague Line (Spring)  
+   - EGOM vs BOF  
+<br> 
+
+
+
 ### Range Edge 
 ### Deepening 
 ### Effective Area Occupied 
