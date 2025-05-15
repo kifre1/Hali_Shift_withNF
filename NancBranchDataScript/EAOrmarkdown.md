@@ -1,27 +1,58 @@
 ---
 title: "Area vs Abundance Analysis"
-author: "Nancy"
+author: "Nancy Shackell"
 date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
-    toc_float: true
-    theme: cosmo
+    df_print: paged
+  word_document:
+    toc: true
     highlight: tango
-    code_folding: show
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, 
-                     fig.width = 10, fig.height = 6)
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width=10,
+  fig.height=8,
+  fig.align = "center")
 ```
-## Introduction and data prep
-
-This analysis explores the relationship between abundance and the area containing different percentages of abundance across regions and years. We'll examine how the spatial distribution of abundance varies over time and across different regions.
-The dataset used in this analysis contains abundance estimates for different regions and years, along with the area of each region. The goal is to calculate the area required to contain a certain percentage of total abundance (e.g., 50%, 75%, 90%, 95%) and visualize the results.
-```{r load-libraries}
-library(ggplot2)
+```{r load libraries}
+library(dplyr)
 library(tidyverse)
+library(broom)
+#library(flextable);library(officer)
+library(ggplot2);library(ggrepel) 
+
+library(patchwork)
+#library(RColorBrewer); #display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE,#colorblindFriendly=FALSE)
+library(grid)  # For unit() function
+library(viridis) # For color palettes
+theme_set(theme_bw())
+```
+```{r theme-settings, include=FALSE}
+theme_set(theme_bw())
+theme_update(
+  panel.grid.minor = element_blank(), 
+  panel.grid.major = element_blank(),
+  strip.background = element_rect(colour="black", fill="white"),
+  axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=10),
+  axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1, size=10)
+)
+```
+##Fix a test chunk** to verify if the issue is with specific plots:
+
+```{r test-chunk, echo=FALSE}
+# A simple test plot to check if rendering works
+plot(1:10, 1:10, main="Test Plot")
+```
+## Introduction
+This analysis explores the relationship between abundance and the area containing different percentages of abundance across regions and years. We'll examine how the spatial distribution of abundance varies over time and across different regions.
+
+```{r load-data}
 abdest<- read.csv("~/My_Program_Files/R/Hali_Shift_withNF/2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv")
 dim(abdest)
 summary(abdest)
@@ -54,7 +85,6 @@ abdest.spr <- abdest.spr %>%
   group_by(Region, Year) %>%
   mutate(AnnualAbundance = sum(Abundance))
 ```
-
 ## Calculating Area Thresholds
 
 Next, we'll calculate the area containing different percentages of abundance (50%, 75%, 90%, 95%) for each region and year:
@@ -106,8 +136,8 @@ head(area_thresholds)
 
 ### 1. Area Containing 90% of Abundance by Region and Year
 
-```{r plot-area-by-region-year, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90), 
+```{r plot-area-by-region-year}
+P1<-ggplot(area_thresholds %>% filter(Threshold == 90), 
        aes(x = as.factor(Year), y = Area_Threshold, fill = Region)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Area Containing 90% of Abundance", 
@@ -116,12 +146,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        fill = "Region") +
   theme_minimal() +
   scale_fill_viridis_d() # Color-blind friendly palette
+P1
 ```
 
 ### 2. Trends Over Time
 
-```{r plot-trends, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90), 
+```{r plot-trends}
+P2<-ggplot(area_thresholds %>% filter(Threshold == 90), 
        aes(x = Year, y = Area_Threshold, color = Region, group = Region)) +
   geom_line(size = 1) +
   geom_point(size = 3) +
@@ -131,12 +162,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        color = "Region") +
   theme_minimal() +
   scale_color_viridis_d()
+P2
 ```
 
 ### 3. Multiple Thresholds Comparison
 
-```{r plot-thresholds, fig.height=8}
-ggplot(area_thresholds, 
+```{r plot-thresholds}
+P3<-ggplot(area_thresholds, 
        aes(x = as.factor(Threshold), y = Area_Threshold, fill = Region)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~Year, scales = "free_y") +
@@ -146,12 +178,13 @@ ggplot(area_thresholds,
        fill = "Region") +
   theme_minimal() +
   scale_fill_viridis_d()
+P3
 ```
 
 ### 4. Percentage of Total Area Used
 
-```{r plot-percent-area, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90), 
+```{r plot-percent-area}
+P4<-ggplot(area_thresholds %>% filter(Threshold == 90), 
        aes(x = as.factor(Year), y = Percent_Area_Used, fill = Region)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Percentage of Total Area Containing 90% of Abundance", 
@@ -162,12 +195,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
   scale_fill_viridis_d() +
   geom_hline(yintercept = 90, linetype = "dashed", color = "red") +
   annotate("text", x = 1, y = 92, label = "90% line", color = "red")
+P4
 ```
 
 ### 5. All Thresholds Over Time
 
-```{r plot-all-thresholds, fig.height=8}
-ggplot(area_thresholds, 
+```{r plot-all-thresholds}
+P5<-ggplot(area_thresholds, 
        aes(x = Year, y = Area_Threshold, color = as.factor(Threshold), group = Threshold)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
@@ -178,14 +212,15 @@ ggplot(area_thresholds,
        color = "Abundance\nThreshold (%)") +
   theme_minimal() +
   scale_color_viridis_d()
+P5
 ```
 
 ## Area vs Annual Abundance Analysis
 
 ### 1. Scatter Plot by Region
 
-```{r scatter-by-region, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90),
+```{r scatter-by-region}
+P6<-ggplot(area_thresholds %>% filter(Threshold == 90),
        aes(x = Total_Abundance, y = Area_Threshold, color = Region)) +
   geom_point(size = 4, alpha = 0.7) +
   geom_text(aes(label = Year), vjust = -0.5, hjust = 0.5, size = 3) +
@@ -195,12 +230,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        color = "Region") +
   theme_minimal() +
   scale_color_viridis_d()
+P6
 ```
 
 ### 2. Trajectory Over Time
 
-```{r trajectory-plot, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90),
+```{r trajectory-plot}
+P7<-ggplot(area_thresholds %>% filter(Threshold == 90),
        aes(x = Total_Abundance, y = Area_Threshold, color = Region)) +
   geom_path(aes(group = Region), arrow = arrow(length = unit(0.25, "cm"), 
                                               ends = "last", type = "closed"),
@@ -214,12 +250,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        size = "Year") +
   theme_minimal() +
   scale_color_viridis_d()
+P7
 ```
 
 ### 3. Faceted by Region
 
-```{r facet-by-region, fig.height=8}
-ggplot(area_thresholds %>% filter(Threshold == 90),
+```{r facet-by-region}
+P8<-ggplot(area_thresholds %>% filter(Threshold == 90),
        aes(x = Total_Abundance, y = Area_Threshold, color = as.factor(Year))) +
   geom_point(size = 4, alpha = 0.8) +
   geom_line(aes(group = Region)) +
@@ -230,12 +267,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        color = "Year") +
   theme_minimal() +
   scale_color_viridis_d()
+P8
 ```
 
 ### 4. Area Efficiency Over Time
 
-```{r efficiency-plot, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90),
+```{r efficiency-plot}
+P9<-ggplot(area_thresholds %>% filter(Threshold == 90),
        aes(x = Year, y = Area_Efficiency, color = Region, group = Region)) +
   geom_line(size = 1) +
   geom_point(size = 3) +
@@ -246,12 +284,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
        color = "Region") +
   theme_minimal() +
   scale_color_viridis_d()
+P9
 ```
 
 ### 5. Multi-dimensional View
 
-```{r bubble-plot, fig.height=7}
-ggplot(area_thresholds %>% filter(Threshold == 90),
+```{r bubble-plot}
+P10<-ggplot(area_thresholds %>% filter(Threshold == 90),
        aes(x = Total_Abundance, y = Area_Threshold, size = Area_Efficiency, color = Region)) +
   geom_point(alpha = 0.7) +
   geom_text(aes(label = Year), vjust = -1, size = 3) +
@@ -263,12 +302,13 @@ ggplot(area_thresholds %>% filter(Threshold == 90),
   theme_minimal() +
   scale_color_viridis_d() +
   scale_size_continuous(range = c(3, 10))
+P10
 ```
 
 ## Abundance Concentration Efficiency
 
-```{r concentration-plot, fig.height=8}
-ggplot(area_thresholds, 
+```{r concentration-plot}
+P11<-ggplot(area_thresholds, 
        aes(x = Percent_Area_Used, y = Threshold, color = Region)) +
   geom_point(size = 3) +
   geom_line(aes(group = interaction(Region, Year))) +
@@ -282,6 +322,7 @@ ggplot(area_thresholds,
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
   annotate("text", x = 75, y = 25, label = "Equal distribution line", 
            color = "gray", angle = 45)
+P11
 ```
 
 ## Conclusion
