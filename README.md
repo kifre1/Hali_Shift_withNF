@@ -106,24 +106,22 @@ For each shift indicator, create data, fit LM, and plot
 
 ### Distance from Hague 
 **6.1Distance_From_Hague.R**: Calculate Distance from a fixed point on the hague line to the Centre of gravity (Mean, Median, Q5 and Q95) for timeserie and grouping using seasonal_centroid_data  
- - **Part 1:** Data Prep   
   1. Hague line and centriod data are turned to spatial points. A subset of the Hague line is also made to prevent Browns, Sable, CB, and Gully from estimating across land 
   2. *find_nearest_point():* function identifies the nearest hague_point to each centroid in the timeseries and creates a df that has a "closest" point for each year/season/grouping 
   3. *calculate_distances():* function created df by calculating the distance between each "closest" point and the corresponding centriod 
   4. **Output** for Mean, Median, Q5 and Q95 (by year/season/grouping) are joined into one dataframe: dist_hague_all_seasonal.csv, dist_hague_Reg_seasonal.csv, dist_hague_CA_seasonal.csv  
-<br> 
 
- - **Part 2:** Plotting   
-   - Overall COG Distance from Hague Line (Spring)  
-   - COG Distance from Hague Line: Spring,  per core area  
-   - Regional COG Distance from Hague Line (Spring)  
-   - EGOM vs BOF  
 <br> 
 **6.2Fit_LM_Distance_From_Hague_PlotSlopes.R**:  
  - Statistics that fall in the US (regional and CA) are transformed to have negative values (hague being zero) 
  -**Output:** DistHagCASpringTransformedforFig.csv  
  - Plot Distance from Hague line (km) per core area  
- - Perform lm on each group and extract coefficients, and plot
+ - Perform lm on each group and extract coefficients, and plot 
+   - Plot1: Core Areas DFH timeseries plots
+   - Plot2: Core areas DFH rate of change (lm)
+   - Plot : regional DFH rate of change (lm)
+   - Plot : regional DFH timeseries plots
+   - Plot : aggregated Regional DFH
 
 # Perform lm on each group and extract coefficients----
 
