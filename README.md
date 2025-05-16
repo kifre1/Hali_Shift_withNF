@@ -114,18 +114,20 @@ For each shift indicator, create data, fit LM, and plot
 <br> 
 **6.2Fit_LM_Distance_From_Hague_PlotSlopes.R**:  
  - Statistics that fall in the US (regional and CA) are transformed to have negative values (hague being zero) 
- -**Output:** DistHagCASpringTransformedforFig.csv  
- - Plot Distance from Hague line (km) per core area  
- - Perform lm on each group and extract coefficients, and plot 
-   - Plot1: Core Areas DFH timeseries plots
-   - Plot2: Core areas DFH rate of change (lm)
-   - Plot : regional DFH rate of change (lm)
-   - Plot : regional DFH timeseries plots
-   - Plot : aggregated Regional DFH
-
-# Perform lm on each group and extract coefficients----
+ -**Output:** DistHagCASpringTransformedforFig.csv   
+ - Perform lm on each group and extract coefficients  
+   - Plot1: Core Areas DFH timeseries plots  
+   - Plot2: Core areas DFH rate of change (lm)  
+   - Plot3: regional DFH rate of change (lm)  
+   - Plot4: regional DFH timeseries plots  
+   - Plot5: aggregated Regional DFH  
+<br> 
 
 ### Range Edge 
+**7.1RangeEdge.R**: Calculates 5th percentile (trailing edge), 50th, and  95th percentile (leading edge) of the species' spatial distribution) by calculating a Weighted quantile of the coordinate values, where weights are the density estimates. For each year, the edge of the distribution is compared to the same quantile location in the first year, showing absolute shifts over time relative to the baseline year 
+  - Basic Plot  
+  - **Output:**Range_Edge.csv, Edge_df_NSreshp.csv (wide df for better plotting)  
+<br> 
 ### Deepening 
 ### Effective Area Occupied 
 
@@ -137,3 +139,4 @@ For each shift indicator, create data, fit LM, and plot
 
 **Sup3TMB_Error_fix.R**
 
+#top 5 commercial and top 5 depleted species 
