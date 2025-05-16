@@ -2,13 +2,10 @@
 
 #Abundance trend Plots
 library(dplyr)
-
 library(broom)
-
 library(ggplot2)
-
+library(scales)
 library(patchwork)
-
 library(grid)  # For unit() function
 theme_replace(panel.grid.minor = element_blank(), panel.grid.major = element_line(colour="black"),
               
@@ -58,10 +55,10 @@ abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season==
 regpal<- c("orange", "darkblue")
 RegionalPlot<- ggplot(data = abundance_ind_Region, aes(x = Year, y = Index_Estimate, color = Index_Region))+
   geom_point()+
-  scale_y_continuous(labels = scales::scientific) +
-  geom_line()+
+geom_line()+
   geom_errorbar(data = abundance_ind_Region, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
   labs(title="Estimated Abundance \nAggregated by Region: Spring", y="Count", x="Year")+
+  scale_y_continuous(labels = label_number())+
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
   scale_color_manual(values = regpal) +
 guides(color = guide_legend(title = NULL))
@@ -69,8 +66,8 @@ RegionalPlot
 
 #Calculate the change in slope
 abundance_ind_Region$Period<-NULL
-abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"Before"
-abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"After"
+abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"1990-2005"
+abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"2006-2023"
 
 Reg_Abundance_coefficients_df <- abundance_ind_Region %>%
   group_by(Index_Region,Period) %>%
@@ -91,6 +88,7 @@ ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y =
   geom_point(shape=21, size = 3,position=pd) +
   coord_flip()+
   scale_fill_manual(values=c("steelblue", "orangered"))+
+  scale_y_continuous(labels = label_number())+
   #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
   #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
   geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
@@ -122,6 +120,7 @@ CAPlot<- ggplot(data = abundance_ind_CA, aes(x = Year, y = Index_Estimate, color
   geom_point(size=2)+
   scale_y_continuous(labels = scales::scientific) +
   geom_line(size=.8)+
+  scale_y_continuous(labels = label_number())+
   geom_errorbar(data = abundance_ind_CA, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
   #facet_grid(.~Season)+
   scale_color_manual(values = region_colours)+
@@ -137,8 +136,8 @@ CAPlot
 
 #Calculate the change in slope
 abundance_ind_CA$Period<-NULL
-abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"Before"
-abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"After"
+abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
+abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
 
 CA_Abundance_coefficients_df <- abundance_ind_CA %>%
   group_by(Index_Region,Period) %>%
@@ -151,8 +150,11 @@ CA_Abundance_coefficients_df <- abundance_ind_CA %>%
 
 CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("BOF", "Browns","CapeBreton", "CapeCod", "EGOM", "GBTail", "Georges", "GrandBanks", "Gully",     
-                                                                                                  "HaliChan", "Nantucket",  "Sable"))
+CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton","HaliChan",
+                                                                                                  "CapeCod","Browns","Gully","GrandBanks",
+                                                                                                  "Nantucket","Georges","Sable","GBTail"))
+
+
 pd <- position_dodge(.5)
 
 ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
@@ -166,3 +168,31 @@ ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = 
   # ylim(-0.018,0.018)+
   xlab("")+  ylab("Rate of change in Abundance count/yr")+
   ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
+
+#plot gain/loss map
+#aggregate total Index_Estimate by Core Area and Period (spring only)
+
+abundance_summary <- abundance_ind_CA %>%
+  group_by(Index_Region, Period) %>%
+  summarise(Total_Index = sum(Index_Estimate, na.rm = TRUE), .groups = "drop")
+abundance_wide <- abundance_summary %>%
+  pivot_wider(names_from = Period, values_from = Total_Index) %>%
+  mutate(Percent_Change = 100 * (`2006-2023` - `1990-2005`) / `1990-2005`)
+
+#run sup2
+
+ggplot() +
+  geom_sf(data = contours, color = "lightblue") +
+  geom_sf(data = CoreAreas_df, aes(fill = abundance_wide$Percent_Change[match(geometry.Region, abundance_wide$Index_Region)])) +
+  geom_sf(data = All_region_df, fill = NA) +
+  geom_sf(data = EEZ, color = "blue") +
+  geom_sf(data = NAFO, fill = NA) +
+  geom_sf(data = land, fill = "grey") +
+  scale_fill_gradientn(
+    name = "% Change",
+    colors = c("darkblue", "lightblue", "orange", "red"), # Transition from red to blue
+    #values = scales::rescale(c(min(abundance_wide$Percent_Change), 0, max(abundance_wide$Percent_Change))),
+    limits = c(min(abundance_wide$Percent_Change), max(abundance_wide$Percent_Change)) # Set limits to the range of your data
+  ) +
+  labs(title = "Percent Change in Abundance") +
+  xlim(-73, -48) + ylim(39.355, 48)
