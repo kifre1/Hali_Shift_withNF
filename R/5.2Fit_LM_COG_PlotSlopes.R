@@ -1,6 +1,10 @@
+#Builds on  seasonal_centroid_data_ from 5.1
+#adds a field for period (before vs after accelerated warming)  
+#Perform lm on each group (region and CA) and extract coefficients, and filter on Year  
+#Plots: Rate of change in Centre of Gravity per year, by Time Period and Core Area or region   
 
-#this originally comes from 05_CentreofGravity.R followed by 05.2
 library(tidyverse)
+#adds a field for period (before vs after accelerated warming)
 #by Core Area
 centroid_data <- read.csv(here::here("","2025-04-23/Output/Shift_Indicators/seasonal_centroid_data_CA.csv"),sep = ",")
 centroid_data$Period<-NULL
