@@ -1,4 +1,4 @@
-#Step 1: Plot Abundance Trends
+
 
 #Abundance trend Plots
 library(dplyr)
@@ -40,14 +40,14 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
               axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))
 
 
-# Plot abuncance indexed regions 
+
 #SpSt_DF<-read.csv(here::here("2024-10-04/Output/PredictionData_for_ShiftAnalysis.csv"))
 
-# Figure 2, 
 
+# Part 1: Regional Abundance trends  
 abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))
 abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
-#plot the regional abundance seasonally 
+#1.1 plot the regional abundance seasonally 
 #remove "all", isolate spring, rename regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
@@ -64,7 +64,7 @@ geom_line()+
 guides(color = guide_legend(title = NULL))
 RegionalPlot
 
-#Calculate the change in slope
+#1.2 Calculate and plot the change in slope for each time period
 abundance_ind_Region$Period<-NULL
 abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"1990-2005"
 abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"2006-2023"
@@ -97,7 +97,8 @@ ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y =
   ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
 
 
-#Core Areas
+#Part 2: Core Areas abundance trends
+#2.1 plot abundance trends, spring 
 abundance_ind_CA<-subset(abundance_ind_CA, abundance_ind_CA$Season=="Spring")
 region_colours <- c(
   "EGOM" ="#004995",
@@ -134,7 +135,7 @@ CAPlot
 #go to Sup2DataPlots.R to make CAMAP
 (CAMAP / CAPlot)+ plot_layout(heights = c(1,1))
 
-#Calculate the change in slope
+#2.2 Calculate and plot the change in slope for each time period
 abundance_ind_CA$Period<-NULL
 abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
 abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"

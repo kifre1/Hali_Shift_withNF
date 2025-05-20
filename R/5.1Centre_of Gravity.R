@@ -30,9 +30,9 @@ centroid_data <- SDM_data_All %>%
     centroid_latitude = weighted.mean(Lat, w = Abundance),
     centroid_latitude_Median = weighted.median(Lat, w = Abundance),
     centroid_longitude_Median = weighted.median(Lon, w = Abundance),
-    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 050th percentile 
+    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 5th percentile 
     centroid_longitude_Quantile_05 = weighted.quantile(Lon, w = Abundance, probs = 0.05), 
-    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile (median)
+    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile
     centroid_longitude_Quantile_95 = weighted.quantile(Lon, w = Abundance, probs = 0.95), 
   )
 centroid_data_Reg <- SDM_data_Reg %>%
@@ -42,9 +42,9 @@ centroid_data_Reg <- SDM_data_Reg %>%
     centroid_latitude = weighted.mean(Lat, w = Abundance),
     centroid_latitude_Median = weighted.median(Lat, w = Abundance),
     centroid_longitude_Median = weighted.median(Lon, w = Abundance),
-    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 050th percentile 
+    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 5th percentile 
     centroid_longitude_Quantile_05 = weighted.quantile(Lon, w = Abundance, probs = 0.05), 
-    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile (median)
+    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile
     centroid_longitude_Quantile_95 = weighted.quantile(Lon, w = Abundance, probs = 0.95), 
   )
 centroid_data_CA <- SDM_data_CA %>%
@@ -54,9 +54,9 @@ centroid_data_CA <- SDM_data_CA %>%
     centroid_latitude = weighted.mean(Lat, w = Abundance),
     centroid_latitude_Median = weighted.median(Lat, w = Abundance),
     centroid_longitude_Median = weighted.median(Lon, w = Abundance),
-    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 050th percentile 
+    centroid_latitude_Quantile_05 = weighted.quantile(Lat, w = Abundance, probs = 0.05), # 5th percentile 
     centroid_longitude_Quantile_05 = weighted.quantile(Lon, w = Abundance, probs = 0.05), 
-    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile (median)
+    centroid_latitude_Quantile_95 = weighted.quantile(Lat, w = Abundance, probs = 0.95), # 95th percentile
     centroid_longitude_Quantile_95 = weighted.quantile(Lon, w = Abundance, probs = 0.95), 
   )
 
@@ -64,9 +64,11 @@ centroid_data_CA <- SDM_data_CA %>%
 write.csv(centroid_data_CA,(here::here("2025-04-23/Output/Shift_Indicators/seasonal_centroid_data_CA.csv")), row.names = FALSE)
 write.csv(centroid_data_Reg,(here::here("2025-04-23/Output/Shift_Indicators/seasonal_centroid_data_region.csv")), row.names = FALSE)
 write.csv(centroid_data, (here::here("2025-04-23/Output/Shift_Indicators/seasonal_centroid_data.csv")), row.names = FALSE)
+#END: go to script 5.2
 
 
-#plot COG SEASONAL
+
+#Exploratory plotting: plot COG SEASONAL
 library(ggplot2)
 library(tidyverse)
 library(RColorBrewer)
