@@ -1,12 +1,12 @@
-
-
-#Create range edge data.  
+#Create range edge data. 
 #see https://rdrr.io/github/James-Thorson/VAST/man/plot_range_edge.html for reference 
 #he used functions that i had to break down because i ran into TMB versioning issues
 #Weighted quantile of the coordinate values, where weights are the density estimates
 #5th percentile (trailing edge), 95th percentile (leading edge) of the species' spatial distribution)
 #For each subsequent year, the edge of the distribution is compared to the same quantile location in the first year.
 #o look at absolute shifts over time relative to the baseline year
+
+#if you get a "TMBconfig"error, run Sup3TMB_Error_fix.R first 
 
 library(TMB)
 library(dplyr)

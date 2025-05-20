@@ -1,3 +1,5 @@
+# I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15
+
 #update R
 .libPaths()
 install.packages("installr")
@@ -29,8 +31,6 @@ install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-dow
 install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/testing"), dep=TRUE)
 
 
-#4.2.2: INLA 24.12.11, TMB: 1.9.11 (also tried .14), Vast: 4
-#4.4.1: INLA 24.12.11, TMB: 1.9.16 (also tried .14), Vast: 3.11.2
 #my version of INLA was built under 4.4.2
 #Try updating R
 #Try older version of INLA 23.09.09 manually download here: https://inla.r-inla-download.org/R/stable/bin/windows/contrib/4.3/
