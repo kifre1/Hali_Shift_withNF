@@ -18,18 +18,9 @@ centroid_data_Reg$Period[centroid_data_Reg$Year<2006]<-"Before Warming"
 centroid_data_Reg$Period[centroid_data_Reg$Year>2005]<-"During Warming"
 str(centroid_data_Reg)
 
-#write.csv(centroid_data_Reg,here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"),row.names = F)
-
-summary(centroid_data)
-names(centroid_data)
-#set the data up for order
-
-#centroid_data$ordCore_Area<-factor(centroid_data$Core_Area,levels=c("CapeCod","EGOM","BOF","Nantucket","Georges","Browns","Sable","Gully","CapeBreton"))
-#centroid_data$Period<-NULL
-#centroid_data$Period[centroid_data$Year<2006]<-"Before Warming"
-#centroid_data$Period[centroid_data$Year>2005]<-"During Warming"
-
-#write.csv(centroid_data,here::here("R/DataforFinalFigs/centroid_dataCAforFig.csv"),row.names = F)
+unique(centroid_data$Stratum)
+write.csv(centroid_data_Reg,here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"),row.names = F)
+write.csv(centroid_data,here::here("R/DataforFinalFigs/centroid_dataCAforFig.csv"),row.names = F)
 
 library(dplyr)
 library(broom)
