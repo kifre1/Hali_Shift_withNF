@@ -55,6 +55,8 @@ crs <- st_crs(region_shape)
 
 all_times<-unique(fit$data_frame$t_i)#range format
 all_times<-as.character(0:101)
+
+#run whichever season you want to plot 
 #select for spring 
 spring_times<- as.character(seq(0, 101, by = 3)) #because there are 3 seasons for each year in the model 
 spring_range <- range(as.numeric(spring_times))
@@ -64,6 +66,29 @@ bin_years <- cut(as.numeric(spring_times), breaks = bin_edges, labels = FALSE, i
 print(bin_years)
 print(spring_times)
 print(table(bin_years))
+season_times<-spring_times
+
+#select for summer
+summer_times<- as.character(seq(1, 101, by = 3)) #because there are 3 seasons for each year in the model 
+summer_range <- range(as.numeric(summer_times))
+#set up the timeframes to plot (before and after accelerated warming period (2005))
+bin_edges <- c(summer_range[1], 48, summer_range[2])# Bin 1: 1990 to 2005 (47) # Bin 2: 2006 to 2023
+bin_years <- cut(as.numeric(summer_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
+print(bin_years)
+print(summer_times)
+print(table(bin_years))
+season_times<-summer_times
+
+#select for fall
+fall_times<- as.character(seq(1, 101, by = 3)) #because there are 3 seasons for each year in the model 
+fall_range <- range(as.numeric(fall_times))
+#set up the timeframes to plot (before and after accelerated warming period (2005))
+bin_edges <- c(fall_range[1], 49, summer_range[2])# Bin 1: 1990 to 2005 (47) # Bin 2: 2006 to 2023
+bin_years <- cut(as.numeric(fall_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
+print(bin_years)
+print(fall_times)
+print(table(bin_years))
+season_times<-fall_times
 
 #settings for pred_df_interp(), 
 #get values blank raster for interpolation to reflect the max/min lat/lon, across an even grid 
@@ -98,8 +123,7 @@ start_year<-1990
 season_increment <- 3 
 legend_title<- "Log(Density)" 
 
-
-vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, 
+vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, SelectedSeason,
                                                 climate_scenario = "", mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, crs,
                                                 lab_lat = NULL, lab_lon = NULL, panel_or_gif = "panel", out_dir, land_color = "#d9d9d9", 
                                                 panel_cols = NULL, panel_rows = NULL, bins = NULL, bin_years = NULL, start_year = NULL, 
@@ -153,12 +177,12 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
       pred_array <- log(pred_array)
     }
   }
-  spring_indices <- match(spring_times, all_times)
-  message("spring_indices", paste(spring_indices))
+  season_indices <- match(season_times, all_times)
+  message("season_indices", paste(season_indices))
   
   # Binning time_indices into the corresponding years
   bin_means <- lapply(1:max(bin_years, na.rm = TRUE), function(bin_idx) {
-    time_indices <- spring_indices[which(bin_years == bin_idx)]
+    time_indices <- season_indices[which(bin_years == bin_idx)]
     mean_pred_array <- apply(pred_array[, , time_indices, drop = FALSE], c(1, 2), mean, na.rm = TRUE)
     list(bin_idx = bin_idx, mean_data = mean_pred_array)
   })
@@ -196,11 +220,11 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     names(pred_df_use) <- c("x", "y", "z")
     
     # Year range for title
-    spring_years_in_bin <- as.numeric(spring_times[which(bin_years == bin_idx)])
-    if (length(spring_years_in_bin) == 0 || all(is.na(spring_years_in_bin))) {
+    season_years_in_bin <- as.numeric(season_times[which(bin_years == bin_idx)])
+    if (length(season_years_in_bin) == 0 || all(is.na(season_years_in_bin))) {
       bin_year_range <- c(NA, NA)
     } else {
-      actual_years <- start_year + (spring_years_in_bin %/% season_increment)
+      actual_years <- start_year + (season_years_in_bin %/% season_increment)
       bin_year_range <- range(actual_years, na.rm = TRUE)
     }
     #   if (!any(is.na(bin_year_range))) {
@@ -211,7 +235,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     if (bin_idx == 1) {
       plot_title <- "Before Warming"
     } else if (bin_idx == 2) {
-      plot_title <- "After Warming"
+      plot_title <- "During Warming"
     } else {
       plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])  # Fallback if more bins exist
     }   
@@ -224,6 +248,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
       #  scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2", "orangered2"), na.value = "transparent", limits = rast_lims) +
       scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "darkorange1","orangered", "red"), na.value = "transparent", limits = rast_lims, name=legend_title) +
       annotate("text", x = lab_lon, y = lab_lat, label = plot_title) +
+      labs(title = SelectedSeason) +
       geom_sf(data = land_sf, fill = land_color, lwd = 0.2, na.rm = TRUE) +
       coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
       theme(panel.background = element_rect(fill = "white"), panel.border = element_rect(fill = NA), 
@@ -249,11 +274,21 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
 }
 
 
-vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",spatial_var = "Index_gctl", 
-                                    nice_category_names = "Atlantic Halibut_Index_gctl", mask = region_shape, all_times = all_times, 
-                                    plot_times = spring_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
+vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Fall",SelectedSeason= "Fall", spatial_var = "Index_gctl", 
+                                    nice_category_names = "AtlanticHalibut_Index_gctl", mask = region_shape, all_times = all_times, 
+                                    plot_times = season_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
                                     lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
                                     panel_cols = 2, panel_rows = 1, bins=2, start_year=start_year, season_increment=season_increment,legend_title=legend_title )    
+
+
+
+
+
+
+
+
+
+
 
 
 #archive: 
@@ -351,7 +386,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     if (bin_idx == 1) {
       plot_title <- "Before Warming"
     } else if (bin_idx == 2) {
-      plot_title <- "After Warming"
+      plot_title <- "During Warming"
     } else {
       plot_title <- paste("Years:", bin_year_range[1], "-", bin_year_range[2])  # Fallback if more bins exist
     }   
@@ -389,7 +424,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
 }
 
 
-vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",spatial_var = "D_gct", 
+vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Summer",plot_title = "Summer"spatial_var = "D_gct", 
                                     nice_category_names = "Atlantic Halibut_D_gct", mask = region_shape, all_times = all_times, 
                                     plot_times = spring_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
                                     lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
