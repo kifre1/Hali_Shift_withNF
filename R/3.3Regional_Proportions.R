@@ -186,35 +186,39 @@ str(abundance_ind_proportions_CA)
 str(abundance_ind_proportions_Region)
 abundance_ind_proportions_CA<-subset(abundance_ind_proportions_CA, abundance_ind_proportions_CA$Index_Region!="All")#not needed anymore
 
-#save----
 write.csv(abundance_ind_proportions_CA, (here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv")))
 write.csv(abundance_ind_proportions_Region, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv")))
+
+
+# add the timeframe to the data
+CA_Proportion <- CA_Proportion %>%
+  mutate(
+    Period = case_when(
+      Year %in% 1990:2005 ~ "Before Warming",
+      Year %in% 2006:2023 ~ "During Warming",
+      TRUE ~ NA_character_  # Handles any years outside these ranges
+    )
+  )
+Regional_Proportion <- Regional_Proportion %>%
+  mutate(
+    Period = case_when(
+      Year %in% 1990:2005 ~ "Before Warming",
+      Year %in% 2006:2023 ~ "During Warming",
+      TRUE ~ NA_character_  # Handles any years outside these ranges
+    )
+  )
+head(Regional_Proportion)
+#save----
+write.csv(CA_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv")))
+write.csv(Regional_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional2.csv")))
+
+write.csv(Regional_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv")))
 
 
 #STEP 2: Compare these data between before and during warming timeframes ----
 #incorporate timeframes----
 CA_Proportion<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv"))
 Regional_Proportion<- read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
-
-
-# add the timeframe to the data
-CA_Proportion <- CA_Proportion %>%
-  mutate(
-    timeframe = case_when(
-      Year %in% 1990:2005 ~ "Before",
-      Year %in% 2006:2023 ~ "After",
-      TRUE ~ NA_character_  # Handles any years outside these ranges
-    )
-  )
-Regional_Proportion <- Regional_Proportion %>%
-  mutate(
-    timeframe = case_when(
-      Year %in% 1990:2005 ~ "Before",
-      Year %in% 2006:2023 ~ "After",
-      TRUE ~ NA_character_  # Handles any years outside these ranges
-    )
-  )
-
 
 #Regional: Calculate the mean proportion for each Region and timeframe----
 TF_Avg_R <- Regional_Proportion %>%

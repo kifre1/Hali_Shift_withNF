@@ -1,7 +1,8 @@
 #i honestly don't know how, but running this code and then clearing the environment 
 #solved the error i was getting from TMB (Error in .Call("TMBconfig", e, as.integer(1), PACKAGE = DLL) : "TMBconfig" not available for .Call() for package "VAST_v14_0_1_TMBad") )
 
-#NOTE* you don't have to wait for the fit to rully run, let it run a couple itterations and then hit stop then clear your environment before proceeding 
+#NOTE* you don't have to wait for the fit to fully run, 
+#let it run a couple itterations and then hit stop then clear your environment before proceeding with the original 
 
 #it was found here as an "indes Standardization code"
 #https://github.com/James-Thorson-NOAA/VAST/wiki/Index-standardization

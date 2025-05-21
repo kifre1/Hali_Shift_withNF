@@ -131,7 +131,7 @@ pred_df_ind <- as.data.frame.table(pred_array_ind, responseName = "Abundance") %
 pred_df_ind <- pred_df_ind %>%
   mutate(Site = as.integer(as.character(Site)))#convert it back to int so that it can be joined with the spatial data
 summary(pred_df_ind)#$Stratum  is generic (1:15)--replace these with their actual names (accessed in get_vast_index_timeseries())
-#Create a named lockup for associates stratum 
+#Create a named lookup for associated stratum 
 stratum_map <- data.frame(
   Stratum = paste0("Stratum_", 1:length(unique(abundance_ind$Index_Region))),
   Region_Name = unique(abundance_ind$Index_Region)

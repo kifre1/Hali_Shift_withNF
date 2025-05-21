@@ -1,9 +1,4 @@
 
-
-# Covariate effects: object 'prior.weights' not found
-#Deviance explained is full of NAs
-#Canada was missed in the index= found error 
-
 #####
 # Model diagnostics, evaluation and validation statistics, mostly based on: https://github.com/aallyn/TargetsSDM/blob/main/Vignette.Rmd
 #####
@@ -81,7 +76,7 @@ Report <- Hali_SpSt$tmb_list$Obj$report()
 Report$deviance#If this is NAN the problem is not with optimization, but rather in how VAST is reporting outputs.
 
 
-#1. Default plots
+#1. Default plots----
 #model plotting function writs plots to your folder,
 #but we need to do pull these functions apart later so that we can get at the indexed data for the shift analysis
 setwd(here::here("2025-04-23/Output/Plot/SpSt"))
@@ -94,7 +89,7 @@ setwd(here::here("2025-04-23/Output/Plot/Null"))
 plot(Hali_Null)
 
 
-#2. Covariate effects (+plots)
+#2. Covariate effects (+plots)----
 #plot the covariate effects and then look at the shape/strength of the response curves
 #season is in the model as a fixed effect.
 #columns are the covariates and then the rows are the linear predictors: 
@@ -189,8 +184,9 @@ plot_vast_covariate_effects_kf2(vast_covariate_effects = cov_effs_Sp, vast_fit =
 plot_vast_covariate_effects_kf(vast_covariate_effects = cov_effs_SpSt, vast_fit = Hali_SpSt, nice_category_names = "Halibut_SpSt", out_dir = out_dir)
 
 
-#3. AIC--- full of NAs 
+#3. AIC----
 #TMBAIC for comparing models 
+# if you get a "TMBconfig" error, run Sup3TMB_Error_Fix.R first
 #skip deviance and instead do the "new" marginal AIC calculation 
 #(https://rdrr.io/github/James-Thorson/VAST/src/R/TMBAIC.R) 
 #https://github.com/kifre1/Hali_Shift_withNF/blob/main/R/Sup5ReducedModel.R 
@@ -215,13 +211,7 @@ TMBAIC(fit_opt_Env)#29035.9
 TMBAIC(fit_opt_Sp)#24793.84
 TMBAIC(fit_opt_SpSt)# 24135.08
 
-
-#as.numeric(Hali_Null$parameter_estimates$AIC)#31812.25
-#as.numeric(Hali_Env$parameter_estimates$AIC)#30553.27
-#as.numeric(Hali_Sp$parameter_estimates$AIC)#25243.85
-#as.numeric(Hali_SpSt$parameter_estimates$AIC)#24346.6
-
-# 4. Parameter Estimates-- leave for now
+# 4. Parameter Estimates----
 # For the fixed effect parameters, we can get their MLE as well as standard errors.
 # Parameter estimates and standard errors..omega is spatial, epsilon is spatio-temporal
 Hali_SpSt$parameter_estimates$SD
@@ -244,10 +234,10 @@ logkappa1<- -4.59410320
 logkappa2<- -2.97457159
 kappa1<- exp(logkappa1)#0.01
 kappa2<- exp(logkappa2)#0.05
-range1 <- sqrt(8) / kappa1 #279.7298, Small Kappa suggests a large spatial range, observations remain spatially correlated up to 280 units.
-range2 <- sqrt(8) / kappa2 #55.38409, Larger Kappa, correlation decays faster for this parameter at around 55 units 
+range1 <- sqrt(8) / kappa1 #279.7298, Small Kappa suggests a large spatial range, observations remain spatially correlated up to 280 units (km).
+range2 <- sqrt(8) / kappa2 #55.38409, Larger Kappa, correlation decays faster for this parameter at around 55 units (km) 
 
-# 5. AUC
+# 5. AUC----
 # Get the observation and prediction dataframe (to the survey points not the grid)
 #the function defaults to renaming the predicted variable Biomass but we did this on abundance so just keep this in mind
 
@@ -272,7 +262,7 @@ auc1#0.8740018 (Sp)
 auc2#0.7891228 (Env)
 auc3#0.687837(Null)
 
-#6. Taylor Diagram*
+#6. Taylor Diagram*----
 #*to look at predictive skill in Abundance and Presence...not overly useful if we are not comparing models anymore
 names(obs_pred0)[names(obs_pred0) == "Biomass"] <- "Abundance" #lets get rid of this confusion
 names(obs_pred0)[names(obs_pred0) == "Predicted_Biomass"] <- "Predicted_Abundance"
@@ -282,7 +272,7 @@ taylor_diag0<- taylor_diagram_func(dat = obs_pred0, obs = "Presence", mod = "Pre
 taylor_diag0
 head(obs_pred0)
 
-#7. Plot random effects (Omega, Epsilon, R, P)
+#7. Plot random effects (Omega, Epsilon, R, P)----
 #Along with the fixed effect parameters, we might also have some random effects -- 
 #especially if we have turned on the spatial (omega) or spatio-temporal (epsilon) variability model components. -yes
 #visualize these random effect surfaces.
@@ -293,9 +283,9 @@ crs(region_shape)
 land_use<-st_read(here::here("Data/land_shapefile/", "ne_50m_land.shp"))
 crs(land_use)
 #tidy_mod_data<- read.csv(here::here("R/data/tidy_data_for_SDM.csv"))
-vast_sample_data<- read.csv(here::here("2025-04-09/Output/vast_samp_dat.csv"), header=T)
-xlim_use <- c(-78.5, -45)
-ylim_use <- c(35, 50.5)
+vast_sample_data<- read.csv(here::here("2025-04-23/Output/vast_samp_dat.csv"), header=T)
+xlim_use <- c(-73, -48)
+ylim_use <- c(39.355, 48)
 pred_label<-"test"
 #spatial variability (omega)
 #vast_omega1_plot<- vast_fit_plot_variable(vast_fit = Hali_SpSt,manual_pred_df=NULL, spatial_var = "Omega1_gc", nice_category_names = "Atlantic_halibut", mask = region_shape, all_times = as.character(unique(vast_sample_data$Year)), plot_times = NULL, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9")
@@ -307,9 +297,9 @@ pred_label<-"test"
 #vast_epsilon1_plot+vast_epsilon2_plot
 
 #Plot by season---at the moment this is not working but i feel like i am close
-selected_years_Spring <- as.character(seq(0, 104, by = 3))
-selected_years_Summer <- as.character(seq(1, 104, by = 3))
-selected_years_Fall <- as.character(seq(2, 104, by = 3))
+selected_years_Spring <- as.character(seq(0, 101, by = 3))
+selected_years_Summer <- as.character(seq(1, 101, by = 3))
+selected_years_Fall <- as.character(seq(2, 101, by = 3))
 summary(selected_years_Fall)
 #all_times = as.character(unique(vast_sample_data$Year))
 #pt <- all_times[all_times %in% selected_years_Spring]
@@ -345,7 +335,7 @@ ggplot(halidf, aes(x = Lon_i, y = Lat_i, color = a_i)) +
 
 
 
-#######8. extra from TargetsSDM----
+#8. extra from TargetsSDM----
 #this combines all the models and calculates:
 # DHARMA residuals, deviance explained, root mean square error, and a combined Taylor Diagram
 # this code takes a very long time and is quite finicky. I prefer the above methods,
