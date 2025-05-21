@@ -218,6 +218,8 @@ write.csv(filtered_CA, (here::here("2025-04-23/Output/Shift_Indicators/Deepening
 
 D_data_All<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_All.csv"))
 D_data_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
+D_data_CA<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_CA.csv"))
+
 Slope_All<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_All.csv"))
 Slope_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_Reg.csv"))
 
@@ -226,7 +228,7 @@ library(ggplot2)
 # Plot Mean depth over time
 D_data_All_spring<-subset(D_data_All, D_data_All$Season =="Spring")
 Mean_depth_all<- ggplot(D_data_All_spring, aes(x = Year, y = Depth_Mean)) + 
-  geom_line() + 
+  geom_line( color = "red") + 
   geom_point(size=1.25) +
   #facet_wrap(.~Stratum, scales = "free") +  
   labs(y = "Depth (m) ", title = "Deepening") +
@@ -240,24 +242,65 @@ Mean_depth_Reg<-ggplot(D_data_Reg_spring, aes(x = Year, y = Depth_Mean, color = 
   geom_line() + 
   geom_point(size=1.25) +
   scale_color_manual(values = regpal) +
-  #facet_wrap(.~Stratum, scales = "free") +  
+  facet_wrap(.~Stratum, scales = "free") +  
   labs(y = "Depth (m) ", title = "Deepening") +
   theme_bw() +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
 
 D_data_CA_spring<-subset(D_data_CA, D_data_CA$Season =="Spring")
-#regpal<- get the right one
-Mean_depth_Reg<-ggplot(D_data_Reg_spring, aes(x = Year, y = Depth_Mean, color = Stratum)) + 
-  geom_line() + 
+
+region_colours <- c(
+  "EGOM" ="#004995",
+  "BOF"  = "#8C510A",
+  "CapeBreton" ="#4D4D4D",
+  "HaliChan" ="#00441B",
+  "CapeCod" ="#2171B5",
+  "Browns" ="#D8781D",
+  "Gully"="#7F7F7F",
+  "GrandBanks" ="#238B45",
+  "Nantucket" = "#56B4E9",
+  "Georges" ="#EDA752",
+  "Sable"  ="#C0C0C0",
+  "GBTail" = 	"#81C784"
+)
+#factor the order 
+D_data_CA_spring$Stratum <- factor(D_data_CA_spring$Stratum, levels = names(region_colours))
+
+Mean_depth_CA<-ggplot(D_data_CA_spring, aes(x = Year, y = Depth_Mean, color = Stratum)) + 
+  geom_line(color="black") + 
   geom_point(size=1.25) +
-  scale_color_manual(values = regpal) +
-  #facet_wrap(.~Stratum, scales = "free") +  
+  scale_color_manual(values = region_colours) +
+  facet_wrap(.~Stratum, scales = "free") +  
   labs(y = "Depth (m) ", title = "Deepening") +
   theme_bw() +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1) 
 
+Slope_All<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_All.csv"))
+Slope_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_Reg.csv"))
+Slope_CA<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_CA.csv"))
+Slope_All_spring<-subset(Slope_All, Slope_All$Season =="Spring")
+head(Slope_All_spring)
+#plot change in slope
+pd <- position_dodge(.75)
 
 
 
+ggplot(Slope_All_spring , aes(x = Year y = estimate,fill=Period)) +
+  
+  geom_linerange(aes(ymin =conf.low, ymax =conf.high),position=pd,color="darkgrey",size=1.5)+
+  
+  geom_point(shape=21, size = 4,position=pd) +
+  
+  scale_fill_manual(values=c("steelblue", "wheat"))+
+  
+  coord_flip()+
+  
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  
+  xlab("")+  ylab("Plot ")+
+  
+  ggtitle ("Q5, Average, Q95 Distance from Hague line (km) ")
 
 
