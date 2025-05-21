@@ -49,9 +49,9 @@ Depth_raster<- focal(Depth_raster, w = matrix(1,3,3), fun = fill.na,
 plot(Depth_raster)
 
 #1.2 Join depth data to Estimates data
-SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All.csv"))
-SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg.csv"))
-SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA.csv"))
+SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_May20.csv"))
+SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_May20.csv"))
+SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_May20.csv"))
 
 # They need to be spatial 
 st_crs(Depth_raster)
@@ -84,11 +84,11 @@ process_catch_data <- function(catch_data, Depth_raster, Cleaned_Data) {
 
 #Save these: 
 SDM_data_All_Depth <- process_catch_data( SDM_data_All,  Depth_raster, Cleaned_Data_All)
-#write.csv(SDM_data_All_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_wDepth.csv")), row.names = FALSE)
+write.csv(SDM_data_All_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_wDepth.csv")), row.names = FALSE)
 SDM_data_Reg_Depth <- process_catch_data( SDM_data_Reg,  Depth_raster, Cleaned_Data_Reg)
-#write.csv(SDM_data_Reg_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_wDepth.csv")), row.names = FALSE)
+write.csv(SDM_data_Reg_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_wDepth.csv")), row.names = FALSE)
 SDM_data_CA_Depth <- process_catch_data( SDM_data_CA,  Depth_raster, Cleaned_Data_CA)
-#write.csv(SDM_data_CA_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_wDepth.csv")), row.names = FALSE)
+write.csv(SDM_data_CA_Depth,(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_wDepth.csv")), row.names = FALSE)
 
 #Step 2: Calculate Deepening (same for COG)----
 library(dplyr)
@@ -154,7 +154,6 @@ str(Depth_data_CA$Stratum)
 Depth_data_CA$Stratum<-factor(Depth_data_CA$Stratum,levels=c("EGOM","BOF","CapeBreton","HaliChan",
                                                              "CapeCod","Browns","Gully","GrandBanks",
                                                              "Nantucket","Georges","Sable","GBTail"))
-str(centroid_data)
 
 write.csv(Depth_data_CA,(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_CA.csv")), row.names = FALSE)
 write.csv(Depth_data_Reg,(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv")), row.names = FALSE)
@@ -217,7 +216,45 @@ write.csv(filtered_CA, (here::here("2025-04-23/Output/Shift_Indicators/Deepening
 
 #Plot
 
-Mean 
+D_data_All<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_All.csv"))
+D_data_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
+Slope_All<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_All.csv"))
+Slope_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_Reg.csv"))
+
+library(ggplot2)
+
+# Plot Mean depth over time
+D_data_All_spring<-subset(D_data_All, D_data_All$Season =="Spring")
+Mean_depth_all<- ggplot(D_data_All_spring, aes(x = Year, y = Depth_Mean)) + 
+  geom_line() + 
+  geom_point(size=1.25) +
+  #facet_wrap(.~Stratum, scales = "free") +  
+  labs(y = "Depth (m) ", title = "Deepening") +
+  theme_bw() +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
+  theme(legend.position = "none")  
+
+D_data_Reg_spring<-subset(D_data_Reg, D_data_Reg$Season =="Spring")
+regpal<- c("darkorange", "darkblue")
+Mean_depth_Reg<-ggplot(D_data_Reg_spring, aes(x = Year, y = Depth_Mean, color = Stratum)) + 
+  geom_line() + 
+  geom_point(size=1.25) +
+  scale_color_manual(values = regpal) +
+  #facet_wrap(.~Stratum, scales = "free") +  
+  labs(y = "Depth (m) ", title = "Deepening") +
+  theme_bw() +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+
+D_data_CA_spring<-subset(D_data_CA, D_data_CA$Season =="Spring")
+#regpal<- get the right one
+Mean_depth_Reg<-ggplot(D_data_Reg_spring, aes(x = Year, y = Depth_Mean, color = Stratum)) + 
+  geom_line() + 
+  geom_point(size=1.25) +
+  scale_color_manual(values = regpal) +
+  #facet_wrap(.~Stratum, scales = "free") +  
+  labs(y = "Depth (m) ", title = "Deepening") +
+  theme_bw() +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1) 
 
 
 
