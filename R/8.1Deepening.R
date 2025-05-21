@@ -215,7 +215,9 @@ write.csv(filtered_Reg,(here::here("2025-04-23/Output/Shift_Indicators/Deepening
 write.csv(filtered_CA, (here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_CA.csv")), row.names = FALSE)
 
 
+#Plot
 
+Mean 
 
 
 
