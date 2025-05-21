@@ -7,15 +7,15 @@ library(ggtext)
 library(spatstat)
 #may find some useful stuff in the DisMAP gitHub
 
-SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All.csv"))
-SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg.csv"))
-SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA.csv"))
+SDM_data_All<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_May20.csv"))
+SDM_data_Reg<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_May20.csv"))
+SDM_data_CA<- read.csv(here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_May20.csv"))
 unique(SDM_data_Reg$Area_km2)
 unique(SDM_data_CA$Area_km2)
 
 #Center of gravity (all, national, per core area), per year and season----
 names(SDM_data_CA)
-unique(SDM_data$Stratum)
+unique(SDM_data_CA$Stratum)
 # Group dataframe by year and calculate weighted mean longitude and latitude
 
 #we're calculating the weighted mean of lon/lat based on the abundance values, 

@@ -230,6 +230,4 @@ combinedreg <- (pr1 | pr2 ) +
   theme(plot.margin = unit(c(1, 0, 0,0), "cm")) # Removes outer margins
 combinedreg
 
-# Save the coefficients to a new file
-#write.csv(centroid_latitude, "COGgrouped_lm_coefficients.csv", row.names = FALSE)
 
