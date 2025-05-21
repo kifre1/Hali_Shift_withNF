@@ -1,4 +1,4 @@
-#Step 1: Plot Abundance Trends
+#Step 1: Plot Abundance Trends and ave file for plotting.
 
 #Abundance trend Plots
 library(dplyr)
@@ -51,9 +51,16 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
 abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))
 abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
 #plot the regional abundance seasonally 
-#remove "all", isolate spring, rename regions
+#remove "all", isolate spring, rename file and regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+#Here Nancy is creating another file named SPring so she can plot it elsewhere----
+abundance_ind_Region.Spring<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+abundance_ind_Region.Spring$Period<-NULL
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year<2006]<-"Before Warming"
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year>2005]<-"During Warming"
+abundance_ind_Region.Spring$Region<-factor(abundance_ind_Region.Spring$Index_Region)
+write.csv(abundance_ind_Region.Spring, here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"))
 
 regpal<- c("orange", "darkblue")
 RegionalPlot<- ggplot(data = abundance_ind_Region, aes(x = Year, y = Index_Estimate, color = Index_Region))+
@@ -69,8 +76,8 @@ RegionalPlot
 
 #Calculate the change in slope
 abundance_ind_Region$Period<-NULL
-abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"Before"
-abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"After"
+abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"Before Warming"
+abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"During Warming"
 
 Reg_Abundance_coefficients_df <- abundance_ind_Region %>%
   group_by(Index_Region,Period) %>%
@@ -85,7 +92,7 @@ Reg_Abundance_coefficients_df <- Reg_Abundance_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 Reg_Abundance_coefficients_df$ordRegion<-factor(Reg_Abundance_coefficients_df$Index_Region,levels=c("Canada", "USA"))
 pd <- position_dodge(.5)
-
+write.csv(Reg_Abundance_coefficients_df, here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.csv"))
 ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 3,position=pd) +
