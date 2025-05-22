@@ -47,29 +47,48 @@ pd <- position_dodge(.5)
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
 names(FigAbd.Region.Spring)
 Reg_Abundance_coefficients_df <- read.csv(here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.csv"),row.names=NULL)
+names(Reg_Abundance_coefficients_df)
 #To estimate the proportion ot toal abundance by Season, I have to do it here as teh script in 3.3Regional_Proportions can only easily be run if you have VAST
-proportions_and_density_Regional <- read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"),row.names=NULL)
-proportions_and_density_Regional$Region<-factor(proportions_and_density_Regional$Index_Region, levels=c("USA","Canada"))
-proportions_and_density_Regional$Period<-NULL
-proportions_and_density_Regional$Period[proportions_and_density_Regional$Year<2006]<-"Before Warming"
-proportions_and_density_Regional$Period[proportions_and_density_Regional$Year>2005]<-"During Warming"
-proportions_and_density_Regional.Spring<-subset(proportions_and_density_Regional, proportions_and_density_Regional$Season=="Spring")
+Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
+#isolate spring 
+Reg_Prop_Spring <- subset(Reg_Prop, Reg_Prop$Season == "Spring")
+names(Reg_Prop_Spring)
+#plot check and adding vars to figure out proportion before and during warming.----
+Reg_Prop_Spring$Period<-NULL
+Reg_Prop_Spring$Period[Reg_Prop_Spring$Year<2006]<-"Before Warming"
+Reg_Prop_Spring$Period[Reg_Prop_Spring$Year>2005]<-"During Warming"
+Reg_Prop_Spring$Region<-factor(Reg_Prop_Spring$Index_Region)
+names(Reg_Prop_Spring)
+library(dplyr)
 
-props <- proportions_and_density_Regional.Spring %>%
-  group_by(Period) %>%   
-  summarise(                       
-    Total_Estimate = sum(Index_Estimate)#total catch for the year
-  ) 
+popr <- Reg_Prop_Spring %>%
+  group_by(Period) %>%
+  mutate(Total_EstimateForPeriod = sum(Index_Estimate)) %>%
+  ungroup() %>%
+  group_by(Period, Region) %>%
+  summarise(Total_EstimateForRegion = sum(Index_Estimate), 
+            Total_EstimateForPeriod = first(Total_EstimateForPeriod)) %>%
+  mutate(Prop = Total_EstimateForRegion / Total_EstimateForPeriod * 100) %>%
+  ungroup()
 
-Proportion =  round(Index_Estimate / Total_Estimate, 3),  # Proportion per region rounded to 3 decimals
-Proportion_SD = round(Index_SD / Total_Estimate, 3) #the SD also needs to be scaled by the same factor in order to remain consistent
-
+Regiona_Proportion_Plot_Spring<-ggplot(Reg_Prop_Spring, aes(x = Year, y = Proportion, fill = Index_Region)) +
+  geom_area() +
+  scale_fill_manual(values = c("orange", "darkblue")) +
+  labs(
+    title = "Mean Proportion of Total Est. Abun. Spring",
+    x = "Year",
+    y = "Proportion of Total (%)",
+    fill = NULL
+  ) +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+##END adding vars to figure out proportion before and during warming.----
+popr
 ##Figure ABD Panel A----
 regpal<- c("orange", "darkblue")
 colbline<-brewer.pal(3, "Dark2")
 custom_labels <- c(
-  "Canada: Before (96%), During (94%) Change (2%)",
-  "USA:    Before ( 4%), During ( 6%) Change (35%)"
+  "Canada: Before (93.9%), During (94%)",
+  "USA:    Before ( 6.1%), During ( 6%)"
 )
 ARegionalPlot<- 
   ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = Index_Estimate/1000000),group=Region)+
@@ -87,31 +106,31 @@ ARegionalPlot<-
          fill = "none") + 
   labs(y="Modelled Abundance (Millions)", x="")+
   guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1993, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2012, y = 7, label = "During Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 1996, y = 4.3, label = "Before Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 2014, y = 4.3, label = "During Warming", color = "black", size = 5,family = "serif") +
   #Before
-  annotate("text", x = 1995, y = 3.1, label = "96%", color = "black", size = 4) +
-  annotate("segment", x = 1995, xend = 1995, y = 2.7, yend = 2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
-  annotate("text", x = 1992, y = .85, label = "4%", color = "black", size = 4) +
-  annotate("segment", x = 1992, xend = 1992, y = .7, yend = .3, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
+ # annotate("text", x = 1995, y = 3.1, label = "94%", color = "black", size = 4) +
+#  annotate("segment", x = 1995, xend = 1995, y = 2.7, yend = 2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
+ # annotate("text", x = 1992, y = .85, label = "6%", color = "black", size = 4) +
+  #annotate("segment", x = 1992, xend = 1992, y = .7, yend = .3, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
   #After
-  annotate("text", x = 2015, y = 6.2, label = "94%", color = "black", size = 4) +
-  annotate("segment", x = 2015, xend = 2015, y = 5.7, yend = 5.2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
-  annotate("text", x = 2015, y = .9, label = "6%", color = "black", size = 4) +
-  annotate("segment", x = 2015, xend = 2015, y = .7, yend = .3, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
+  #annotate("text", x = 2015, y = 6.2, label = "94%", color = "black", size = 4) +
+  #annotate("segment", x = 2015, xend = 2015, y = 5.7, yend = 5.2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
+  #annotate("text", x = 2015, y = .9, label = "6%", color = "black", size = 4) +
+  #annotate("segment", x = 2015, xend = 2015, y = .7, yend = .3, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
   #annotate("rect", xmin = 2004, xmax = 2014, ymin = 3, ymax = 5, alpha = 0.2, fill = "red") +
   theme(text = element_text(family = "serif"),  
         legend.box.background = element_blank(), # Transparent legend box
-        legend.position = c(.15,.7),
+        legend.position.inside = c(.15,.7),
         legend.text = element_text(size = 14,family="serif"),
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
 #Figure ABD RATE----
-FigAbd.RegionCoef$Ord2Region<-factor(FigAbd.RegionCoef$Region, levels=c("USA","Canada"))
+Reg_Abundance_coefficients_df$Ord2Region<-factor(Reg_Abundance_coefficients_df$Index_Region, levels=c("USA","Canada"))
 #FigAbd.RegionCoef$RevPeriod <- factor(FigAbd.RegionCoef$Period, levels = c("During Warming", "Before Warming")) 
 RegionRatesPlot<-
-  ggplot(FigAbd.RegionCoef, aes(x = factor(Ord2Region), y = estimate,fill=Period)) +
+  ggplot(Reg_Abundance_coefficients_df , aes(x = factor(Ord2Region), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = pd) +
   geom_point(shape = 21, size = 3, position = pd) +
   coord_flip() +

@@ -5,9 +5,15 @@
 Notes.pptx
 2025-04-04
 Trials
+<<<<<<< Updated upstream
 NancBranch_01_ProcessDataforEAOanalysis.R
 NancBranchDataScript/EAOrmarkdown.docx
 Tryrmd.html
 Tryrmd.Rmd
 *.dcf
 2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv
+=======
+>>>>>>> ceb9218d519bbee3381f6865372cabb21513dbc8
+FullModel_April23.pptx
+*.html
+>>>>>>> Stashed changes
