@@ -50,13 +50,13 @@ abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundanc
 #1.1 plot the regional abundance seasonally 
 #remove "all", isolate spring, rename regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
-abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+abundance_ind_Region.Spring<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
 
 regpal<- c("orange", "darkblue")
-RegionalPlot<- ggplot(data = abundance_ind_Region, aes(x = Year, y = Index_Estimate, color = Index_Region))+
+RegionalPlot<- ggplot(data = abundance_ind_Region.Spring, aes(x = Year, y = Index_Estimate, color = Index_Region))+
   geom_point()+
 geom_line()+
-  geom_errorbar(data = abundance_ind_Region, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
+  geom_errorbar(data = abundance_ind_Region.Spring, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
   labs(title="Estimated Abundance \nAggregated by Region: Spring", y="Count", x="Year")+
   scale_y_continuous(labels = label_number())+
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
@@ -65,25 +65,25 @@ guides(color = guide_legend(title = NULL))
 RegionalPlot
 
 #1.2 Calculate and plot the change in slope for each time period
-abundance_ind_Region$Period<-NULL
-abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"1990-2005"
-abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"2006-2023"
-
-Reg_Abundance_coefficients_df <- abundance_ind_Region %>%
+abundance_ind_Region.Spring$Period<-NULL
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year<2006]<-"Before Warming"
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year>2005]<-"During Warming"
+## NS Modifying here and logging
+Reg_Abundance_coefficients_df.Spring <- abundance_ind_Region.Spring %>%
   group_by(Index_Region,Period) %>%
   do({
-    model <- lm((Index_Estimate) ~ Year, data = .)
+    model <- lm(log10(Index_Estimate+1) ~ Year, data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
   ungroup()
 
-Reg_Abundance_coefficients_df <- Reg_Abundance_coefficients_df%>%
+Reg_Abundance_coefficients_df.Spring <- Reg_Abundance_coefficients_df.Spring%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-Reg_Abundance_coefficients_df$ordRegion<-factor(Reg_Abundance_coefficients_df$Index_Region,levels=c("Canada", "USA"))
+Reg_Abundance_coefficients_df.Spring$ordRegion<-factor(Reg_Abundance_coefficients_df.Spring$Index_Region,levels=c("Canada", "USA"))
 pd <- position_dodge(.5)
-
-ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+write.csv(Reg_Abundance_coefficients_df.Spring,here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.Spring.csv"))
+ggplot(Reg_Abundance_coefficients_df.Spring  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 3,position=pd) +
   coord_flip()+
