@@ -46,8 +46,8 @@ pd <- position_dodge(.5)
 
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
 names(FigAbd.Region.Spring)
-Reg_Abundance_coefficients_df <- read.csv(here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.csv"),row.names=NULL)
-names(Reg_Abundance_coefficients_df)
+Reg_Abundance_coefficients_df.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.Spring.csv"),row.names=NULL)
+names(Reg_Abundance_coefficients_df.Spring)
 #To estimate the proportion ot toal abundance by Season, I have to do it here as teh script in 3.3Regional_Proportions can only easily be run if you have VAST
 Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
 #isolate spring 
