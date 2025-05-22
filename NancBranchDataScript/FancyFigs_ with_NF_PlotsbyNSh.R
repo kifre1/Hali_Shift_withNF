@@ -49,20 +49,21 @@ names(FigAbd.Region.Spring)
 Reg_Abundance_coefficients_df <- read.csv(here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.csv"),row.names=NULL)
 #To estimate the proportion ot toal abundance by Season, I have to do it here as teh script in 3.3Regional_Proportions can only easily be run if you have VAST
 proportions_and_density_Regional <- read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"),row.names=NULL)
+proportions_and_density_Regional$Region<-factor(proportions_and_density_Regional$Index_Region, levels=c("USA","Canada"))
 proportions_and_density_Regional$Period<-NULL
 proportions_and_density_Regional$Period[proportions_and_density_Regional$Year<2006]<-"Before Warming"
 proportions_and_density_Regional$Period[proportions_and_density_Regional$Year>2005]<-"During Warming"
 proportions_and_density_Regional.Spring<-subset(proportions_and_density_Regional, proportions_and_density_Regional$Season=="Spring")
-display.brewer.all(colorblindFriendly = TRUE)
 
 props <- proportions_and_density_Regional.Spring %>%
-  group_by(Period) %>%                               
-mutate(
-    Total_Estimate = sum(Index_Estimate),#total catch for the year
-    Proportion =  round(Index_Estimate / Total_Estimate, 3),  # Proportion per region rounded to 3 decimals
-    Proportion_SD = round(Index_SD / Total_Estimate, 3) #the SD also needs to be scaled by the same factor in order to remain consistent
+  group_by(Period) %>%   
+  summarise(                       
+    Total_Estimate = sum(Index_Estimate)#total catch for the year
   ) 
-  
+
+Proportion =  round(Index_Estimate / Total_Estimate, 3),  # Proportion per region rounded to 3 decimals
+Proportion_SD = round(Index_SD / Total_Estimate, 3) #the SD also needs to be scaled by the same factor in order to remain consistent
+
 ##Figure ABD Panel A----
 regpal<- c("orange", "darkblue")
 colbline<-brewer.pal(3, "Dark2")
