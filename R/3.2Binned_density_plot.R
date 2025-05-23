@@ -122,7 +122,7 @@ lab_lon = -65
 start_year<-1990
 season_increment <- 3 
 legend_title<- "Log(Density)" 
-
+library(terra)
 vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, SelectedSeason,
                                                 climate_scenario = "", mask, all_times = all_times, plot_times = NULL, land_sf, xlim, ylim, crs,
                                                 lab_lat = NULL, lab_lon = NULL, panel_or_gif = "panel", out_dir, land_color = "#d9d9d9", 
@@ -219,6 +219,14 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
     pred_df_use <- data.frame(cbind(coords_keep, "z" = as.numeric(pred_df_temp$z)))
     names(pred_df_use) <- c("x", "y", "z")
     
+    # Save raster from interpolated matrix
+    rast <- rast(pred_df_interp)
+    names(rast) <- paste0("Bin_", bin_idx)
+    
+    # Save raster file (GeoTIFF)
+    writeRaster(rast, filename = paste0(out_dir, "/", nice_category_names, "_", pred_label, "_", spatial_var, "_bin", bin_idx, ".tif"), 
+                overwrite = TRUE)
+    
     # Year range for title
     season_years_in_bin <- as.numeric(season_times[which(bin_years == bin_idx)])
     if (length(season_years_in_bin) == 0 || all(is.na(season_years_in_bin))) {
@@ -274,7 +282,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
 }
 
 
-vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Fall",SelectedSeason= "Fall", spatial_var = "Index_gctl", 
+vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",SelectedSeason= "Spring", spatial_var = "Index_gctl", 
                                     nice_category_names = "AtlanticHalibut_Index_gctl", mask = region_shape, all_times = all_times, 
                                     plot_times = season_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
                                     lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
@@ -283,10 +291,46 @@ vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_la
 
 
 
+#Plotting abundance estimates and difference
+library(terra)
+library(here)
+library(sf)
+#read in the rasters
+r1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_Spring_Index_gctl_bin1.tif"))
+r2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_Spring_Index_gctl_bin2.tif"))
 
+region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
+region_shape <- st_make_valid(region_shape)
+if (!st_crs(region_shape) == crs(r1)) {
+  region_shape <- st_transform(region_shape, crs(r1))
+}
+shape_vect <- vect(region_shape)
+r1<- mask(r1, shape_vect)
+r2<- mask(r2, shape_vect)
 
+#Create rasters for difference and % change
+diff_rast <- r2 - r1
+percent_change_rast <- ((r2 - r1) / r1) * 100
+percent_change_rast[!is.finite(percent_change_rast)] <- NA
+plot(percent_change_rast)
+plot(diff_rast)
 
+library(ggplot2)
 
+#turn the rasters to a df for ggplot
+diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(diff_rast_df)[3] <- "difference"
+
+#beginning to work on plot, being the sup2 plotting data here
+ggplot() +
+  geom_raster(data = r_df, aes(x = x, y = y, fill = value)) +
+  geom_sf(data = boundary, fill = NA, color = "black", linewidth = 0.5) +
+  scale_fill_viridis_c() +
+  coord_sf() +
+  theme_minimal()
+
+writeRaster(diff_rast, "out_dir/nice_name_label_Index_gctl_diff.tif", overwrite = TRUE)
+writeRaster(percent_change_rast, "out_dir/nice_name_label_Index_gctl_percent_change.tif", overwrite = TRUE)
 
 
 
