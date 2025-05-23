@@ -173,7 +173,7 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
   } else {
     pred_array <- vast_fit$Report[[spatial_var]]
     
-    if (spatial_var == "D_gct") {
+    if (spatial_var == "Index_gctl") {
       pred_array <- log(pred_array)
     }
   }
@@ -198,8 +198,8 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
   land_sf <- st_transform (land_sf, CRS_orig)
   # Loop through the bins, generate plots for each bin
   rasts_out <- vector("list", bins)
-  rast_lims <- c(min(pred_array), max(pred_array))
-  
+  #rast_lims <- c(min(pred_array), max(pred_array))
+  rast_lims<-c(1,6)
   for (bin_idx in 1:bins) {
     mean_data <- bin_means[[bin_idx]]$mean_data
     data_df <- data.frame(locs, z = as.vector(mean_data)) %>%
@@ -254,7 +254,8 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
       geom_tile(data = pred_df_use, aes(x = x, y = y, fill = z)) +
       #scale_fill_viridis_c(name = legend_title_final, option = "viridis", na.value = "transparent", limits = rast_lims) +
       #  scale_fill_gradientn(colors = c("darkblue", "lightblue", "orange2", "orangered2"), na.value = "transparent", limits = rast_lims) +
-      scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "darkorange1","orangered", "red"), na.value = "transparent", limits = rast_lims, name=legend_title) +
+      
+      scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "orange1", "red"), na.value = "transparent", limits = rast_lims, name=legend_title) +
       annotate("text", x = lab_lon, y = lab_lat, label = plot_title) +
       labs(title = SelectedSeason) +
       geom_sf(data = land_sf, fill = land_color, lwd = 0.2, na.rm = TRUE) +
@@ -318,16 +319,89 @@ plot(diff_rast)
 library(ggplot2)
 
 #turn the rasters to a df for ggplot
+#load data from Sup2
+#Before, 1990-2005
+rast_lims<-c(1,6)
+
+R1_df <- as.data.frame(r1, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(R1_df)[3] <- "EstimatedAbundance"
+
+ggplot() +
+  geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = Hague, color="darkred", size = 2) +
+  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = land, fill="lightgrey") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="Estimated Abundance, 1990-2005", x = NULL, y = NULL)+
+  theme(
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank()   # removes minor grid lines
+  )
+
+#Before, 1990-2005
+R2_df <- as.data.frame(r2, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(R2_df)[3] <- "EstimatedAbundance"
+
+ggplot() +
+  geom_raster(data = R2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent",limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = Hague, color="darkred", size = 2) +
+  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = land, fill="lightgrey") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL)+
+  theme(
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank()   # removes minor grid lines
+  )
+
+#Difference
 diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_rast_df)[3] <- "difference"
 
-#beginning to work on plot, being the sup2 plotting data here
 ggplot() +
-  geom_raster(data = r_df, aes(x = x, y = y, fill = value)) +
-  geom_sf(data = boundary, fill = NA, color = "black", linewidth = 0.5) +
-  scale_fill_viridis_c() +
+  geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
+  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
   coord_sf() +
-  theme_minimal()
+  geom_sf(data = Hague, color="darkred", size = 2) +
+  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = land, fill="lightgrey") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="Difference", x = NULL, y = NULL)+
+  theme(
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank()   # removes minor grid lines
+  )
+
+#Percent Change
+percent_change_df <- as.data.frame(percent_change_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(percent_change_df)[3] <- "PChange"
+
+ggplot() +
+  geom_raster(data = percent_change_df, aes(x = x, y = y, fill = PChange)) +
+  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "orange1", "red"), na.value = "transparent") +
+  coord_sf() +
+  geom_sf(data = Hague, color="darkred", size = 2) +
+  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = land, fill="lightgrey") +
+  xlim(-73, -48) + ylim(39, 52)+
+  labs(title="Percent Change", x = NULL, y = NULL)+
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank()   # removes minor grid lines
+  )
+
 
 writeRaster(diff_rast, "out_dir/nice_name_label_Index_gctl_diff.tif", overwrite = TRUE)
 writeRaster(percent_change_rast, "out_dir/nice_name_label_Index_gctl_percent_change.tif", overwrite = TRUE)

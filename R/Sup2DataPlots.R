@@ -6,6 +6,8 @@
 #Plot 2: A look at the distribution of RV Survey data
   #add NF
   #Plot presence only 
+library(sf)
+library (ggplot2)
 
 All_region <- st_read(here::here("", "R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))
 crs <- st_crs(All_region)
