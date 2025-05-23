@@ -161,9 +161,11 @@ Figure2AbdAbdRates
 # END Plot abundance indexed regions  ----
 ggsave(here::here("R/Hali_Shift_withNF/NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #EOA plots and table for supplemental----
+
 # PLOT EAO,----
 
 R/DataforFinalFigs
+
 
 
 
