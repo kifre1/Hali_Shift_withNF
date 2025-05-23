@@ -99,7 +99,8 @@ Reg_Abundance_coefficients_df.Spring <- Reg_Abundance_coefficients_df.Spring%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 Reg_Abundance_coefficients_df.Spring$ordRegion<-factor(Reg_Abundance_coefficients_df.Spring$Index_Region,levels=c("Canada", "USA"))
 pd <- position_dodge(.5)
-write.csv(Reg_Abundance_coefficients_df.Spring,here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.Spring.csv"))
+RegionAbdSlope.Spring<-Reg_Abundance_coefficients_df.Spring
+write.csv(RegionAbdSlope.Spring,here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"))
 ggplot(Reg_Abundance_coefficients_df.Spring  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 3,position=pd) +
