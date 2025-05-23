@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 
+=======
+#Step 1: Plot Abundance Trends and ave file for plotting.
+>>>>>>> NancBranch
 
 #Abundance trend Plots
 library(dplyr)
@@ -47,10 +51,24 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
 # Part 1: Regional Abundance trends  
 abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))
 abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
+<<<<<<< HEAD
 #1.1 plot the regional abundance seasonally 
 #remove "all", isolate spring, rename regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
 abundance_ind_Region.Spring<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+=======
+#plot the regional abundance seasonally 
+#remove "all", isolate spring, rename file and regions
+abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
+abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+#Here Nancy is creating another file named SPring so she can plot it elsewhere----
+abundance_ind_Region.Spring<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
+abundance_ind_Region.Spring$Period<-NULL
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year<2006]<-"Before Warming"
+abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year>2005]<-"During Warming"
+abundance_ind_Region.Spring$Region<-factor(abundance_ind_Region.Spring$Index_Region)
+write.csv(abundance_ind_Region.Spring, here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"))
+>>>>>>> NancBranch
 
 regpal<- c("orange", "darkblue")
 RegionalPlot<- ggplot(data = abundance_ind_Region.Spring, aes(x = Year, y = Index_Estimate, color = Index_Region))+
@@ -64,12 +82,21 @@ geom_line()+
 guides(color = guide_legend(title = NULL))
 RegionalPlot
 
+<<<<<<< HEAD
 #1.2 Calculate and plot the change in slope for each time period
 abundance_ind_Region.Spring$Period<-NULL
 abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year<2006]<-"Before Warming"
 abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year>2005]<-"During Warming"
 ## NS Modifying here and logging
 Reg_Abundance_coefficients_df.Spring <- abundance_ind_Region.Spring %>%
+=======
+#Calculate the change in slope
+abundance_ind_Region$Period<-NULL
+abundance_ind_Region$Period[abundance_ind_Region$Year<2006]<-"Before Warming"
+abundance_ind_Region$Period[abundance_ind_Region$Year>2005]<-"During Warming"
+
+Reg_Abundance_coefficients_df <- abundance_ind_Region %>%
+>>>>>>> NancBranch
   group_by(Index_Region,Period) %>%
   do({
     model <- lm(log10(Index_Estimate+1) ~ Year, data = .)
@@ -81,8 +108,13 @@ Reg_Abundance_coefficients_df.Spring <- Reg_Abundance_coefficients_df.Spring%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 Reg_Abundance_coefficients_df.Spring$ordRegion<-factor(Reg_Abundance_coefficients_df.Spring$Index_Region,levels=c("Canada", "USA"))
 pd <- position_dodge(.5)
+<<<<<<< HEAD
 write.csv(Reg_Abundance_coefficients_df.Spring,here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.Spring.csv"))
 ggplot(Reg_Abundance_coefficients_df.Spring  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+=======
+write.csv(Reg_Abundance_coefficients_df, here::here("2025-04-23/Output/IndexAbundance/Reg_Abundance_coefficients_df.csv"))
+ggplot(Reg_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+>>>>>>> NancBranch
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 3,position=pd) +
   coord_flip()+
