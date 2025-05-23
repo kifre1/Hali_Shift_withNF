@@ -77,7 +77,6 @@ Reg_Abundance_coefficients_df.Spring <- abundance_ind_Region.Spring %>%
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
   ungroup()
-
 Reg_Abundance_coefficients_df.Spring <- Reg_Abundance_coefficients_df.Spring%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 Reg_Abundance_coefficients_df.Spring$ordRegion<-factor(Reg_Abundance_coefficients_df.Spring$Index_Region,levels=c("Canada", "USA"))
