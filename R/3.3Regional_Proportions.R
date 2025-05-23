@@ -210,8 +210,6 @@ Regional_Proportion <- Regional_Proportion %>%
 head(Regional_Proportion)
 #save----
 write.csv(CA_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_CA.csv")))
-write.csv(Regional_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional2.csv")))
-
 write.csv(Regional_Proportion, (here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv")))
 
 
@@ -446,7 +444,7 @@ Reg_Prop_avg <- Reg_Prop %>%
   group_by(Year, Index_Region) %>%
   summarise(Proportion = mean(Proportion, na.rm = TRUE),
             ProportionalDensity = mean(ProportionalDensity, na.rm = TRUE), .groups = "drop")
-  
+
 Regiona_Proportion_Plot<-ggplot(Reg_Prop_avg, aes(x = Year, y = Proportion, fill = Index_Region)) +
   geom_area() +
   scale_fill_manual(values = c("orange", "darkblue")) +
@@ -457,6 +455,22 @@ Regiona_Proportion_Plot<-ggplot(Reg_Prop_avg, aes(x = Year, y = Proportion, fill
     fill = NULL
   ) +
   geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+
+Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
+#isolate spring 
+Reg_Prop_Spring <- subset(Reg_Prop, Reg_Prop$Season == "Spring")
+
+Regiona_Proportion_Plot_Spring<-ggplot(Reg_Prop_Spring, aes(x = Year, y = Proportion, fill = Index_Region)) +
+  geom_area() +
+  scale_fill_manual(values = c("orange", "darkblue")) +
+  labs(
+    title = "Mean Proportion of Total Est. Abun. Spring",
+    x = "Year",
+    y = "Proportion of Total (%)",
+    fill = NULL
+  ) +
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)
+
 Regiona_RelativeDensity_Plot<-ggplot(Reg_Prop_avg, aes(x = Year, y = ProportionalDensity, fill = Index_Region)) +
   geom_area() +
   scale_fill_manual(values = c("orange", "darkblue")) +
