@@ -172,7 +172,7 @@ FigureXEAOrate
 # END Plot EAO rates----
 ggsave(here::here("R/DataforFinalFigs/FigureXEAOrate.jpeg"), plot =FigureXEAOrate, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
-##PlotEAO-
+##PlotEAO----
 EAOplot<-ggplot(EAOcc_DF_Region_Spring,aes(x = Year, y = EffectiveArea/1000)) +
   geom_point(aes(color = Region),shape = 19,size=2.5) +
   geom_ribbon(aes(x = Year, 
