@@ -13,7 +13,7 @@ All_region <- st_read(here::here("", "R/Shapefiles/IndexShapefiles/Full_RegionAl
 crs <- st_crs(All_region)
 
 #bounding box for plotting
-study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -44, ymax = 60))
+study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -45, ymax = 60))
 study_area_polygon <- st_as_sfc(study_area_bbox)
 st_crs(study_area_polygon) <- crs
 

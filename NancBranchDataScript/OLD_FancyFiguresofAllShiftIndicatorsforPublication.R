@@ -503,7 +503,6 @@ COGSupptabledoc2 <- body_add_flextable(doc, value = COGSupptable.ft)
 # Save the document
 print(COGSupptabledoc2, target = here::here("R/DataforFinalFigs/COGSupptabledoc2.docx"))
 
-
 #END Create arrow data by group----
 ggsave(here::here("R/DataforFinalFigs/Figure3COG_CAMap.jpeg"), plot = COG_CA_map, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 # FOR SUPPLEMENTAL USING CA DATA
