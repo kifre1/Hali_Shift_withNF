@@ -62,7 +62,7 @@ arrow_data_CA <- centroid_CA_sf_spr %>%
   st_drop_geometry()
   
 #END Just arrows----
-
+summary(arrow_data_CA)
 #to compute the distance in periods----
 library(dplyr)
 library(sf)

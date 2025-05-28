@@ -274,7 +274,7 @@ COG_Reg_map<-ggplot() +
         #axis.text.x = element_blank(),      # Customize x-axis label
         plot.margin=margin(0,0,0,0))
 COG_Reg_map
-#END READ IN FILE AND PLOT COG Region ----
+#END READ PLOT COG Region ----
 #Plot COG CA----
 #Don't forget to run arrows in MakingMapArrowsandTables.r
 
@@ -349,12 +349,15 @@ COGCombo
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/COGCombo.jpeg"), plot = COGCombo, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
 #Making supplemental tables for distances and for slopes----
-#Distance Table
+#Distance estimates MADE IN MakingMapArrowsandTables.r
+
 COGSupptable<-merge(COGRegMovement,COGCoreMovement,all=T)
 COGSupptable <- COGSupptable %>%
   mutate(Region_CoreArea= factor(Region_CoreArea, 
                                  levels = c("Canada", "USA", "Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","GrandBanks","GBTail","HaliChan"), ordered = F))  %>%  # Custom order for Period
   arrange(Region_CoreArea, Period)
+
+#Find range of distances travelled for just core areas
 
 COGSupptable.ft <- flextable(COGSupptable)
 # Format the numeric columns with 2 decimal places
@@ -433,18 +436,22 @@ suppcogca
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
 # PLOT COG Slopes and CI CORE AREAS and combine----
-COGSlopeCI$ord2Core_Area <- factor(COGSlopeCI$ordCore_Area,levels = rev(unique(COGSlopeCI$ordCore_Area)))                               
-unique(COGSlopeCI$ord2Core_Area)
-unique(COGSlopeCI$ordCore_Area)
-p1<-ggplot(COGSlopeCI[COGSlopeCI$AxesNE=="Latitude",] , aes(x = (ord2Core_Area), y = estimate,fill=Period)) +
+cogCAslope$ordCoreArea<-factor(cogCAslope$Stratum, levels=c("Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
+unique(cogCAslope$ordCoreArea)
+cogCAslope_spr<-cogCAslope[cogCAslope$Season=="Spring",]
+
+cogCAslope_spr$ord2CoreArea <- factor(cogCAslope_spr$ordCoreArea,levels = rev(unique(cogCAslope_spr$ordCoreArea)))                               
+unique(cogCAslope_spr$ord2CoreArea)
+unique(cogCAslope_spr$ordCoreArea)
+p1<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Latitude",] , aes(x = (ordCoreArea), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 2,position=pd) +
   scale_fill_manual(values=c("steelblue", "orangered"))+
-  geom_vline(xintercept = seq(1.5, length(unique(COGSlopeCI$ord2Core_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
   #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
   geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
   #scale_x_discrete(limits = rev(levels(factor(COGSlopeCI$ordCore_Area))))+ 
-  ylim(-0.018,0.018)+
+  #ylim(-0.018,0.018)+
   xlab("")+  ylab("Rate of change (DD/yr)")+
   annotate("text", x = 1.6, y = .015, label = "North", hjust = 0,size=4,family="serif") +
   annotate("text", x = 1.6, y = -.012, label = "South", hjust = 0,size=4,family="serif") +
@@ -454,14 +461,14 @@ p1<-ggplot(COGSlopeCI[COGSlopeCI$AxesNE=="Latitude",] , aes(x = (ord2Core_Area),
         axis.title.y = element_text(margin = margin(r = 5)),  #  space for y-axis label
         plot.margin = margin(5.5, 5.5, 5.5, 5.5))  # Increase left margin
 
-
-p2<-ggplot(COGSlopeCI[COGSlopeCI$AxesNE=="Longitude",] , aes(x = ordCore_Area, y = estimate,fill=Period)) +
+p1
+p2<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Longitude",] , aes(x = ordCoreArea, y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
   geom_point(shape=21, size = 2,position=pd) +
   scale_fill_manual(values=c("steelblue", "orangered"))+
-  ylim(-0.018,0.018)+
+  #ylim(-0.018,0.018)+
   coord_flip() +
-  geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
   geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
   xlab("")+  ylab("Rate of change (DD/yr)") +
   annotate("text", x = 3, y = -.017, label = "West", hjust = 0,size=4,family="serif") +
@@ -472,7 +479,7 @@ p2<-ggplot(COGSlopeCI[COGSlopeCI$AxesNE=="Longitude",] , aes(x = ordCore_Area, y
         axis.title.x= element_text(margin = margin(b = 0)),  # Bring x-axis label closer
         plot.margin = margin(5.5, 5.5, 5.5, 5.5))
 
-
+p2
 combined <- (p1 | p2) +
   plot_layout(guides = "collect") &
   theme(
@@ -488,5 +495,190 @@ combined
 #ggsave("combined_figure.pdf", combined, width = 10, height = 5, 
 #      dpi = 300, device = cairo_pdf)
 ##END Combine----
-ggsave(here::here("R/DataforFinalFigs/FigureS2COGCA.jpeg"), plot = combined, dpi = 600, width =10, height = 5, units = "in", device = "jpeg")
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSCOGCASlopes.jpeg"), plot = combined, dpi = 600, width =10, height = 5, units = "in", device = "jpeg")
 #END FOR SUPPLEMENTAL USING CA DATA----
+
+#PLOT Distance to Hague Line
+#Figure DIST REG AND CA Trends ----
+# Processing distance data for REG and CA----
+
+dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
+dist_hague_Reg$Period<-NULL
+dist_hague_Reg$Period[DistHagTrans_Reg$Year<2006]<-"Before Warming"
+dist_hague_Reg$Period[DistHagTrans_Reg$Year>2005]<-"During Warming"
+dist_hague_Reg_spr<-dist_hague_Reg[dist_hague_Reg$Season=="Spring",]
+dist_hague_Reg_spr_agg<-dist_hague_Reg_spr %>%
+  group_by(Stratum,Period) %>%
+    summarise(
+    Dist_Mean = mean(Dist_Mean, na.rm = TRUE),
+    Dist_Med = mean(Dist_Med, na.rm = TRUE),
+    Dist_Q5 = mean(Dist_Q5, 0.05, na.rm = TRUE),
+    Dist_Q95 = mean(Dist_Q95, 0.95, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+dist_hague_CA<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_CA_seasonal.csv"))
+dist_hague_CA$Period<-NULL
+dist_hague_CA$Period[dist_hague_CA$Year<2006]<-"Before Warming"
+dist_hague_CA$Period[dist_hague_CA$Year>2005]<-"During Warming"
+dist_hague_CA_spr<-dist_hague_CA[dist_hague_CA$Season=="Spring",]
+
+dist_hague_CA_spr_agg<-dist_hague_CA_spr %>%
+  group_by(Stratum,Period) %>%
+  summarise(
+    Dist_Mean = mean(Dist_Mean, na.rm = TRUE),
+    Dist_Med = mean(Dist_Med, na.rm = TRUE),
+    Dist_Q5 = mean(Dist_Q5, 0.05, na.rm = TRUE),
+    Dist_Q95 = mean(Dist_Q95, 0.95, na.rm = TRUE)
+  ) %>%
+  ungroup()
+#Must TRANSFORM USA distances to be negative for plotting----
+dist_hague_RegFromZero<-dist_hague_Reg_spr_agg %>%
+  mutate(
+    Dist_Mean = case_when(
+      Stratum %in% c("USA") ~ Dist_Mean * -1,
+      TRUE ~ Dist_Mean
+    ),
+    Dist_Med = case_when(
+      Stratum %in% c("USA") ~ Dist_Med * -1,
+      TRUE ~ Dist_Med
+    ),
+    Dist_Q5 = case_when(
+      Stratum %in% c("USA") ~ Dist_Q5 * -1,
+      TRUE ~ Dist_Q5
+    ),
+    Dist_Q95 = case_when(
+      Stratum %in% c("USA") ~ Dist_Q95 * -1,
+      TRUE ~ Dist_Q95
+    )
+  )
+
+selected_categories <- c("CapeCod","EGOM","Nantucket","Georges")
+
+dist_hague_CAFromZero<-dist_hague_CA_spr_agg %>%
+  mutate(
+    Dist_Mean = case_when(
+      Stratum %in% selected_categories ~ Dist_Mean * -1,
+      TRUE ~ Dist_Mean
+      ),
+Dist_Med = case_when(
+  Stratum %in% selected_categories ~ Dist_Med * -1,
+  TRUE ~ Dist_Med
+),
+Dist_Q5 = case_when(
+  Stratum %in% selected_categories ~ Dist_Q5 * -1,
+  TRUE ~ Dist_Q5
+),
+Dist_Q95 = case_when(
+  Stratum %in% selected_categories ~ Dist_Q95 * -1,
+  TRUE ~ Dist_Q95
+  )
+)
+#END Must TRANSFORM USA distances to be negative for plotting----
+#END Processing distance data for REG and CA----
+   
+pd <- position_dodge(.7)
+##Plot Distance for REG----
+#have to set order for region because plot is flipped
+dist_hague_RegFromZero$Ord2Region<-factor(dist_hague_RegFromZero$Stratum, levels=c("USA","Canada"))
+DistReg<-ggplot(dist_hague_RegFromZero, aes(x = Ord2Region, y = Dist_Mean,fill=Period)) +
+  geom_linerange(aes(ymin = Dist_Q5, ymax =Dist_Q95),position=pd,color="darkgrey",size=1.5)+
+  geom_point(shape=21, size = 3,position=pd) +
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  coord_flip()+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  xlab("")+  ylab("")+
+  #ylab("Distance from Hague line (km)")+
+  scale_y_continuous(breaks = seq(-400, 1500, by = 200),limits=c(-400,1500)) +
+  theme_bw() + # A clean theme
+  theme(
+    text = element_text(family = "serif",size=14),  
+    axis.text = element_text(family = "serif",size=12),      
+    legend.position = "none",
+    #legend.position = c(0.75, 0.2),               # Position of the legend
+    legend.box.background = element_blank(), # Transparent legend box
+    legend.title = element_blank(),             # Hide legend title
+    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
+    axis.title.y = element_blank(),             # Remove y-axis label
+    axis.title.x = element_text(size = 14),      # Customize x-axis label
+    panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+    plot.margin=margin(10,40,20,30)
+  )
+DistReg
+##Plot Distance for CA----
+dist_hague_CAFromZero$ordCoreArea<-factor(dist_hague_CAFromZero$Stratum, levels=c("Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
+pd <- position_dodge(.7)
+DistHag<-ggplot(dist_hague_CAFromZero , aes(x = factor(ordCoreArea), y = Dist_Mean,fill=Period)) +
+  geom_linerange(aes(ymin = Dist_Q5, ymax =Dist_Q95),position=pd,color="darkgrey",size=1.5)+
+  geom_point(shape=21, size = 3,position=pd) +
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  coord_flip()+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  xlab("")+  ylab("Distance from Hague line (km)")+
+  scale_y_continuous(breaks = seq(-400, 1500, by = 200)) +  # set tick marks
+  theme_bw() + # A clean theme
+  theme(
+    text = element_text(family = "serif",size=14),  
+    axis.text = element_text(family = "serif",size=12),           
+    legend.position = c(0.75, 0.2),               # Position of the legend
+    #legend.box.background = element_blank(), # Transparent legend box
+    legend.title = element_blank(),             # Hide legend title
+    legend.text = element_text(size = 14, family = "serif"), # Customize legend text
+    axis.title.y = element_blank(),             # Remove y-axis label
+    axis.title.x = element_text(size = 14),      # Customize x-axis label
+    panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+    plot.margin=margin(10,40,20,30)
+  )
+DistHag
+##END DistHag----
+DistHagCombo<-plot_grid(DistReg, DistHag, nrow = 2,rel_heights = c(1, 2),labels = c("(a)", "(b)"),align = "v", axis = "lr") # Add labels
+DistHagCombo
+
+
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/DistHag.jpeg"), plot = DistHagCombo, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#
+#END PLOT Distance to Hague Line
+#Range Edge  ----
+rangeedge<-read.csv(here::here("R/DataforFinalFigs/Edge_df_NSreshp.csv"))
+range.spr<-rangeedge[rangeedge$Season=="Spring",]
+range.spr$Period<-NULL
+range.spr$Period[range.spr$Year<2006]<-"Before Warming"
+range.spr$Period[range.spr$Year>2005]<-"During Warming"
+names(range.spr);summary(range.spr)
+# Create a jitter object with both horizontal and vertical displacement
+set.seed(123)  # For reproducibility
+pos_jitter <- position_jitter(width = .1, height = .1)  # Jitter both horizontally and vertically
+
+## Two facets
+RangeEdge<-ggplot(range.spr, aes(x = Estimate_km_E_quantile_0.5, y = Estimate_km_N_quantile_0.5, 
+                                 color = Period)) +
+  geom_errorbarh(aes(
+    xmin = Estimate_km_E_quantile_0.05 - Std_Dev_km_E_quantile_0.05, 
+    xmax = Estimate_km_E_quantile_0.95 + Std_Dev_km_E_quantile_0.95
+  ), height = 0.1, position = pos_jitter, na.rm = TRUE) +
+  
+  geom_errorbar(aes(
+    ymin = Estimate_km_N_quantile_0.5 - Std_Dev_km_N_quantile_0.5, 
+    ymax = Estimate_km_N_quantile_0.5 + Std_Dev_km_N_quantile_0.5
+  ), width = 0.1, position = pos_jitter, na.rm = TRUE) +
+  
+  geom_point(position = pos_jitter, na.rm = TRUE, alpha = 1, size = 1.5, shape = 19) +
+  scale_color_manual(values = c("steelblue","orangered")) +
+  ylab("Range Edge N (km)")+
+  xlab("Range Edge E (km)")+
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.margin=margin(5,10,10,10),
+        axis.text.x = element_text(angle = 90, vjust = 0, hjust=.5,size=14,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=0,size=14,family="serif"),
+        axis.title.x=element_text(size=16,hjust=0.5,vjust=-2,family="serif"),
+        axis.title.y=element_text(size=16,hjust=0.5,vjust=4,angle=90,family="serif"),
+        strip.text=element_text(size=14,family="serif",angle=0),
+        strip.background = element_rect(colour = "black", fill = "white"))+
+  facet_wrap(~Period,nrow=1,scales="fixed")
+RangeEdge
+##END Plot Range Edge----
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#Plot deepening
