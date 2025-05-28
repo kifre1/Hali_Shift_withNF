@@ -2,16 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
-<<<<<<< HEAD
+
 =======
 Notes.pptx
 2025-04-04
 Trials
-<<<<<<< HEAD
->>>>>>> ceb9218d519bbee3381f6865372cabb21513dbc8
 FullModel_April23.pptx
 =======
-<<<<<<< Updated upstream
 NancBranch_01_ProcessDataforEAOanalysis.R
 NancBranchDataScript/EAOrmarkdown.docx
 Tryrmd.html
@@ -19,18 +16,13 @@ Tryrmd.Rmd
 *.dcf
 2025-04-23/Output/IndexAbundance/AbundanceEstimates_GridCentriods_Reg.csv
 =======
->>>>>>> ceb9218d519bbee3381f6865372cabb21513dbc8
 FullModel_April23.pptx
 *.html
->>>>>>> Stashed changes
->>>>>>> NancBranch
 R/DataforFinalFigs/Figure2AbdAbdRates.jpeg
-<<<<<<< Updated upstream
 R/DataforFinalFigs/FigureAppend_EAO.jpeg
 NancBranchDataScript/EAOrmarkdown.Rmd
 NancBranchDataScript/FancyFiguresforMS/~$GSlopeSupptabledoc2.docx
 NancBranchDataScript/FancyFiguresforMS/~$GSlopeSupptabledoc2.docx
 NancBranchDataScript/FancyFiguresforMS/~$GSlopeSupptabledoc2.docx
-=======
->>>>>>> Stashed changes
 NancBranchDataScript/FancyFigs_ with_NF_PlotsbyNSh.R
+NancBranchDataScript/FancyFiguresforMS/COGSlopeSupptabledoc2.docx
