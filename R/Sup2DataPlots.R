@@ -13,7 +13,7 @@ All_region <- st_read(here::here("", "R/Shapefiles/IndexShapefiles/Full_RegionAl
 crs <- st_crs(All_region)
 
 #bounding box for plotting
-study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -44, ymax = 48))
+study_area_bbox <- st_bbox(c(xmin = -76, ymin = 35.5, xmax = -45, ymax = 60))
 study_area_polygon <- st_as_sfc(study_area_bbox)
 st_crs(study_area_polygon) <- crs
 
@@ -76,7 +76,7 @@ CAMAP<-ggplot() +
   scale_fill_manual(values = region_colours)+
   #scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
   labs(title="Core Areas")+
-  xlim(-73, -48) + ylim(39.355, 48)+
+  xlim(-73, -48) + ylim(39.355, 55)+
   theme_bw()
 CAMAP
 

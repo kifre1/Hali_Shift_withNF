@@ -172,7 +172,7 @@ FigureXEAOrate
 # END Plot EAO rates----
 ggsave(here::here("R/DataforFinalFigs/FigureXEAOrate.jpeg"), plot =FigureXEAOrate, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
-##PlotEAO-
+##PlotEAO----
 EAOplot<-ggplot(EAOcc_DF_Region_Spring,aes(x = Year, y = EffectiveArea/1000)) +
   geom_point(aes(color = Region),shape = 19,size=2.5) +
   geom_ribbon(aes(x = Year, 
@@ -502,7 +502,6 @@ COGSupptabledoc2 <- body_add_flextable(doc, value = COGSupptable.ft)
 
 # Save the document
 print(COGSupptabledoc2, target = here::here("R/DataforFinalFigs/COGSupptabledoc2.docx"))
-
 
 #END Create arrow data by group----
 ggsave(here::here("R/DataforFinalFigs/Figure3COG_CAMap.jpeg"), plot = COG_CA_map, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
