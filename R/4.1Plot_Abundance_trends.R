@@ -1,8 +1,6 @@
-<<<<<<< HEAD
 
-=======
 #Step 1: Plot Abundance Trends and ave file for plotting.
->>>>>>> NancBranch
+
 
 #Abundance trend Plots
 library(dplyr)
@@ -51,12 +49,12 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
 # Part 1: Regional Abundance trends  
 abundance_ind_Region<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.csv"))
 abundance_ind_CA<-read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
-<<<<<<< HEAD
+
 #1.1 plot the regional abundance seasonally 
 #remove "all", isolate spring, rename regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
 abundance_ind_Region.Spring<-subset(abundance_ind_Region, abundance_ind_Region$Season=="Spring")
-=======
+
 #plot the regional abundance seasonally 
 #remove "all", isolate spring, rename file and regions
 abundance_ind_Region<-subset(abundance_ind_Region, abundance_ind_Region$Index_Region=="Canada"|abundance_ind_Region$Index_Region=="USA")
@@ -68,7 +66,7 @@ abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year<2006]<-"Befo
 abundance_ind_Region.Spring$Period[abundance_ind_Region.Spring$Year>2005]<-"During Warming"
 abundance_ind_Region.Spring$Region<-factor(abundance_ind_Region.Spring$Index_Region)
 write.csv(abundance_ind_Region.Spring, here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"))
->>>>>>> NancBranch
+
 
 regpal<- c("orange", "darkblue")
 RegionalPlot<- ggplot(data = abundance_ind_Region.Spring, aes(x = Year, y = Index_Estimate, color = Index_Region))+
@@ -154,6 +152,7 @@ CAPlot
 (CAMAP / CAPlot)+ plot_layout(heights = c(1,1))
 
 #2.2 Calculate and plot the change in slope for each time period
+## NS Modifying here and logging
 abundance_ind_CA$Period<-NULL
 abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
 abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
@@ -161,7 +160,7 @@ abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
 CA_Abundance_coefficients_df <- abundance_ind_CA %>%
   group_by(Index_Region,Period) %>%
   do({
-    model <- lm((Index_Estimate) ~ Year, data = .)
+    model <- lm(log10(Index_Estimate+1) ~ Year, data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
@@ -169,10 +168,12 @@ CA_Abundance_coefficients_df <- abundance_ind_CA %>%
 
 CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
   filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton","HaliChan",
-                                                                                                  "CapeCod","Browns","Gully","GrandBanks",
-                                                                                                  "Nantucket","Georges","Sable","GBTail"))
+CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,
+                                               levels=c("EGOM","BOF","CapeBreton","HaliChan",
+                                               "CapeCod","Browns","Gully","GrandBanks","Nantucket","Georges","Sable","GBTail"))
 
+write.csv(abundance_ind_CA, here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"))
+write.csv(CA_Abundance_coefficients_df, here::here("2025-04-23/Output/IndexAbundance/CA_Abundance_coefficients_df.csv"))
 
 pd <- position_dodge(.5)
 
