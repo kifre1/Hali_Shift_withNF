@@ -20,7 +20,7 @@ st_crs(study_area_polygon) <- crs
 #Mapping shapefiles
 EEZ <- st_read(here::here("", "Data/Mapping_shapefiles/EEZ.shp"))
 land <- st_read(here::here("", "Data/Mapping_shapefiles/poly_NAD83.shp"))
-contours <- st_read(here::here("", "Data/Mapping_shapefiles/DepthContours.shp"))
+contours <- st_read(here::here("", "Data/Mapping_shapefiles/GEBCO_DepthContours.shp"))
 NAFO <- st_read(here::here("", "Data/Mapping_shapefiles/Divisions.shp"))
 Hague <- st_read(here::here("", "Data/Mapping_shapefiles/HagueLine.shp"))
 
