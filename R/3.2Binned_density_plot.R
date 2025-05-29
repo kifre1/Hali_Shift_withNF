@@ -308,7 +308,8 @@ if (!st_crs(region_shape) == crs(r1)) {
 shape_vect <- vect(region_shape)
 r1<- mask(r1, shape_vect)
 r2<- mask(r2, shape_vect)
-
+plot(r1)
+plot(r2)
 #Create rasters for difference and % change
 diff_rast <- r2 - r1
 percent_change_rast <- ((r2 - r1) / r1) * 100
@@ -321,14 +322,14 @@ library(ggplot2)
 #turn the rasters to a df for ggplot
 #load data from Sup2
 #Before, 1990-2005
-rast_lims<-c(1,6)
+rast_lims<-c(0,6.5)
 
 R1_df <- as.data.frame(r1, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(R1_df)[3] <- "EstimatedAbundance"
 
-ggplot() +
+BeforePlot<- ggplot() +
   geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  scale_fill_gradientn(colors = c("darkblue","blue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -336,19 +337,22 @@ ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Estimated Abundance, 1990-2005", x = NULL, y = NULL)+
+  labs(title="Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "Log Abun.")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank()   # removes minor grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
-
-#Before, 1990-2005
+   
+#During, 2006-2023
 R2_df <- as.data.frame(r2, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(R2_df)[3] <- "EstimatedAbundance"
 
-ggplot() +
+DuringPlot<- ggplot() +
   geom_raster(data = R2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent",limits = rast_lims) +
+  scale_fill_gradientn(colors = c("darkblue","blue", "deepskyblue1","darkorange",   "red"), na.value = "transparent",limits = rast_lims) +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -356,17 +360,20 @@ ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL)+
+  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL, fill = "Log Abundance")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank()   # removes minor grid lines
+    panel.grid.minor = element_blank(),   # rmoves minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
 #Difference
 diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_rast_df)[3] <- "difference"
 
-ggplot() +
+DifferencePlot<-ggplot() +
   geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
   scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
   coord_sf() +
@@ -376,17 +383,20 @@ ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Difference", x = NULL, y = NULL)+
+  labs(title="Difference (1990-2005 vs. 2006-2023)", x = NULL, y = NULL, fill = "Change")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank()   # removes minor grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
 #Percent Change
 percent_change_df <- as.data.frame(percent_change_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(percent_change_df)[3] <- "PChange"
 
-ggplot() +
+ChangePlot<-ggplot() +
   geom_raster(data = percent_change_df, aes(x = x, y = y, fill = PChange)) +
   scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "orange1", "red"), na.value = "transparent") +
   coord_sf() +
@@ -399,17 +409,21 @@ ggplot() +
   theme_bw()+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank()   # removes minor grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
+#save the rasters for difference and change
+#make plots for average temperature (1990-2005) and average temperature durin warming or difference 
 
-writeRaster(diff_rast, "out_dir/nice_name_label_Index_gctl_diff.tif", overwrite = TRUE)
+writeRaster(diff_rast_df, "out_dir/difference_rast.tif", overwrite = TRUE)
 writeRaster(percent_change_rast, "out_dir/nice_name_label_Index_gctl_percent_change.tif", overwrite = TRUE)
 
+BeforePlot+DifferencePlot
 
-
-
-#archive: 
+#archive:---- 
 #this one is for plotting the statistics that have Time, category, site dimensions (no stratum).
 #the above was alters so that when pred_array is made, we select for Stratum1 (All) and then remove the Stratum dimension
 vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_grid, spatial_var, nice_category_names, pred_label, 
