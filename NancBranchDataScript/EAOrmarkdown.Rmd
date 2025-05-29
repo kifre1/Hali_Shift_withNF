@@ -26,12 +26,12 @@ library(tidyverse)
 library(broom)
 #library(flextable);library(officer)
 library(ggplot2);library(ggrepel) 
-
+library(ggpmisc)  # Make sure this is loaded for stat_poly_eq
 library(patchwork)
 #library(RColorBrewer); #display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE,#colorblindFriendly=FALSE)
 library(grid)  # For unit() function
 library(viridis) # For color palettes
-library(ggpmisc)
+
 theme_set(theme_bw())
 ```
 ```{r theme-settings, include=FALSE}
@@ -122,9 +122,13 @@ area_thresholds <- calculate_areas(abdest.spr)
 # Calculate area efficiency (area per unit of abundance)
 area_thresholds <- area_thresholds %>%
   mutate(Area_Efficiency = Area_Threshold / Total_Abundance)
-
+area_thresholds$Period<-NULL
+area_thresholds$Period[area_thresholds$Year<2006]<-"Before Warming"
+area_thresholds$Period[area_thresholds$Year>2005]<-"During Warming"
 # Preview the results
 head(area_thresholds)
+write.csv(area_thresholds, 
+          file = here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"),row.names = FALSE)
 ```
 
 ## Visualizing the Results
@@ -161,6 +165,7 @@ P2<-ggplot(area_thresholds %>% filter(Threshold == 90),
   theme_minimal() +
   scale_color_viridis_d()
 P2
+
 ```
 
 ### 3. Multiple Thresholds Comparison
@@ -247,7 +252,7 @@ If I don;t have it backwards, then in Canada, for every 1% increase, 0.3% increa
 
 ```{r fit slopes}
 P9<-ggplot(area_thresholds %>% filter(Threshold == 90),
-       aes(y =log10(Area_Threshold), x =log10(Total_Abundance) )) +
+       aes(y =log10(Area_Threshold), x =log10(Total_Abundance))) +
   geom_point(size = 2, alpha = 0.8) +
   geom_smooth(method = "lm", se = T,aes(group = 1)) +
   stat_poly_eq(
@@ -266,6 +271,31 @@ P9<-ggplot(area_thresholds %>% filter(Threshold == 90),
        color = "Year") +
   theme_minimal()
   P9
+ p10<- ggplot(area_thresholds %>% filter(Threshold == 90),
+       aes(y = log10(Area_Threshold), x = log10(Total_Abundance))) +
+  geom_point(aes(color = Period), size = 2, alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE,
+              aes(group = interaction(Region, Period), color = Period)) +
+  stat_poly_eq(
+    aes(group = interaction(Region, Period), color = Period,
+        label = paste(after_stat(eq.label),
+                      after_stat(rr.label),
+                      after_stat(p.value.label), sep = "~~~")),
+    formula = y ~ x,
+    parse = TRUE,
+    label.x.npc = "left",
+    label.y.npc = 0.9,
+    size = 3
+  ) +
+  facet_wrap(~Region, scales = "free") +
+  labs(title = "Area vs Annual Abundance by Region",
+       x = "Total Annual Abundance",
+       y = "Area (sqkm)",
+       color = "Period") +
+  theme_minimal()
+
+ p10
+
 ```
 
 ### 4. Area Efficiency Over Time
