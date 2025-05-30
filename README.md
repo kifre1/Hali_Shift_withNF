@@ -55,7 +55,9 @@ Model output are huge .rds files that contain everything (input, estimates, indi
     - **Output:** *AbundanceEstimates_GridCentriods_All.csv,AbundanceEstimates_GridCentriods_Reg.csv, AbundanceEstimates_GridCentriods_CA.csv* 
 <br>
 
-  - **3.2Binned_density_plot.R**: *vast_fit_plot_spatial_kf_binned_new()*  function to interpolate and map the predicted density (log+1) of grid centroids estimates,  over a regular grid. Plot two bins: before and after accelerated warming period (2005)  
+  - **3.2Binned_density_plot.R**: *vast_fit_plot_spatial_kf_binned_new()*  function to interpolate and map the predicted abundance of grid centroids estimates,  over a regular grid. 
+    - Plot two bins: before and after accelerated warming period (2005)  
+    - Saves rasters for plotting
 <br>
 
   - **3.3Regional_Proportions.R**: Preparing Estimated Abundance data and plotting the timeseries to compare the abundance trends of National and Core Area stratum. Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
@@ -78,6 +80,12 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       - Fit a linear model predicting proportion as a function of Year, within each region/period grouping
       -Completed and plotted for Abundance, Proportion, and relative density 
 <br> 
+
+  - **3.4Plot_Estimates_Temp_Change.R**: Plotting maps of estimates and temperature and change 
+    - Part 1: Plotting maps for estimates: 1990-2005, 2006-2023, and the difference between the 2 timeframes
+    - Part 2: Temperature  
+      - Creates a raster layer for mean spring (May, June, July ) temperature for each time frame 
+<br>
 
 ## Shift Analysis 
 For each shift indicator, create data, fit LM, and plot 

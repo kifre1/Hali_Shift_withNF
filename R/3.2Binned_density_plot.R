@@ -1,18 +1,6 @@
 # Interpolate and map the predicted density (log+1) from grid centroids,  over a regular grid. Plot two bins: before and after accelerated warming period (2005)
 
 
-ind_data <- fit$Report$Index_gctl
-ind_data_filtered <- ind_data[, , , "Stratum_1", drop = FALSE]
-pr_array <- array(ind_data_filtered, dim = dim(ind_data_filtered)[1:3], 
-                      dimnames = dimnames(ind_data_filtered)[1:3])
-r_lims <- c(min(pr_array), max(pr_array))
-summary(pr_array)
-hist(pr_array, main = "Original")
-hist(log(pr_array + 1), main = "Log + 1")
-hist(log(pr_array + 0.1), main = "Log + 0.1")
-hist(sqrt(pr_array), main = "Sqrt")
-hist(pr_array^(1/3), main = "Cube root")
-hist(asinh(pr_array), main = "asinh")
   # Load package
 library(VAST)
 library(stringr)
@@ -307,146 +295,22 @@ vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_la
                                     panel_cols = 2, panel_rows = 1, bins=2, start_year=start_year, season_increment=season_increment,legend_title=legend_title )    
 
 
+#go to 3.4Plot_Estimates_Temp_Change.R for plotting
 
 
-#Plotting abundance estimates and difference
-library(terra)
-library(here)
-library(sf)
-library(ggplot2)
-
-#read in the rasters
-r1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
-r2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
-r1<- mask(r1, shape_vect)
-r2<- mask(r2, shape_vect)
-plot(r1)
-plot(r2)
-
-
-#turn the rasters to a df for ggplot
-#load data from Sup2
-#Before, 1990-2005
-rast_lims<-c(0,80)
-
-R1_df <- as.data.frame(r1, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(R1_df)[3] <- "EstimatedAbundance"
-
-BeforePlot<- ggplot() +
-  geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
-  coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
-  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
-  xlim(-73, -48) + ylim(39, 52)+
-  theme_bw()+
-  labs(title="Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
-  theme(
-    panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-  )
-   
-#During, 2006-2023
-R2_df <- as.data.frame(r2, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(R2_df)[3] <- "EstimatedAbundance"
-
-DuringPlot<- ggplot() +
-  geom_raster(data = R2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent",limits = rast_lims) +
-  coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
-  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
-  xlim(-73, -48) + ylim(39, 52)+
-  theme_bw()+
-  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
-  theme(
-    panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank(),   # rmoves minor grid lines
-    legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-  )
-
-#Difference
-#to get the difference and percent change we will difference the raw data 
-r1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin1.tif"))
-r2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin2.tif"))
-
-max(r1)
-region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
-region_shape <- st_make_valid(region_shape)
-if (!st_crs(region_shape) == crs(r1)) {
-  region_shape <- st_transform(region_shape, crs(r1))
-}
-shape_vect <- vect(region_shape)
-r1<- mask(r1, shape_vect)
-r2<- mask(r2, shape_vect)
-plot(r1)
-plot(r2)
-#Create rasters for difference and % change
-diff_rast <- r2 - r1
-percent_change_rast <- ((r2 - r1) / r1) * 100
-percent_change_rast[!is.finite(percent_change_rast)] <- NA
-plot(percent_change_rast)
-plot(diff_rast)
-max(diff_rast)
-
-diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(diff_rast_df)[3] <- "difference"
-
-DifferencePlot<-ggplot() +
-  geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",   "red"), na.value = "transparent") +
-  coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
-  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
-  xlim(-73, -48) + ylim(39, 52)+
-  theme_bw()+
-  labs(title="Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Count")+
-  theme(
-    panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-  )
-
-#Percent Change
-percent_change_df <- as.data.frame(percent_change_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(percent_change_df)[3] <- "PChange"
-
-ChangePlot<-ggplot() +
-  geom_raster(data = percent_change_df, aes(x = x, y = y, fill = PChange)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
-  coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
-  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
-  xlim(-73, -48) + ylim(39, 52)+
-  labs(title="Percent Change", x = NULL, y = NULL)+
-  theme_bw()+
-  theme(
-    panel.grid.major = element_blank(),  # removes major grid lines
-    panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-  )
-BeforePlot+DifferencePlot
-
-#save the rasters for difference and change
-writeRaster(diff_rast, filename = paste0(out_dir, "/diff_rast_spring.tif"), overwrite = TRUE)
-writeRaster(percent_change_rast, filename = paste0(out_dir, "/percent_change_rast_spring.tif"), overwrite = TRUE)
+#looking into how i want to redistribute the data for plotting 
+ind_data <- fit$Report$Index_gctl
+ind_data_filtered <- ind_data[, , , "Stratum_1", drop = FALSE]
+pr_array <- array(ind_data_filtered, dim = dim(ind_data_filtered)[1:3], 
+                  dimnames = dimnames(ind_data_filtered)[1:3])
+r_lims <- c(min(pr_array), max(pr_array))
+summary(pr_array)
+hist(pr_array, main = "Original")
+hist(log(pr_array + 1), main = "Log + 1")
+hist(log(pr_array + 0.1), main = "Log + 0.1")
+hist(sqrt(pr_array), main = "Sqrt")
+hist(pr_array^(1/3), main = "Cube root")
+hist(asinh(pr_array), main = "asinh")
 
 
 
