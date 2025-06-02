@@ -30,7 +30,8 @@ names(R1_df)[3] <- "EstimatedAbundance"
 
 BeforePlot<- ggplot() +
   geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  scale_fill_viridis_c()+
+ # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -43,7 +44,7 @@ BeforePlot<- ggplot() +
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
@@ -53,7 +54,8 @@ names(R2_df)[3] <- "EstimatedAbundance"
 
 DuringPlot<- ggplot() +
   geom_raster(data = R2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent",limits = rast_lims) +
+  scale_fill_viridis_c()+
+  # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent",limits = rast_lims) +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -66,7 +68,7 @@ DuringPlot<- ggplot() +
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # rmoves minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
@@ -94,7 +96,8 @@ names(diff_rast_df)[3] <- "difference"
 
 DifferencePlot<-ggplot() +
   geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",   "red"), na.value = "transparent") +
+  scale_fill_viridis_c()+
+  # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",   "red"), na.value = "transparent") +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -102,12 +105,12 @@ DifferencePlot<-ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Count")+
+  labs(title="Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
@@ -117,7 +120,8 @@ names(percent_change_df)[3] <- "PChange"
 
 ChangePlot<-ggplot() +
   geom_raster(data = percent_change_df, aes(x = x, y = y, fill = PChange)) +
-  scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
+  scale_fill_viridis_c()+
+ # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
   geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
@@ -130,7 +134,7 @@ ChangePlot<-ggplot() +
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
@@ -269,10 +273,10 @@ BeforeTemp_rast_df <- as.data.frame(mean_Braster, xy = TRUE, na.rm = TRUE)  # In
 names(BeforeTemp_rast_df)[3] <- "Temperature"
 diff_temp_rast_df <- as.data.frame(diff_temp_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_temp_rast_df)[3] <- "Temperature"
-
+library(scico)
 tempBefore<- ggplot() +
   geom_raster(data = BeforeTemp_rast_df, aes(x = x, y = y, fill = Temperature)) +
-  scale_fill_viridis_c()+
+  scale_fill_scico(palette = "vik", name = "Temp (°C)")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
@@ -286,13 +290,13 @@ tempBefore<- ggplot() +
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
 tempchange<-ggplot() +
   geom_raster(data = diff_temp_rast_df, aes(x = x, y = y, fill = Temperature)) +
-  scale_fill_viridis_c()+
+  scale_fill_scico(palette = "vik", name = "Temp (°C)")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
   geom_sf(data = Hague, color="darkred", size = 2) +
@@ -306,7 +310,7 @@ tempchange<-ggplot() +
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
-    legend.position.inside = c(0.05, 0.95),         # (x, y) coordinates inside plot
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
