@@ -93,11 +93,14 @@ custom_labels <- c(
   "USA:    Before ( 6.1%), During ( 6%)"
 )
 ARegionalPlot<- 
-  ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = Index_Estimate/1000000),group=Region)+
+  ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = log10(Index_Estimate)),group=Region)+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
   #geom_errorbar(data =  FigAbd.Region.Spring, aes(x = Year, ymin = (Index_Estimate/1000000 - Index_SD/1000000), ymax = (Index_Estimate/1000000 + Index_SD/1000000), color = Region, group = Region), alpha = 0.65) +
-  geom_ribbon(aes(x = Year, ymin = Index_Estimate/1000000 - Index_SD/1000000, 
-                  ymax = Index_Estimate/1000000 +Index_SD/1000000, 
+  geom_ribbon(aes(x = Year, 
+                  #ymin = Index_Estimate/1000000 - Index_SD/1000000, 
+                  #ymax = Index_Estimate/1000000 +Index_SD/1000000, 
+                  ymin = log10(Index_Estimate+1) - sd(log10(Index_Estimate+1)), 
+                  ymax = log10(Index_Estimate+1) +sd(log10(Index_Estimate+1)), 
                   fill = Region), alpha = 0.12) +  # Use geom_ribbon for the SE band
   geom_line(aes(color =  Region), linewidth = 1) +                         # Line for the group
   geom_point(aes(color = Region), shape = 19,size=2.5) +                        # Points for data
@@ -106,10 +109,10 @@ ARegionalPlot<-
   # Combine legends
   guides(color = guide_legend(title = ""),
          fill = "none") + 
-  labs(y="Modelled Abundance (Millions)", x="")+
+  labs(y="Modelled Abundance (Logged)", x="")+
   guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1996, y = 4.3, label = "Before Warming", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2014, y = 4.3, label = "During Warming", color = "black", size = 5,family = "serif") +
+    annotate("text", x = 1996, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 2014, y = 7, label = "During Warming", color = "black", size = 5,family = "serif") +
   #Before
  # annotate("text", x = 1995, y = 3.1, label = "94%", color = "black", size = 4) +
 #  annotate("segment", x = 1995, xend = 1995, y = 2.7, yend = 2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
@@ -141,7 +144,7 @@ RegionRatesPlot<-
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
   ylim(-0.06, 0.06) +
-  theme_minimal() + # A cleaner minimal theme
+ # theme_minimal() + # A cleaner minimal theme
   theme(
     text = element_text(family = "serif"),  
     legend.position.inside = c(0.25, 0.6),               # Position of the legend
@@ -153,15 +156,93 @@ RegionRatesPlot<-
     axis.title.x = element_text(size = 14),      # Customize x-axis label
     plot.margin=margin(10,40,20,30))+
   xlab("") +                                     # Clear x-axis label
-  ylab("Rate of change in Abundance (log10) /year")
+  ylab("Rate of change in Logged Abundance/year")
 RegionRatesPlot
 Figure2AbdAbdRates<-plot_grid(ARegionalPlot, RegionRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
 Figure2AbdAbdRates
 #ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
 # END Plot abundance indexed regions  ----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-#EOA plots and table for supplemental----
 
+#Core Area Abundance for Supplemental----
+#Part 2: Core Areas abundance trends
+FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
+names(FigAbd.Region.Spring)
+
+Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
+names(Reg_SlopSpring)
+#2.1 plot abundance trends, spring 
+abundance_ind_CA<-subset(abundance_ind_CA, abundance_ind_CA$Season=="Spring")
+region_colours <- c(
+  "EGOM" ="#004995",
+  "BOF"  = "#8C510A",
+  "CapeBreton" ="#4D4D4D",
+  "HaliChan" ="#00441B",
+  "CapeCod" ="#2171B5",
+  "Browns" ="#D8781D",
+  "Gully"="#7F7F7F",
+  "GrandBanks" ="#238B45",
+  "Nantucket" = "#56B4E9",
+  "Georges" ="#EDA752",
+  "Sable"  ="#C0C0C0",
+  "GBTail" = 	"#81C784"
+)
+#factor the order 
+abundance_ind_CA$Index_Region <- factor(abundance_ind_CA$Index_Region, levels = names(region_colours))
+
+CAPlot<- ggplot(data = abundance_ind_CA, aes(x = Year, y = Index_Estimate, color = Index_Region))+
+  geom_point(size=2)+
+  scale_y_continuous(labels = scales::scientific) +
+  geom_line(size=.8)+
+  scale_y_continuous(labels = label_number())+
+  geom_errorbar(data = abundance_ind_CA, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
+  #facet_grid(.~Season)+
+  scale_color_manual(values = region_colours)+
+  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
+  labs(title="Estimated Abundance \nAggregated by CoreArea: Spring", y="Count", x="Year")+
+  guides(color = guide_legend(title = NULL))
+#theme(legend.position = "none")  # Remove legend
+CAPlot
+
+#Figure4: plot abundance trends with a map of the core areas 
+#go to Sup2DataPlots.R to make CAMAP
+(CAMAP / CAPlot)+ plot_layout(heights = c(1,1))
+
+#2.2 Calculate and plot the change in slope for each time period
+abundance_ind_CA$Period<-NULL
+abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
+abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
+
+CA_Abundance_coefficients_df <- abundance_ind_CA %>%
+  group_by(Index_Region,Period) %>%
+  do({
+    model <- lm((Index_Estimate) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
+  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton","HaliChan",
+                                                                                                  "CapeCod","Browns","Gully","GrandBanks",
+                                                                                                  "Nantucket","Georges","Sable","GBTail"))
+
+
+pd <- position_dodge(.5)
+
+ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
+  geom_point(shape=21, size = 3,position=pd) +
+  coord_flip()+
+  scale_fill_manual(values=c("steelblue", "orangered"))+
+  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
+  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
+  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
+  # ylim(-0.018,0.018)+
+  xlab("")+  ylab("Rate of change in Abundance count/yr")+
+  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
+#EOA plots and table ----
 # PLOT EAO,----
 eaothresh <- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
 names(EAOcc_DF_Region_Spring)
@@ -756,4 +837,5 @@ FigureDeepDeepRates
 #ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
 # END Plot abundance indexed regions  ----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureDeepDeepRates.jpeg"), plot = FigureDeepDeepRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#
 #COmmit
