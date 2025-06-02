@@ -93,11 +93,14 @@ custom_labels <- c(
   "USA:    Before ( 6.1%), During ( 6%)"
 )
 ARegionalPlot<- 
-  ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = Index_Estimate/1000000),group=Region)+
+  ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = log10(Index_Estimate)),group=Region)+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
   #geom_errorbar(data =  FigAbd.Region.Spring, aes(x = Year, ymin = (Index_Estimate/1000000 - Index_SD/1000000), ymax = (Index_Estimate/1000000 + Index_SD/1000000), color = Region, group = Region), alpha = 0.65) +
-  geom_ribbon(aes(x = Year, ymin = Index_Estimate/1000000 - Index_SD/1000000, 
-                  ymax = Index_Estimate/1000000 +Index_SD/1000000, 
+  geom_ribbon(aes(x = Year, 
+                  #ymin = Index_Estimate/1000000 - Index_SD/1000000, 
+                  #ymax = Index_Estimate/1000000 +Index_SD/1000000, 
+                  ymin = log10(Index_Estimate+1) - sd(log10(Index_Estimate+1)), 
+                  ymax = log10(Index_Estimate+1) +sd(log10(Index_Estimate+1)), 
                   fill = Region), alpha = 0.12) +  # Use geom_ribbon for the SE band
   geom_line(aes(color =  Region), linewidth = 1) +                         # Line for the group
   geom_point(aes(color = Region), shape = 19,size=2.5) +                        # Points for data
@@ -106,10 +109,10 @@ ARegionalPlot<-
   # Combine legends
   guides(color = guide_legend(title = ""),
          fill = "none") + 
-  labs(y="Modelled Abundance (Millions)", x="")+
+  labs(y="Modelled Abundance (Logged)", x="")+
   guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1996, y = 4.3, label = "Before Warming", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2014, y = 4.3, label = "During Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 1996, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 2014, y = 7, label = "During Warming", color = "black", size = 5,family = "serif") +
   #Before
  # annotate("text", x = 1995, y = 3.1, label = "94%", color = "black", size = 4) +
 #  annotate("segment", x = 1995, xend = 1995, y = 2.7, yend = 2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
@@ -141,7 +144,7 @@ RegionRatesPlot<-
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
   ylim(-0.06, 0.06) +
-  theme_minimal() + # A cleaner minimal theme
+ # theme_minimal() + # A cleaner minimal theme
   theme(
     text = element_text(family = "serif"),  
     legend.position.inside = c(0.25, 0.6),               # Position of the legend
@@ -153,14 +156,14 @@ RegionRatesPlot<-
     axis.title.x = element_text(size = 14),      # Customize x-axis label
     plot.margin=margin(10,40,20,30))+
   xlab("") +                                     # Clear x-axis label
-  ylab("Rate of change in Abundance (log10) /year")
+  ylab("Rate of change in Logged Abundance/year")
 RegionRatesPlot
 Figure2AbdAbdRates<-plot_grid(ARegionalPlot, RegionRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
 Figure2AbdAbdRates
 #ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
 # END Plot abundance indexed regions  ----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-#EOA plots and table for supplemental----
+
 #Core Area Abundance for Supplemental----
 #Part 2: Core Areas abundance trends
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
@@ -239,7 +242,7 @@ ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = 
   # ylim(-0.018,0.018)+
   xlab("")+  ylab("Rate of change in Abundance count/yr")+
   ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
-
+#EOA plots and table ----
 # PLOT EAO,----
 eaothresh <- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
 names(EAOcc_DF_Region_Spring)
