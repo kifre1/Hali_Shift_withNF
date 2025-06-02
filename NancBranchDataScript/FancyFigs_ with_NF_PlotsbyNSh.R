@@ -111,7 +111,7 @@ ARegionalPlot<-
          fill = "none") + 
   labs(y="Modelled Abundance (Logged)", x="")+
   guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1996, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
+    annotate("text", x = 1996, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
   annotate("text", x = 2014, y = 7, label = "During Warming", color = "black", size = 5,family = "serif") +
   #Before
  # annotate("text", x = 1995, y = 3.1, label = "94%", color = "black", size = 4) +
