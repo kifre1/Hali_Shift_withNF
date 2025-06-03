@@ -5,7 +5,9 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(patchwork)
+library(gridExtra)
 library(RColorBrewer)
+library(scales)
 
 library(grid)  # For unit() function
 #theme----
@@ -92,15 +94,19 @@ custom_labels <- c(
   "Canada: Before (93.9%), During (94%)",
   "USA:    Before ( 6.1%), During ( 6%)"
 )
+CI <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x)) * qt(0.975, df = length(x) - 1)
+}
 ARegionalPlot<- 
   ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = log10(Index_Estimate)),group=Region)+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
+  scale_x_continuous(breaks = seq(1990, 2023, by = 5)) + # Set x-axis breaks
   #geom_errorbar(data =  FigAbd.Region.Spring, aes(x = Year, ymin = (Index_Estimate/1000000 - Index_SD/1000000), ymax = (Index_Estimate/1000000 + Index_SD/1000000), color = Region, group = Region), alpha = 0.65) +
   geom_ribbon(aes(x = Year, 
                   #ymin = Index_Estimate/1000000 - Index_SD/1000000, 
                   #ymax = Index_Estimate/1000000 +Index_SD/1000000, 
-                  ymin = log10(Index_Estimate+1) - sd(log10(Index_Estimate+1)), 
-                  ymax = log10(Index_Estimate+1) +sd(log10(Index_Estimate+1)), 
+                  ymin = log10(Index_Estimate+1) - CI(log10(Index_Estimate+1)), 
+                  ymax = log10(Index_Estimate+1) +CI(log10(Index_Estimate+1)), 
                   fill = Region), alpha = 0.12) +  # Use geom_ribbon for the SE band
   geom_line(aes(color =  Region), linewidth = 1) +                         # Line for the group
   geom_point(aes(color = Region), shape = 19,size=2.5) +                        # Points for data
@@ -111,8 +117,8 @@ ARegionalPlot<-
          fill = "none") + 
   labs(y="Modelled Abundance (Logged)", x="")+
   guides(color = guide_legend(title = ""))+
-    annotate("text", x = 1996, y = 7, label = "Before Warming", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2014, y = 7, label = "During Warming", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 1996, y = 6.5, label = "Canada", color = "black", size = 5,family = "serif") +
+  annotate("text", x = 1996, y = 5.3, label = "USA", color = "black", size = 5,family = "serif") +
   #Before
  # annotate("text", x = 1995, y = 3.1, label = "94%", color = "black", size = 4) +
 #  annotate("segment", x = 1995, xend = 1995, y = 2.7, yend = 2, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
@@ -125,9 +131,10 @@ ARegionalPlot<-
   #annotate("segment", x = 2015, xend = 2015, y = .7, yend = .3, arrow = arrow(length = unit(.2, "cm"),type="closed")) +
   #annotate("rect", xmin = 2004, xmax = 2014, ymin = 3, ymax = 5, alpha = 0.2, fill = "red") +
   theme(text = element_text(family = "serif"),  
-        legend.box.background = element_blank(), # Transparent legend box
-        legend.position.inside = c(.15,.7),
-        legend.text = element_text(size = 14,family="serif"),
+        #legend.box.background = element_blank(), # Transparent legend box
+        #legend.position.inside = c(.15,.7),
+        #legend.text = element_text(size = 14,family="serif"),
+        legend.position = "none",
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
@@ -157,22 +164,26 @@ RegionRatesPlot<-
     plot.margin=margin(10,40,20,30))+
   xlab("") +                                     # Clear x-axis label
   ylab("Rate of change in Logged Abundance/year")
+
 RegionRatesPlot
 Figure2AbdAbdRates<-plot_grid(ARegionalPlot, RegionRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
 Figure2AbdAbdRates
 #ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
 # END Plot abundance indexed regions  ----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
-#Core Area Abundance for Supplemental----
+#Core Area Abundance----
 #Part 2: Core Areas abundance trends
-FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
-names(FigAbd.Region.Spring)
-
 Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
 names(Reg_SlopSpring)
-#2.1 plot abundance trends, spring 
-abundance_ind_CA<-subset(abundance_ind_CA, abundance_ind_CA$Season=="Spring")
+
+abundance_ind_CA <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"),row.names=NULL)
+names(abundance_ind_CA)
+abundance_ind_CA.spr<- subset(abundance_ind_CA, abundance_ind_CA$Season == "Spring")
+
+#2.1 plot abundance trends, spring
+#assign colors----
+abundance_ind_CA.spr$Index_Region <- factor(abundance_ind_CA.spr$Index_Region, levels = c("EGOM", "BOF", "CapeBreton", "HaliChan", "CapeCod", "Browns", "Gully", "GrandBanks", "Nantucket", "Georges", "Sable", "GBTail"))
 region_colours <- c(
   "EGOM" ="#004995",
   "BOF"  = "#8C510A",
@@ -188,25 +199,133 @@ region_colours <- c(
   "GBTail" = 	"#81C784"
 )
 #factor the order 
-abundance_ind_CA$Index_Region <- factor(abundance_ind_CA$Index_Region, levels = names(region_colours))
+abundance_ind_CA.spr$Index_Region <- factor(abundance_ind_CA.spr$Index_Region, levels = names(region_colours))
+abundance_ind_CA.spr$ordCoreArea<-factor(abundance_ind_CA.spr$Index_Region, levels=c("Nantucket","CapeCod","EGOM","Georges","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
+region_colours2 <- c(
+  "Nantucket" = "#56B4E9",
+  "CapeCod" = "#2171B5",
+  "EGOM" = "#004995",
+  "Georges" = "#EDA752",
+  "BOF" = "#8C510A",
+  "Browns" = "#D8781D",
+  "Sable" = "#C0C0C0",
+  "Gully" = "#7F7F7F",
+  "CapeBreton" = "#4D4D4D",
+  "HaliChan" = "#00441B",
+  "GrandBanks" = "#238B45",
+  "GBTail" = "#81C784"
+  )
 
-CAPlot<- ggplot(data = abundance_ind_CA, aes(x = Year, y = Index_Estimate, color = Index_Region))+
-  geom_point(size=2)+
-  scale_y_continuous(labels = scales::scientific) +
-  geom_line(size=.8)+
-  scale_y_continuous(labels = label_number())+
-  geom_errorbar(data = abundance_ind_CA, aes(x = Year, ymin = (Index_Estimate - Index_SD), ymax = (Index_Estimate + Index_SD), color = Index_Region, group = Index_Region), alpha = 0.65) +
-  #facet_grid(.~Season)+
+
+abundance_ind_CA.spr$ordCoreArea<-factor(abundance_ind_CA.spr$ordCoreArea, levels=names(region_colours2))
+#END #assign colors----
+                                                                                        #log values and get standard deviation of log values
+abundance_ind_CA.spr$LogAbd <- log10(abundance_ind_CA.spr$Index_Estimate + 1)  # Add 1 to avoid log(0)
+CI <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x)) * qt(0.975, df = length(x) - 1)
+}
+CI(abundance_ind_CA.spr$LogAbd)
+length(region_colours2)
+length(abundance_ind_CA.spr$ordCoreArea)
+
+CAPlot<- ggplot(data = abundance_ind_CA.spr, aes(x = Year, y = LogAbd, color = ordCoreArea))+
+  scale_x_continuous(breaks = seq(1990, 2023, by = 5)) + # Set x-axis breaks
+  labs(y="Modelled Abundance (Logged)", x="")+
+  #annotate("text", x = 1996, y = 6, label = "Before Warming", color = "black", size = 5,family = "serif") +
+  #annotate("text", x = 2014, y = 6, label = "During Warming", color = "black", size = 5,family = "serif") +
+  ##scale_y_continuous(labels = label_number())+
+  geom_ribbon(aes(x = Year, 
+                  ymin = LogAbd - CI(LogAbd), 
+                  ymax = LogAbd + CI(LogAbd), 
+                  fill = ordCoreArea), alpha = 0.12,colour=NA) +  # Use geom_ribbon for the SE band
+  geom_line(aes(color =  ordCoreArea), linewidth = .9) +                         # Line for the group
+  geom_point(aes(color = ordCoreArea), shape = 19,size=2) +                        # Points for data
+  scale_fill_manual(values = region_colours) +                    # Custom fill colors
   scale_color_manual(values = region_colours)+
-  geom_vline(xintercept = 2006, linetype = "dashed", color = "black", size = 1)+
-  labs(title="Estimated Abundance \nAggregated by CoreArea: Spring", y="Count", x="Year")+
-  guides(color = guide_legend(title = NULL))
-#theme(legend.position = "none")  # Remove legend
+  geom_vline(xintercept = 2005, linetype = "dashed", color = "black", size = 1)+
+  #labs(title="Estimated Abundance \nAggregated by CoreArea: Spring", y="Count", x="Year")+
+  # Combine legends
+  guides(color = guide_legend(title = ""),
+         fill = "none") + 
+  labs(y="Modelled Abundance (Logged)", x="")+
+   theme(text = element_text(family = "serif"),  
+        legend.box.background = element_blank(), # Transparent legend box
+        legend.position.inside = c(.15,.7),
+        legend.text = element_text(size = 10,family="serif"),
+        plot.margin=margin(10, 5, 10, 15))
+  #theme(legend.position = "none")  # Remove legend
 CAPlot
 
 #Figure4: plot abundance trends with a map of the core areas 
-#go to Sup2DataPlots.R to make CAMAP
-(CAMAP / CAPlot)+ plot_layout(heights = c(1,1))
+#go to Sup2DataPlots.R to make CAMAP 
+library(patchwork)
+library(grid)  # for textGrob
+
+ARegionalPlot_clean <- ARegionalPlot + 
+theme(
+  axis.title.y = element_blank(),
+  legend.position = "none",
+  plot.margin = margin(2, 2, 2, 2)  # Tight margins
+)
+
+CAPlot_clean <- CAPlot +
+  theme(
+    axis.title.y = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(2, 2, 2, 2)  # Tight margins
+  )
+
+# Create shared y-axis label
+shared_y <- textGrob("Modelled Abundance", 
+                     rot = 90, 
+                     gp = gpar(fontsize = 10, fontfamily = "serif"))
+
+
+# Bottom row with shared y-axis title
+bottom_row <- plot_grid(shared_y,plot_grid(CAPlot_clean,ARegionalPlot_clean, ncol = 2, rel_widths = c(1, 1)),
+                        ncol = 2, 
+                        rel_widths = c(0.05, 1)
+)
+# Extract legend using cowplot
+legend_CAMAP <- get_legend(CAMAP + theme(legend.position = "right"))
+CAMAP_2col <- CAMAP +
+  guides(fill = guide_legend(ncol = 2),   # for fill legends
+         color = guide_legend(ncol = 2)) +  # for color legends
+  theme(legend.position = "right",legend.title = element_blank())
+# Extract the legend from CAMAP
+legend_CAMAP <- get_legend(CAMAP_2col)
+CAMAP_clean <- CAMAP + theme(legend.position = "none")
+#You use CAMAP_2col to get the 2-column legend, but use CAMAP_clean for the plot without the legend.
+#Comben CAMAP no legend with 2 col legend()
+camap_with_legend <- plot_grid(
+  CAMAP_clean, legend_CAMAP,
+  ncol = 2,
+  rel_widths = c(.6, 0.4),
+  align = "h"
+)
+
+#manual labels
+final_plot <- camap_with_legend / bottom_row +
+  plot_layout(heights = c(1, 1))+
+  plot_annotation(tag_levels = 'a', tag_suffix = ')') & 
+  theme(plot.margin = margin(1, 10, 1, 0),plot.tag.position = c(0.02, 0.98),  # top-left inside
+        plot.tag = element_text(size = 14, face = "bold"))
+  
+final_plot
+#manual labels----
+#library(cowplot)
+final_plot <- draw_plot_label(
+  final_plot,
+  label = c("a", "b", "c"),
+  x = c(0.01, 0.01, 0.52),  # x-positions for labels (in [0, 1] units)
+  y = c(0.99, 0.48, 0.48),  # y-positions (top of each panel)
+  size = 14,
+  fontface = "bold"
+)
+#END manual labels----
+final_plot
+# Save the final plot with legend
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureAbundanceFAandMapTrends.jpeg"), plot = final_plot, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
 #2.2 Calculate and plot the change in slope for each time period
 abundance_ind_CA$Period<-NULL
@@ -228,7 +347,6 @@ CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Inde
                                                                                                   "CapeCod","Browns","Gully","GrandBanks",
                                                                                                   "Nantucket","Georges","Sable","GBTail"))
 
-
 pd <- position_dodge(.5)
 
 ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
@@ -243,59 +361,256 @@ ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = 
   xlab("")+  ylab("Rate of change in Abundance count/yr")+
   ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
 #EOA plots and table ----
+#NOTE a lot of this is derived from EAOrmarkdown which is in the NancBranchDataScript folder
+#NancBranchDataScript/EAOrmarkdown.Rmd
+#where spring was isolated
 # PLOT EAO,----
-eaothresh <- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
-names(EAOcc_DF_Region_Spring)
+Area_ThresholdsforEAO<- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
+names(Area_ThresholdsforEAO)
 
 ##PlotEOA----
 #IN Appendix S1 Fig S EAO 
-EAOplot<-ggplot(area_thresholds %>% filter(Threshold == 90), 
-                  aes(x = Year, y = Area_Threshold, color = Region, group = Region)) +
+EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
+                  aes(x = Year, y =log10(Area_Threshold), color = Region, group = Region)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
   scale_fill_manual(values = regpal) +                    # Custom fill colors
   scale_color_manual(values = regpal) +
-  labs(title = "Trend in Area Containing 90% of Abundance", 
-       x = "Year", 
-       y = "Area (km²)",
-       color = "Region") +
+  labs(title = "",
+       x = expression(""),
+       y = expression("Area km"^2*" (log"[10]*")"),
+        color = "Region") +
   guides(color = guide_legend(title = ""))+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
   theme(text = element_text(family = "serif"),  
         legend.box.background = element_blank(), # Transparent legend box
-        legend.position.inside = c(.15,.7),
-        legend.text = element_text(size = 14,family="serif"),
-        plot.margin=margin(10, 5, 10, 15))
+        legend.position = c(.7,.5),
+        legend.text = element_text(size = 12,family="serif"),
+        plot.margin=margin(0, 0, 0, 0))
 EAOplot
 ##END PlotEOA----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/EAOplot.jpeg"), plot = EAOplot, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-
+library(ggpmisc)
 ## PlotEAOvsAbd----
-PlotEAOAbd<- ggplot(area_thresholds %>% filter(Threshold == 90),
-                 aes(y = log10(Area_Threshold), x = log10(Total_Abundance))) +
-  geom_point(aes(color = Period), size = 2, alpha = 0.8) +
-  geom_smooth(method = "lm", se = TRUE,
-              aes(group = interaction(Region, Period), color = Period)) +
-  stat_poly_eq(
-    aes(group = interaction(Region, Period), color = Period,
-        label = paste(after_stat(eq.label),
-                      after_stat(rr.label),
-                      after_stat(p.value.label), sep = "~~~")),
-    formula = y ~ x,
-    parse = TRUE,
-    label.x.npc = "left",
-    label.y.npc = 0.9,
-    size = 3
-  ) +
-  facet_wrap(Region~., scales = "free") +
-  labs(title = "Area vs Annual Abundance by Region",
-       x = "Total Annual Abundance",
-       y = "Area (sqkm)",
+# Tidied Area vs Abundance Plot----
+PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
+                     aes(y = log10(Area_Threshold), 
+                         x = log10(Total_Abundance))) +
+  # Points with better styling
+  geom_point(aes(color = Period), 
+             size = 2.5, 
+             alpha = 0.7) +
+  scale_color_manual(values = c("Before Warming" = "steelblue", "During Warming" = "orangered"))+
+  # Smoothed regression lines
+  geom_smooth(method = "lm", 
+              se = TRUE,
+              aes(group = interaction(Region, Period), 
+                  color = Period),
+              alpha = .1) +  # Make confidence bands more subtle
+    # Statistical annotations----
+  #stat_poly_eq(
+   # aes(group = interaction(Region, Period), 
+    #    color = Period,
+     #   label = paste(after_stat(eq.label),
+      #                after_stat(rr.label),
+       #               after_stat(p.value.label), 
+        #              sep = "~~~")),
+    #formula = y ~ x,
+    #parse = TRUE,
+    #label.x.npc = "left",
+    #label.y.npc = "top",  # Changed from 0.9 for better positioning
+    #size = 3,
+    #vjust = 1.2  # Adjust vertical spacing
+ # ) +
+  
+  # Faceting by region
+  facet_wrap(Region ~ ., 
+             scales = "free",
+             labeller = label_wrap_gen(width = 15)) +  # Wrap long region names
+  
+  # Improved labels with log notation
+  labs(title = "",
+       x = expression("Total Annual Abundance (log"[10]*")"),
+       y = expression("Area km"^2*" (log"[10]*")"),
        color = "Period") +
-  theme_minimal()
+ #  Remove fill from legend, keep only color
+   guides(fill = "none") +
+  # Clean theme
+  theme_bw() +
+  theme(
+    text = element_text(family = "serif"),  
+    legend.box.background = element_blank(), # Transparent legend box
+    #legend.position = c(.5,.1),
+    legend.position = "top",
+    axis.title = element_text(size = 12, family = "serif"),
+    axis.text = element_text(size = 12, family = "serif"),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8, family = "serif"),
+    legend.key = element_rect(fill = "white", color = NA),
+    strip.text = element_text(size = 11, family = "serif"),
+    strip.background = element_rect(colour = "black", fill = "white"),
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.grid.major = element_blank(),  #
+    #legend.position = "bottom"  # Move legend to bottom for better space usage
+  )
+
+# Display the plot
+print(PlotEAOAbd)
+
+# Alternative: If you want different colors for periods----
+# PlotEAOAbd + scale_color_manual(values = c("Period1" = "steelblue", "Period2" = "orangered"))
+
+# Alternative: If the stat labels are too crowded, you can simplify:
+# Replace the stat_poly_eq section with:
+# stat_poly_eq(
+#   aes(group = interaction(Region, Period), color = Period,
+#       label = after_stat(rr.label)),  # Just show R² values
+#   formula = y ~ x,
+#   parse = TRUE,
+#   label.x.npc = "left",
+#   label.y.npc = "top",
+#   size = 3.5
+# )-----
 PlotEAOAbd
 ## END PlotEAOvsAbd----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/PlotEAOAbd.jpeg"), plot = PlotEAOAbd, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#Range Edge  ----
+rangeedge<-read.csv(here::here("R/DataforFinalFigs/Edge_df_NSreshp.csv"))
+range.spr<-rangeedge[rangeedge$Season=="Spring",]
+range.spr$Period<-NULL
+range.spr$Period[range.spr$Year<2006]<-"Before Warming"
+range.spr$Period[range.spr$Year>2005]<-"During Warming"
+names(range.spr);summary(range.spr)
+# Create a jitter object with both horizontal and vertical displacement
+set.seed(123)  # For reproducibility
+pos_jitter <- position_jitter(width = .1, height = .1)  # Jitter both horizontally and vertically
+# Range Edge Plot with Blue-Orange Year Gradient----
+RangeEdge <- ggplot(range.spr, 
+                    aes(x = Estimate_km_E_quantile_0.5, 
+                        y = Estimate_km_N_quantile_0.5, 
+                        color = Year)) +
+  
+  # Horizontal error bars
+  geom_errorbarh(aes(xmin = Estimate_km_E_quantile_0.05 - Std_Dev_km_E_quantile_0.05, 
+                     xmax = Estimate_km_E_quantile_0.95 + Std_Dev_km_E_quantile_0.95), 
+                 height = 0.1, 
+                 position = pos_jitter, 
+                 na.rm = TRUE) +
+  
+  # Vertical error bars
+  geom_errorbar(aes(ymin = Estimate_km_N_quantile_0.5 - Std_Dev_km_N_quantile_0.5, 
+                    ymax = Estimate_km_N_quantile_0.5 + Std_Dev_km_N_quantile_0.5), 
+                width = 0.1, 
+                position = pos_jitter, 
+                na.rm = TRUE) +
+  
+  # Points
+  geom_point(position = pos_jitter, 
+             na.rm = TRUE, 
+             alpha = .75, 
+             size = 4, 
+             shape = 19) +
+  
+  # Blue to orange gradient for Year
+  scale_color_gradient(low = "steelblue", 
+                       high = "orangered", 
+                       name = "Year") +
+  
+  # Labels
+  xlab("Range Edge E (km)") +
+  ylab("Range Edge N (km)") +
+  
+  # Theme
+  theme_bw() +
+  theme(
+    legend.position = "right",  # Changed from "none" to show the gradient legend
+    plot.margin = margin(5, 10, 10, 10),
+    axis.text.x = element_text(angle = 90, 
+                               vjust = 0, 
+                               hjust = 0.5, 
+                               size = 12, 
+                               family = "serif"),
+    axis.text.y = element_text(angle = 0, 
+                               vjust = 0.5, 
+                               hjust = 0, 
+                               size = 12, 
+                               family = "serif"),
+    axis.title.x = element_text(size = 12, 
+                                hjust = 0.5, 
+                                vjust = -2, 
+                                family = "serif"),
+    axis.title.y = element_text(size = 12, 
+                                hjust = 0.5, 
+                                vjust = 4, 
+                                angle = 90, 
+                                family = "serif"),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12, family = "serif"),
+    strip.text = element_text(size = 12, 
+                              family = "serif", 
+                              angle = 0),
+    strip.background = element_rect(colour = "black", 
+                                    fill = "white")
+  )
+
+# Display the plot
+print(RangeEdge)
+RangeEdge2<-RangeEdge + scale_color_gradient2(low = "steelblue3", mid = "yellow", high = "orangered", 
+                                                                    #midpoint = median(range.spr$Year, na.rm = TRUE), 
+                                                                    midpoint =2005, 
+                                                                      name = "Year")
+
+RangeEdge2
+#END range edge----
+#Combineplots
+# Ensure both plots have identical margins
+RangeEdge2 <- RangeEdge2 + theme(plot.margin = margin(10, 0,20,0))
+PlotEAOAbd <- PlotEAOAbd + theme(plot.margin = margin(0, 0,10,10))#,axis.title.y = element_blank())
+EAOplot <- EAOplot + theme(plot.margin = margin(15, 0,20,0))#,axis.title.y = element_blank())
+
+
+# FIXED Option 3: Proper nested approach
+# Create top row WITHOUT labels (labels will be added at the end)
+top_row <- plot_grid(
+  EAOplot, 
+  PlotEAOAbd, 
+  ncol = 2, 
+  rel_heights = c(1,1),rel_widths =c(.5,.5), 
+  align = "h",
+  axis = "b"
+)
+
+# Create bottom row WITHOUT labels
+bottom_centered <- plot_grid(
+  NULL, 
+  RangeEdge2, 
+  NULL,
+  ncol = 3,
+  rel_widths = c(0.1, .8, 0.1)
+)
+
+# Combine rows and add ALL labels at this final step
+# Combine rows WITHOUT automatic labels
+EAORangeCombo_alt <- plot_grid(
+  top_row,
+  bottom_centered,
+  nrow = 2,
+  rel_heights = c(.55,.45)
+)
+EAORangeCombo_final <- ggdraw(EAORangeCombo_alt) +
+  draw_plot_label(label = "(a)", x = 0.01, y = 0.99, size = 12) +   # Top left
+  draw_plot_label(label = "(b)", x = 0.52, y = 0.99, size = 12) +   # Top right  
+  draw_plot_label(label = "(c)", x = 0.01, y = 0.45, size = 12)     # Bottom (centered plot)
+
+
+# Display the result
+print(EAORangeCombo_final)
+
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/EAORangeCombo_final.jpeg"), plot = EAORangeCombo_final, dpi = 600, width = 10, height = 8, units = "in", device = "jpeg") 
+
+CombEAOABDrANGE
+##END Plot Range Edge----
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
 #LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r
 cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"))
@@ -721,47 +1036,6 @@ DistHagCombo
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/DistHag.jpeg"), plot = DistHagCombo, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #
 #END PLOT Distance to Hague Line
-#Range Edge  ----
-rangeedge<-read.csv(here::here("R/DataforFinalFigs/Edge_df_NSreshp.csv"))
-range.spr<-rangeedge[rangeedge$Season=="Spring",]
-range.spr$Period<-NULL
-range.spr$Period[range.spr$Year<2006]<-"Before Warming"
-range.spr$Period[range.spr$Year>2005]<-"During Warming"
-names(range.spr);summary(range.spr)
-# Create a jitter object with both horizontal and vertical displacement
-set.seed(123)  # For reproducibility
-pos_jitter <- position_jitter(width = .1, height = .1)  # Jitter both horizontally and vertically
-
-## Two facets
-RangeEdge<-ggplot(range.spr, aes(x = Estimate_km_E_quantile_0.5, y = Estimate_km_N_quantile_0.5, 
-                                 color = Period)) +
-  geom_errorbarh(aes(
-    xmin = Estimate_km_E_quantile_0.05 - Std_Dev_km_E_quantile_0.05, 
-    xmax = Estimate_km_E_quantile_0.95 + Std_Dev_km_E_quantile_0.95
-  ), height = 0.1, position = pos_jitter, na.rm = TRUE) +
-  
-  geom_errorbar(aes(
-    ymin = Estimate_km_N_quantile_0.5 - Std_Dev_km_N_quantile_0.5, 
-    ymax = Estimate_km_N_quantile_0.5 + Std_Dev_km_N_quantile_0.5
-  ), width = 0.1, position = pos_jitter, na.rm = TRUE) +
-  
-  geom_point(position = pos_jitter, na.rm = TRUE, alpha = 1, size = 1.5, shape = 19) +
-  scale_color_manual(values = c("steelblue","orangered")) +
-  ylab("Range Edge N (km)")+
-  xlab("Range Edge E (km)")+
-  theme_bw() +
-  theme(legend.position = "none",
-        plot.margin=margin(5,10,10,10),
-        axis.text.x = element_text(angle = 90, vjust = 0, hjust=.5,size=14,family="serif"),
-        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=0,size=14,family="serif"),
-        axis.title.x=element_text(size=16,hjust=0.5,vjust=-2,family="serif"),
-        axis.title.y=element_text(size=16,hjust=0.5,vjust=4,angle=90,family="serif"),
-        strip.text=element_text(size=14,family="serif",angle=0),
-        strip.background = element_rect(colour = "black", fill = "white"))+
-  facet_wrap(~Period,nrow=1,scales="fixed")
-RangeEdge
-##END Plot Range Edge----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #Plot deepening----
 deepReg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
 names(deepReg);summary(deepReg)

@@ -72,12 +72,13 @@ CAMAP<-ggplot() +
   geom_sf(data = Hague, color="navy") +
   geom_sf(data = EEZ, color="navy", linetype = "dashed", size = 1.2) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = land, fill="cornsilk") +
   scale_fill_manual(values = region_colours)+
   #scale_fill_manual(name = " ", values = c("#E41A1C","#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#F781BF", "#999999")) +
-  labs(title="Core Areas")+
-  xlim(-73, -48) + ylim(39.355, 55)+
-  theme_bw()
+  labs(title="")+
+  xlim(-72.5, -48) + ylim(39.355, 50)+
+  theme_bw()+
+  theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust=1,size=8,family="serif"))
 CAMAP
 
 
