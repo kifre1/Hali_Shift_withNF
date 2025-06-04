@@ -643,7 +643,7 @@ COG_Reg_map<-ggplot() +
   geom_sf(data = All_region_df,  fill = NA) +
   geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
   geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
-  geom_sf(data = land, fill = "grey") +  
+  geom_sf(data = land, fill = "cornsilk") +  
   geom_sf(data = centroid_reg_sf_spr, aes(color = Year),size =1.5, alpha = .5,shape=16) +  
   xlim(-70.5, -48) + ylim(39.5, 50)+
   labs(title = "", x = "",y = "",
@@ -680,7 +680,7 @@ COG_CA_map<-ggplot() +
   geom_sf(data = All_region_df,  fill = NA) +
   geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
   geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
-  geom_sf(data = land, fill="grey") +
+  geom_sf(data = land, fill="cornsilk") +
   geom_sf(data = centroid_CA_sf_spr, aes(color = Year),size =1.5, alpha = .5,shape=16) +  # Adjust size and alpha here
   #labs(title = "Centre of Gravity (Mean) within Core Areas:Spring", x = "Longitude", y = "Latitude",
   #   color = "Year") +
