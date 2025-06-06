@@ -1,6 +1,15 @@
 #Plotting estimates vs temperature figure 
+#STEP 1: Plotting abundance estimates and difference
+  #Before, 1990-2005, During(2006-2023), mean sqrt(Abun.) rasters calculated in 3.2
+  #diff_rast_spring.tif: difference(After-Before) Avg.Count rasters calculated in 3.2, sqrt transformation here for plotting 
+  #percent_change_rast_spring.tif: percent change (((After-Before) / Before) * 100), (Avg.Count)
+#STEP2: TEMPERATURE...prepare temperature and temperature change rasters from BNAM .mat files
+  #mean_bottom_temperature_Before_annual.tif: Mean annual BT 1990-2005
+  #mean_bottom_temperature_During_annual.tif: Mean annual BT 2006-2023
+  #diff_Btemp_rast_annual.tif: (Mean annual BT 2006-2023)-(Mean annual BT 1990-2005)
+#STEP3: plot temperature and temperature change
 
-#Part 1 Plotting abundance estimates and difference---
+#STEP 1 Plotting abundance estimates and difference---
 library(terra)
 library(here)
 library(sf)
@@ -33,13 +42,13 @@ BeforePlot<- ggplot() +
   scale_fill_viridis_c()+
  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(a)Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
+  labs(title="(a) Mean Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -57,13 +66,13 @@ DuringPlot<- ggplot() +
   scale_fill_viridis_c()+
   # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1","darkorange",   "red"), na.value = "transparent",limits = rast_lims) +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
+  labs(title="Estimated Abundance, 2006-2023", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # rmoves minor grid lines
@@ -94,18 +103,41 @@ max(diff_rast)
 diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_rast_df)[3] <- "difference"
 
+library(scales)
+#set up how the colour gradient will be defined
+min_val  <- min(diff_rast_df$difference, na.rm = TRUE)
+max_val <- max(diff_rast_df$difference, na.rm = TRUE)
+values <- rescale(c(min_val,-30,  -0.01, 0, 0.01, 500, max_val))
+range(diff_rast_df$difference)#min:-446.4199 max: 5781.7812
+#because the positive range is so much larger we will transform these so that the negative range shows up
+#diff_rast_df$difference_trans <- sign(diff_rast_df$difference) * sqrt(abs(diff_rast_df$difference))#because the 
+#min_val  <- min(diff_rast_df$difference_trans, na.rm = TRUE)
+#max_val <- max(diff_rast_df$difference_trans, na.rm = TRUE)
+#values <- rescale(c(min_val,  -0.01, 0, 0.01, 28, max_val))
+#check out the colours in vik
+scico::scico(n = 10, palette = "vik")
+#"#001260" "#023E7D" "#1D6E9C" "#71A7C4" "#C9DDE7" "#EACEBE" "#D29773" "#BD6432" "#8B2706" "#590007"
+
 DifferencePlot<-ggplot() +
   geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
-  scale_fill_viridis_c()+
+  scale_fill_gradientn(
+    colours = c("#001260","#1D6E9C",  "#C9DDE7", "white", "#EACEBE", "#D29773",  "#8B2706"), # duplicate colors for sharp edges
+    values = values,
+    limits = c(min_val, max_val),
+    oob = scales::squish
+  ) +
+  #coord_fixed() +
+  #scale_fill_scico(palette = "vik")+
+  #scale_fill_viridis_c()+
   # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",   "red"), na.value = "transparent") +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(b)Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
+  labs(title="(b) Change in Estimated Abundance (2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -113,7 +145,8 @@ DifferencePlot<-ggplot() +
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
-
+DifferencePlot
+DifferencePlot+BeforePlot
 #Percent Change
 percent_change_df <- as.data.frame(percent_change_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(percent_change_df)[3] <- "PChange"
@@ -123,10 +156,10 @@ ChangePlot<-ggplot() +
   scale_fill_viridis_c()+
  # scale_fill_gradientn(colors = c("darkblue", "deepskyblue1",  "red"), na.value = "transparent") +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   labs(title="Percent Change", x = NULL, y = NULL)+
   theme_bw()+
@@ -144,7 +177,8 @@ BeforePlot+DifferencePlot
 writeRaster(diff_rast, filename = paste0(out_dir, "/diff_rast_spring.tif"), overwrite = TRUE)
 writeRaster(percent_change_rast, filename = paste0(out_dir, "/percent_change_rast_spring.tif"), overwrite = TRUE)
 
-#Part2 Temperature plots----
+
+#STEP2: TEMPERATURE...prepare temperature and temperature change rasters from BNAM .mat files ----
 #make a spring 1990-2005 and 2006-2023 layer----
 
 library(R.matlab)
@@ -280,46 +314,67 @@ writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Btemp_rast_annual.
 #writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_surface_temperature_During_Spring.tif"), overwrite = TRUE)
 #writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Stemp_rast_Spring.tif"), overwrite = TRUE)
 
-
-
-#plot
-BeforeTemp_rast_df <- as.data.frame(mean_Braster, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(BeforeTemp_rast_df)[3] <- "Temperature"
-AfterTemp_rast_df <- as.data.frame(mean_Araster, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(AfterTemp_rast_df)[3] <- "Temperature"
-diff_temp_rast_df <- as.data.frame(diff_temp_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
-names(diff_temp_rast_df)[3] <- "Temperature"
+#STEP3 plot temperature and temperature change----
 library(scico)
 library(ggplot2)
+BT1_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_Before_annual.tif"))
+BT2_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_During_annual.tif"))
+BTchange_r <- rast(here::here("2025-04-23/Output/GridPlot/diff_Btemp_rast_annual.tif"))
+BT1_r_df <- as.data.frame(BT1_r, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(BT1_r_df)[3] <- "Temperature"
+BT2_r_df <- as.data.frame(BT2_r, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(BT2_r_df)[3] <- "Temperature"
+BTchange_r_df <- as.data.frame(BTchange_r, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(BTchange_r_df)[3] <- "Temperature"
+
+#we want 0 to be the midpoint
+range(BT1_r_df)
+hist(BT1_r_df$Temperature)
+min_BT  <- min(BT1_r_df$Temperature, na.rm = TRUE)
+max_BT <- max(BT1_r_df$Temperature, na.rm = TRUE)
+#colours <- c("blue", "white", "darkred")
+#values_BT <- rescale(c(min_BT,  -0.01, 0, 0.01, max_BT))
+#values_BT <- rescale(c(min_BT,  -0.01, 0, 0.01,  5,9, max_BT)) 
+#colours <- c("blue", "white", "yellow", "orange", "darkred")
+
 tempBefore<- ggplot() +
-  geom_raster(data = BeforeTemp_rast_df, aes(x = x, y = y, fill = Temperature)) +
-  scale_fill_scico(palette = "vik", name = "Temp (°C)")+
+  geom_raster(data = BT1_r_df, aes(x = x, y = y, fill = Temperature)) +
+  #scale_fill_gradientn(colours = rev(rainbow(7)))+
+   scale_fill_gradientn(
+    colours = c("purple", "blue", "cyan", "green", "yellow", "orange", "red"),     # Reversed rainbow   # Reversed rainbow
+    values = scales::rescale(c(min_BT, 0, 2, 4, 6, 8 , max_BT)),
+    limits = c(min_BT, max_BT),
+    oob = scales::squish
+  )+
+  #scale_fill_scico(palette = "vik", name = "Temp (°C)")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(c) Mean Bottom Temp. 1990-2005", x = NULL, y = NULL, fill = "°C")+
+  labs(title="(c) Mean Bottom Temp. (1990-2005)", x = NULL, y = NULL, fill = "°C")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-  )
+
+    )
+tempBefore
 
 tempAfter<- ggplot() +
-  geom_raster(data = AfterTemp_rast_df, aes(x = x, y = y, fill = Temperature)) +
+  geom_raster(data = BT2_r_df, aes(x = x, y = y, fill = Temperature)) +
   scale_fill_scico(palette = "vik", name = "Temp (°C)")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
   labs(title="(c) Mean Bottom Temp. 2006-2023", x = NULL, y = NULL, fill = "°C")+
@@ -331,15 +386,24 @@ tempAfter<- ggplot() +
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
 
+max_change <- max(abs(BTchange_r_df$Temperature), na.rm = TRUE)
+min_change <- max(abs(BTchange_r_df$Temperature), na.rm = TRUE)
+
 tempchange<-ggplot() +
-  geom_raster(data = diff_temp_rast_df, aes(x = x, y = y, fill = Temperature)) +
-  scale_fill_scico(palette = "vik", name = "Temp (°C)")+
+  geom_raster(data = BTchange_r_df, aes(x = x, y = y, fill = Temperature)) +
+  scale_fill_scico(
+    palette = "vik",
+    name = "(°C)",
+    limits = c(-min_change, max_change), 
+    oob = scales::squish
+  )+
+  #scale_fill_scico(palette = "vik", name = "°C")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
-  geom_sf(data = Hague, color="darkred", size = 2) +
-  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
-  geom_sf(data = land, fill="lightgrey") +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
   labs(title="(d) Change in Mean BTemp. (2006-2023)", x = NULL, y = NULL, fill = "°C")+
@@ -353,4 +417,8 @@ tempchange<-ggplot() +
 
 library(gridExtra)
 grid.arrange(tempBefore, tempchange, ncol = 2)
+
+#FIGURE 2:
 grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2)
+
+GridPlot_BTemp
