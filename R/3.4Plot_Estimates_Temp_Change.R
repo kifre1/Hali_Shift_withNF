@@ -1,14 +1,20 @@
 #Plotting estimates vs temperature figure 
 #STEP 1: Plotting abundance estimates and difference
-  #Before, 1990-2005, During(2006-2023), mean sqrt(Abun.) rasters calculated in 3.2
-  #diff_rast_spring.tif: difference(After-Before) Avg.Count rasters calculated in 3.2, sqrt transformation here for plotting 
+  #(PANEL A): Before, 1990-2005 , mean sqrt(Abun.) rasters calculated in 3.2
+  #During(2006-2023), mean sqrt(Abun.) rasters calculated in 3.2
+  #(PANEL B):diff_rast_spring.tif: difference(After-Before) Avg.Count rasters calculated in 3.2, 
   #percent_change_rast_spring.tif: percent change (((After-Before) / Before) * 100), (Avg.Count)
 #STEP2: TEMPERATURE...prepare temperature and temperature change rasters from BNAM .mat files
   #mean_bottom_temperature_Before_annual.tif: Mean annual BT 1990-2005
   #mean_bottom_temperature_During_annual.tif: Mean annual BT 2006-2023
   #diff_Btemp_rast_annual.tif: (Mean annual BT 2006-2023)-(Mean annual BT 1990-2005)
 #STEP3: plot temperature and temperature change
+  #(PANEL C):TempBefore, 
+  #TempAfter, 
+  #(PANEL D): TempChange (TempAfter-TempBefore)
+  #FIGURE 2: BeforePlot,DifferencePlot,tempBefore,tempchange
 
+#save as GridPlot_BTemp
 #STEP 1 Plotting abundance estimates and difference---
 library(terra)
 library(here)
@@ -37,6 +43,7 @@ rast_lims<-c(0,80)
 R1_df <- as.data.frame(r1, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(R1_df)[3] <- "EstimatedAbundance"
 
+#(PANEL A)
 BeforePlot<- ggplot() +
   geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
   scale_fill_viridis_c()+
@@ -50,6 +57,7 @@ BeforePlot<- ggplot() +
   theme_bw()+
   labs(title="(a) Mean Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
   theme(
+    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -109,15 +117,11 @@ min_val  <- min(diff_rast_df$difference, na.rm = TRUE)
 max_val <- max(diff_rast_df$difference, na.rm = TRUE)
 values <- rescale(c(min_val,-30,  -0.01, 0, 0.01, 500, max_val))
 range(diff_rast_df$difference)#min:-446.4199 max: 5781.7812
-#because the positive range is so much larger we will transform these so that the negative range shows up
-#diff_rast_df$difference_trans <- sign(diff_rast_df$difference) * sqrt(abs(diff_rast_df$difference))#because the 
-#min_val  <- min(diff_rast_df$difference_trans, na.rm = TRUE)
-#max_val <- max(diff_rast_df$difference_trans, na.rm = TRUE)
-#values <- rescale(c(min_val,  -0.01, 0, 0.01, 28, max_val))
-#check out the colours in vik
+
 scico::scico(n = 10, palette = "vik")
 #"#001260" "#023E7D" "#1D6E9C" "#71A7C4" "#C9DDE7" "#EACEBE" "#D29773" "#BD6432" "#8B2706" "#590007"
 
+#(PANEL B)
 DifferencePlot<-ggplot() +
   geom_raster(data = diff_rast_df, aes(x = x, y = y, fill = difference)) +
   scale_fill_gradientn(
@@ -137,8 +141,9 @@ DifferencePlot<-ggplot() +
   geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(b) Change in Estimated Abundance (2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
+  labs(title="(b) Change in Estimated Abundance (2006-2023)", x = NULL, y = NULL, fill = "Avg.\nCount")+
   theme(
+    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -332,11 +337,8 @@ range(BT1_r_df)
 hist(BT1_r_df$Temperature)
 min_BT  <- min(BT1_r_df$Temperature, na.rm = TRUE)
 max_BT <- max(BT1_r_df$Temperature, na.rm = TRUE)
-#colours <- c("blue", "white", "darkred")
-#values_BT <- rescale(c(min_BT,  -0.01, 0, 0.01, max_BT))
-#values_BT <- rescale(c(min_BT,  -0.01, 0, 0.01,  5,9, max_BT)) 
-#colours <- c("blue", "white", "yellow", "orange", "darkred")
 
+#(PANEL C)
 tempBefore<- ggplot() +
   geom_raster(data = BT1_r_df, aes(x = x, y = y, fill = Temperature)) +
   #scale_fill_gradientn(colours = rev(rainbow(7)))+
@@ -357,6 +359,8 @@ tempBefore<- ggplot() +
   theme_bw()+
   labs(title="(c) Mean Bottom Temp. (1990-2005)", x = NULL, y = NULL, fill = "°C")+
   theme(
+    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
+    axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -389,6 +393,7 @@ tempAfter<- ggplot() +
 max_change <- max(abs(BTchange_r_df$Temperature), na.rm = TRUE)
 min_change <- max(abs(BTchange_r_df$Temperature), na.rm = TRUE)
 
+#(PANEL D)
 tempchange<-ggplot() +
   geom_raster(data = BTchange_r_df, aes(x = x, y = y, fill = Temperature)) +
   scale_fill_scico(
@@ -397,8 +402,6 @@ tempchange<-ggplot() +
     limits = c(-min_change, max_change), 
     oob = scales::squish
   )+
-  #scale_fill_scico(palette = "vik", name = "°C")+
-  #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
   geom_sf(data = Hague, color="black", size = 2) +
@@ -421,4 +424,4 @@ grid.arrange(tempBefore, tempchange, ncol = 2)
 #FIGURE 2:
 grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2)
 
-GridPlot_BTemp
+#save as GridPlot_BTemp
