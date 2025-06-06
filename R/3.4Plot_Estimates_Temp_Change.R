@@ -39,7 +39,7 @@ BeforePlot<- ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
+  labs(title="(a)Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt(Abun.)")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -105,7 +105,7 @@ DifferencePlot<-ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
+  labs(title="(b)Change in Estimated Abundance (vs. 2006-2023)", x = NULL, y = NULL, fill = "Avg.Count")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -152,6 +152,8 @@ library(raster)
 library(sp)
 library(lubridate)
 
+mat_test <- readMat("C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/TSsfce_1990.mat", fixNames = TRUE)
+
 # Function to process individual .mat files----
 process_mat_to_raster_stack <- function(mat_file, info_file, yearrange, variable_name) {
   # Load .mat files
@@ -174,7 +176,7 @@ process_mat_to_raster_stack <- function(mat_file, info_file, yearrange, variable
   BNAM_lon <- as.vector(mat_data$nav.lon[1:801, 1:401])
   
   # Only extract months 4(April, 5 (May), 6 (June)
-  selected_months <- 4:6
+  selected_months <- 1:12 #set for whole year
   month_list <- lapply(selected_months, function(i) {
     as.vector(mat_data[[variable_name]][i, 1:801, 1:401])
   })
@@ -241,10 +243,12 @@ process_all_mat_files <- function(mat_folder, info_file, variable_name) {
 #----
 #Make rasters----
 # Surface Temperature
-mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/"
+#mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/"  #Surface
+mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSbtm-20250319T175520Z-001/TSbtm/"  #bottom
 info_file <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/bnam_grid_info.mat"
 # Select the variable you want to process
-variable_to_process <- "Tsfce"  
+#variable_to_process <- "Tsfce"  #surface
+variable_to_process <- "Tbtm"  #bottom
 
 # Run function on all .mat files
 yearrange<- 1990:2005
@@ -263,17 +267,30 @@ diff_temp_rast <- mean_Araster - mean_Braster
 plot(diff_temp_rast)
 
 out_dir <- here::here("2025-04-23/Output/GridPlot")
-writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_surface_temperature_Before.tif"), overwrite = TRUE)
-writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_surface_temperature_During.tif"), overwrite = TRUE)
-writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_temp_rast.tif"), overwrite = TRUE)
+#annual mean Bottom 
+writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_bottom_temperature_Before_annual.tif"), overwrite = TRUE)
+writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_bottom_temperature_During_annual.tif"), overwrite = TRUE)
+writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Btemp_rast_annual.tif"), overwrite = TRUE)
+#annual mean surface
+#writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_temperature_Before_annual.tif"), overwrite = TRUE)
+#writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_temperature_During_annual.tif"), overwrite = TRUE)
+#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_temp_rast_annual.tif"), overwrite = TRUE)
+#spring mean surface
+#writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_surface_temperature_Before_Spring.tif"), overwrite = TRUE)
+#writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_surface_temperature_During_Spring.tif"), overwrite = TRUE)
+#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Stemp_rast_Spring.tif"), overwrite = TRUE)
+
 
 
 #plot
 BeforeTemp_rast_df <- as.data.frame(mean_Braster, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(BeforeTemp_rast_df)[3] <- "Temperature"
+AfterTemp_rast_df <- as.data.frame(mean_Araster, xy = TRUE, na.rm = TRUE)  # Include coordinates
+names(AfterTemp_rast_df)[3] <- "Temperature"
 diff_temp_rast_df <- as.data.frame(diff_temp_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_temp_rast_df)[3] <- "Temperature"
 library(scico)
+library(ggplot2)
 tempBefore<- ggplot() +
   geom_raster(data = BeforeTemp_rast_df, aes(x = x, y = y, fill = Temperature)) +
   scale_fill_scico(palette = "vik", name = "Temp (°C)")+
@@ -285,7 +302,27 @@ tempBefore<- ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Mean Spring Surface Temp. 1990-2005", x = NULL, y = NULL, fill = "°C")+
+  labs(title="(c) Mean Bottom Temp. 1990-2005", x = NULL, y = NULL, fill = "°C")+
+  theme(
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
+  )
+
+tempAfter<- ggplot() +
+  geom_raster(data = AfterTemp_rast_df, aes(x = x, y = y, fill = Temperature)) +
+  scale_fill_scico(palette = "vik", name = "Temp (°C)")+
+  #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
+  coord_sf() +
+  geom_sf(data = Hague, color="darkred", size = 2) +
+  geom_sf(data = EEZ, color="darkred", linetype = "dashed", size = 1.7) +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = land, fill="lightgrey") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(c) Mean Bottom Temp. 2006-2023", x = NULL, y = NULL, fill = "°C")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -305,7 +342,7 @@ tempchange<-ggplot() +
   geom_sf(data = land, fill="lightgrey") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="Change in Mean Spring Temp. (vs. 2006-2023)", x = NULL, y = NULL, fill = "°C")+
+  labs(title="(d) Change in Mean BTemp. (2006-2023)", x = NULL, y = NULL, fill = "°C")+
   theme(
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -315,6 +352,5 @@ tempchange<-ggplot() +
   )
 
 library(gridExtra)
-
+grid.arrange(tempBefore, tempchange, ncol = 2)
 grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2)
-
