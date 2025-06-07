@@ -57,7 +57,11 @@ Model output are huge .rds files that contain everything (input, estimates, indi
 
   - **3.2Binned_density_plot.R**: *vast_fit_plot_spatial_kf_binned_new()*  function to interpolate and map the predicted abundance of grid centroids estimates,  over a regular grid. 
     - Plot two bins: before and after accelerated warming period (2005)  
-    - Saves rasters for plotting
+    - Saves rasters for plotting: 
+      - **square root 1990-2005 annual mean**: AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif   
+      - **square root 2006-2023 annual mean**: AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif  
+      - **Raw 1990-2005 annual mean**: AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin1.tif  
+      - **Raw2006-2023 annual mean**: AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin1.tif  
 <br>
 
   - **3.3Regional_Proportions.R**: Preparing Estimated Abundance data and plotting the timeseries to compare the abundance trends of National and Core Area stratum. Using the generated indexed abundance data from get_vast_index_timeseries() becasue the standard errors are not available at scale of grid location 
@@ -81,10 +85,21 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       -Completed and plotted for Abundance, Proportion, and relative density 
 <br> 
 
-  - **3.4Plot_Estimates_Temp_Change.R**: Plotting maps of estimates and temperature and change 
-    - Part 1: Plotting maps for estimates: 1990-2005, 2006-2023, and the difference between the 2 timeframes
-    - Part 2: Temperature  
-      - Creates a raster layer for mean spring (May, June, July ) temperature for each time frame 
+  - **3.4Plot_Estimates_Temp_Change.R**: Plotting maps of estimates and temperature and change for Figure 2  
+    - STEP 1: Plotting abundance estimates and difference  
+      - **(PANEL A)**: Before, 1990-2005 , mean sqrt(Abun.) rasters calculated in 3.2  
+      - During(2006-2023), mean sqrt(Abun.) rasters calculated in 3.2  
+      - **(PANEL B)**:*diff_rast_spring.tif*: difference(After-Before) Avg.Count rasters calculated in 3.2,  
+      -  *percent_change_rast_spring.tif*: percent change (((After-Before) / Before) * 100), (Avg.Count)  
+    - STEP2: TEMPERATURE...prepare temperature and temperature change rasters from BNAM .mat files  
+      - Mean annual BT 1990-2005: *mean_bottom_temperature_Before_annual.tif *  
+      - Mean annual BT 2006-2023: *mean_bottom_temperature_During_annual.tif*   
+      - Difference: *diff_Btemp_rast_annual.tif*:* (Mean annual BT 2006-2023)-(Mean annual BT 1990-2005)  
+    - STEP3: plot temperature and temperature change  
+      - **(PANEL C)**:TempBefore  
+      - TempAfter  
+      - **(PANEL D)**: TempChange (TempAfter-TempBefore)  
+    - **FIGURE 2**: BeforePlot,DifferencePlot,tempBefore,tempchange
 <br>
 
 ## Shift Analysis 

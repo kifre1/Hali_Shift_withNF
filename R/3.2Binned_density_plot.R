@@ -120,7 +120,7 @@ lab_lat = 38
 lab_lon = -65 
 start_year<-1990
 season_increment <- 3 
-legend_title<- "Density" 
+legend_title<- "Abundance" 
 
 
 library(terra)
