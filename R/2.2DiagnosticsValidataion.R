@@ -60,6 +60,7 @@ Hali_Env<- readRDS( here::here("2025-04-23/Halibut_BC/EnvOnly_mod_fit.rds"))
 Hali_Sp<- readRDS( here::here("2025-04-23/Halibut_BC/Sp_mod_fit.rds"))  
 vast_sample_data<- read.csv(here::here("2025-04-23/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
 
+
 Hali_SpSt$Report$jnll
 Hali_SpSt$Report$deviance #is NaN
 print(Hali_SpSt$parameter_estimates$objective)
@@ -177,6 +178,81 @@ range(Hali_SpSt$effects$covariate_data_full$BT_monthly)
 #good 
 
 str(Hali_SpSt$covariate_data)
+str(cov_effs_SpSt)
+
+#2.6 Tables: Real_Value at which each covariate has its max effect
+#Probability of presence 
+cov_effs_SpSt %>%
+  filter(Lin_pred == "X1") %>%
+  mutate(prob = plogis(fit)) %>%
+  group_by(Covariate) %>%
+  slice_max(prob, n = 1)
+#    fit  se    lower upper Lin_pred  Covariate   Value   Real_Value   prob
+#1  3.34 0.534  2.29  4.39   X1       BT_monthly   0.8    6.34        0.966
+#2  3.42 0.552  2.33  4.50   X1       Depth        1.73   576.        0.968
+#3  3.61 0.603  2.43  4.79   X1       SST_monthly  3.04   25.9        0.974
+
+#99% of max 
+cov_effs_SpSt %>%
+  filter(Lin_pred == "X1") %>%
+  mutate(prob = plogis(fit)) %>%
+  group_by(Covariate) %>%
+  mutate(prob_pct = prob / max(prob)) %>%
+  filter(prob_pct >= 0.99) %>%
+  summarise(
+    min_val = min(Real_Value),
+    max_val = max(Real_Value),
+    max_prob = max(prob)
+  )
+#Covariate      min_val max_val max_prob
+#1 BT_monthly   4.11    8.37    0.966
+#2 Depth        252.    900.    0.968
+#3 SST_monthly  13.1    25.9    0.974
+
+#positive catch rate
+cov_effs_SpSt %>%
+  filter(Lin_pred == "X2") %>%
+  mutate(prob = plogis(fit)) %>%
+  group_by(Covariate) %>%
+  slice_max(prob, n = 1)
+#    fit     se   lower upper  Lin_pred Covariate    Value  Real_Value  prob
+#1  -0.427 0.390 -1.19  0.337   X2       BT_monthly   0.426    5.23    0.395
+#2  1.81   1.15  -0.454 4.07    X2       Depth        8.53     2014.   0.859
+#3  0.286  0.350 -0.400 0.972   X2       SST_monthly -1.61    -1.61    0.571
+cov_effs_SpSt %>%
+  filter(Lin_pred == "X2") %>%
+  mutate(prob = plogis(fit)) %>%
+  group_by(Covariate) %>%
+  mutate(prob_pct = prob / max(prob)) %>%
+  filter(prob_pct >= 0.99) %>%
+  summarise(
+    min_val = min(Real_Value),
+    max_val = max(Real_Value),
+    max_prob = max(prob)
+  )
+#Covariate   min_val max_val max_prob
+#1 BT_monthly  3.18    7.45    0.395
+#2 Depth       1995.   2014.   0.859
+#3 SST_monthly -1.61   -1.38   0.571
+#remove depth outliers?
+cov_effs_SpSt_clipped <- cov_effs_SpSt %>%
+  filter(Covariate != "Depth" |
+           (Covariate == "Depth" & Real_Value >= 20 & Real_Value <= 1300))
+
+cov_effs_SpSt_clipped %>%
+  filter(Lin_pred == "X2") %>%
+  mutate(prob = plogis(fit)) %>%
+  group_by(Covariate) %>%
+  mutate(prob_pct = prob / max(prob)) %>%
+  filter(prob_pct >= 0.95) %>%
+  summarise(
+    min_val = min(Real_Value),
+    max_val = max(Real_Value),
+    max_prob = max(prob)
+  )
+
+
+
 #2.6. Plot Real instead of scaled values(altered original function) 
 source(here::here("R/VAST_functions/kf_vast_function_edits.R"))
 plot_vast_covariate_effects_kf(vast_covariate_effects = cov_effs_Env, vast_fit = Hali_Env, nice_category_names = "Halibut_Env", out_dir = out_dir)
@@ -236,6 +312,7 @@ kappa1<- exp(logkappa1)#0.01
 kappa2<- exp(logkappa2)#0.05
 range1 <- sqrt(8) / kappa1 #279.7298, Small Kappa suggests a large spatial range, observations remain spatially correlated up to 280 units (km).
 range2 <- sqrt(8) / kappa2 #55.38409, Larger Kappa, correlation decays faster for this parameter at around 55 units (km) 
+
 
 # 5. AUC----
 # Get the observation and prediction dataframe (to the survey points not the grid)
