@@ -569,7 +569,7 @@ PlotEAOAbd <- PlotEAOAbd + theme(plot.margin = margin(0, 0,10,10))#,axis.title.y
 EAOplot <- EAOplot + theme(plot.margin = margin(15, 0,20,0))#,axis.title.y = element_blank())
 
 
-# FIXED Option 3: Proper nested approach
+# Combo plot: Proper nested approach----
 # Create top row WITHOUT labels (labels will be added at the end)
 top_row <- plot_grid(
   EAOplot, 
@@ -611,7 +611,7 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/EAORangeCombo_final.jp
 CombEAOABDrANGE
 ##END Plot Range Edge----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-
+#END Combo plot: Proper nested approach----
 #LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r
 cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"))
 cogregslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_Regional.csv"))
@@ -900,8 +900,8 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSCOGCASlopes.jpe
 
 dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
 dist_hague_Reg$Period<-NULL
-dist_hague_Reg$Period[DistHagTrans_Reg$Year<2006]<-"Before Warming"
-dist_hague_Reg$Period[DistHagTrans_Reg$Year>2005]<-"During Warming"
+dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"Before Warming"
+dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"During Warming"
 dist_hague_Reg_spr<-dist_hague_Reg[dist_hague_Reg$Season=="Spring",]
 dist_hague_Reg_spr_agg<-dist_hague_Reg_spr %>%
   group_by(Stratum,Period) %>%
@@ -918,7 +918,7 @@ dist_hague_CA$Period<-NULL
 dist_hague_CA$Period[dist_hague_CA$Year<2006]<-"Before Warming"
 dist_hague_CA$Period[dist_hague_CA$Year>2005]<-"During Warming"
 dist_hague_CA_spr<-dist_hague_CA[dist_hague_CA$Season=="Spring",]
-
+#aggregate values by Stratum and Period
 dist_hague_CA_spr_agg<-dist_hague_CA_spr %>%
   group_by(Stratum,Period) %>%
   summarise(
@@ -949,7 +949,8 @@ dist_hague_RegFromZero<-dist_hague_Reg_spr_agg %>%
     )
   )
 
-selected_categories <- c("CapeCod","EGOM","Nantucket","Georges")
+#selected_categories <- c("CapeCod","EGOM","Nantucket","Georges")
+selected_categories <- c("CapeCod","EGOM","Nantucket")
 
 dist_hague_CAFromZero<-dist_hague_CA_spr_agg %>%
   mutate(
@@ -970,6 +971,15 @@ Dist_Q95 = case_when(
   TRUE ~ Dist_Q95
   )
 )
+# Now just Georges q5
+
+dist_hague_CAFromZero2<-dist_hague_CAFromZero %>%
+  mutate(
+    Dist_Q5= case_when(
+      Stratum %in% "Georges" ~ Dist_Q5 * -1,
+      TRUE ~ Dist_Q95
+    )
+  ) 
 #END Must TRANSFORM USA distances to be negative for plotting----
 #END Processing distance data for REG and CA----
    
@@ -1003,9 +1013,10 @@ DistReg<-ggplot(dist_hague_RegFromZero, aes(x = Ord2Region, y = Dist_Mean,fill=P
   )
 DistReg
 ##Plot Distance for CA----
-dist_hague_CAFromZero$ordCoreArea<-factor(dist_hague_CAFromZero$Stratum, levels=c("Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
-pd <- position_dodge(.7)
-DistHag<-ggplot(dist_hague_CAFromZero , aes(x = factor(ordCoreArea), y = Dist_Mean,fill=Period)) +
+dist_hague_CAFromZero2
+dist_hague_CAFromZero2$ordCoreArea<-factor(dist_hague_CAFromZero$Stratum, levels=c("Nantucket","CapeCod","EGOM","Georges","BOF","Browns","Sable","CapeBreton","Gully","HaliChan","GrandBanks","GBTail"))
+pd <- position_dodge(.5)
+DistHag<-ggplot(dist_hague_CAFromZero2, aes(x = factor(ordCoreArea), y = Dist_Mean,fill=Period)) +
   geom_linerange(aes(ymin = Dist_Q5, ymax =Dist_Q95),position=pd,color="darkgrey",size=1.5)+
   geom_point(shape=21, size = 3,position=pd) +
   scale_fill_manual(values=c("steelblue", "orangered"))+
