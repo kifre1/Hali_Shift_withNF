@@ -50,8 +50,7 @@ pd <- position_dodge(.5)
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
 names(FigAbd.Region.Spring)
 
-Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
-names(Reg_SlopSpring)
+
 #To estimate the proportion ot toal abundance by Season, I have to do it here as teh script in 3.3Regional_Proportions can only easily be run if you have VAST
 Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
 #isolate spring 
@@ -138,39 +137,6 @@ ARegionalPlot<-
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
-#Figure ABD RATE----
-Reg_SlopSpring$Ord2Region<-factor(Reg_SlopSpring$Index_Region, levels=c("USA","Canada"))
-
-Reg_SlopSpring$RevPeriod <- factor(Reg_SlopSpring$Period, levels = c("During Warming", "Before Warming")) 
-RegionRatesPlot<-
-  ggplot(Reg_SlopSpring , aes(x = factor(Ord2Region), y = estimate,fill=RevPeriod)) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = pd) +
-  geom_point(shape = 21, size = 3, position = pd) +
-  guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
-  scale_fill_manual(values = c("orangered","steelblue" ))+ #Reverse the colors
-  coord_flip() +
-  geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
-  ylim(-0.06, 0.06) +
- # theme_minimal() + # A cleaner minimal theme
-  theme(
-    text = element_text(family = "serif"),  
-    legend.position.inside = c(0.25, 0.6),               # Position of the legend
-    legend.box.background = element_blank(), # Transparent legend box
-    legend.title = element_blank(),             # Hide legend title
-    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
-    axis.text = element_text(size = 14),      # Customize x-axis label
-    axis.title.y = element_blank(),             # Remove y-axis label
-    axis.title.x = element_text(size = 14),      # Customize x-axis label
-    plot.margin=margin(10,40,20,30))+
-  xlab("") +                                     # Clear x-axis label
-  ylab("Rate of change in Logged Abundance/year")
-
-RegionRatesPlot
-Figure2AbdAbdRates<-plot_grid(ARegionalPlot, RegionRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
-Figure2AbdAbdRates
-#ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
-# END Plot abundance indexed regions  ----
-#ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
 #Core Area Abundance----
 #Part 2: Core Areas abundance trends
