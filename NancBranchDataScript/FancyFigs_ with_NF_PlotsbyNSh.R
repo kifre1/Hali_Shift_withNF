@@ -293,40 +293,7 @@ final_plot
 # Save the final plot with legend
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureAbundanceFAandMapTrends.jpeg"), plot = final_plot, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
-#2.2 Calculate and plot the change in slope for each time period
-abundance_ind_CA$Period<-NULL
-abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
-abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
-
-CA_Abundance_coefficients_df <- abundance_ind_CA %>%
-  group_by(Index_Region,Period) %>%
-  do({
-    model <- lm((Index_Estimate) ~ Year, data = .)
-    data.frame(t(coef(model)))
-    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
-  }) %>%
-  ungroup()
-
-CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
-  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton","HaliChan",
-                                                                                                  "CapeCod","Browns","Gully","GrandBanks",
-                                                                                                  "Nantucket","Georges","Sable","GBTail"))
-
-pd <- position_dodge(.5)
-
-ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 3,position=pd) +
-  coord_flip()+
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  # ylim(-0.018,0.018)+
-  xlab("")+  ylab("Rate of change in Abundance count/yr")+
-  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
-#EOA plots and table ----
+#EAO ----
 #NOTE a lot of this is derived from EAOrmarkdown which is in the NancBranchDataScript folder
 #NancBranchDataScript/EAOrmarkdown.Rmd
 #where spring was isolated
