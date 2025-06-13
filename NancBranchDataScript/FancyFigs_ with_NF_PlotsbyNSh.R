@@ -764,69 +764,7 @@ suppcogca
 #END plot for Supplemental COG Lat vs Long by Core Area----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
-# PLOT COG Slopes and CI CORE AREAS and combine----
-cogCAslope$ordCoreArea<-factor(cogCAslope$Stratum, levels=c("Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
-unique(cogCAslope$ordCoreArea)
-cogCAslope_spr<-cogCAslope[cogCAslope$Season=="Spring",]
-
-cogCAslope_spr$ord2CoreArea <- factor(cogCAslope_spr$ordCoreArea,levels = rev(unique(cogCAslope_spr$ordCoreArea)))                               
-unique(cogCAslope_spr$ord2CoreArea)
-unique(cogCAslope_spr$ordCoreArea)
-p1<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Latitude",] , aes(x = (ordCoreArea), y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 2,position=pd) +
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  #scale_x_discrete(limits = rev(levels(factor(COGSlopeCI$ordCore_Area))))+ 
-  #ylim(-0.018,0.018)+
-  xlab("")+  ylab("Rate of change (DD/yr)")+
-  annotate("text", x = 1.6, y = .015, label = "North", hjust = 0,size=4,family="serif") +
-  annotate("text", x = 1.6, y = -.012, label = "South", hjust = 0,size=4,family="serif") +
-  labs(tag = "(a) Latitude")+
-  theme(plot.tag.position = c(.3, 1.1),plot.tag = element_text(family = "serif"),
-        axis.text.x =element_text(angle=90), 
-        axis.title.y = element_text(margin = margin(r = 5)),  #  space for y-axis label
-        plot.margin = margin(5.5, 5.5, 5.5, 5.5))  # Increase left margin
-
-p1
-p2<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Longitude",] , aes(x = ordCoreArea, y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 2,position=pd) +
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  #ylim(-0.018,0.018)+
-  coord_flip() +
-  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  xlab("")+  ylab("Rate of change (DD/yr)") +
-  annotate("text", x = 3, y = -.017, label = "West", hjust = 0,size=4,family="serif") +
-  annotate("text", x = 3, y = .009, label = "East", hjust = 0,size=4,family="serif") +
-  labs(tag = "(b) Longitude",title=NULL)+
-  theme(plot.tag.position = c(.3, 1.1),plot.tag = element_text(family = "serif"),
-        axis.text.x=element_text(angle=90),
-        axis.title.x= element_text(margin = margin(b = 0)),  # Bring x-axis label closer
-        plot.margin = margin(5.5, 5.5, 5.5, 5.5))
-
-p2
-combined <- (p1 | p2) +
-  plot_layout(guides = "collect") &
-  theme(
-    legend.title=element_blank(),legend.text=element_text(family="serif"),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    legend.margin = margin(0, 0, 0, 0),
-    legend.spacing.x = unit(0.2, 'cm'),
-    plot.margin = margin(30, 0, 0, 5)
-  )
-combined
-# Save with optimal dimensions for publication
-#ggsave("combined_figure.pdf", combined, width = 10, height = 5, 
-#      dpi = 300, device = cairo_pdf)
-##END Combine----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSCOGCASlopes.jpeg"), plot = combined, dpi = 600, width =10, height = 5, units = "in", device = "jpeg")
-#END FOR SUPPLEMENTAL USING CA DATA----
-
+# FOR SLOPES got to SupplementalSlopePlots.R
 #PLOT Distance to Hague Line
 #Figure DIST REG AND CA Trends ----
 # Processing distance data for REG and CA----
