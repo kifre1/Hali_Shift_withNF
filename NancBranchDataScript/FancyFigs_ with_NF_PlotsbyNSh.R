@@ -50,8 +50,7 @@ pd <- position_dodge(.5)
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
 names(FigAbd.Region.Spring)
 
-Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
-names(Reg_SlopSpring)
+
 #To estimate the proportion ot toal abundance by Season, I have to do it here as teh script in 3.3Regional_Proportions can only easily be run if you have VAST
 Reg_Prop<-read.csv(here::here("2025-04-23/Output/Proportions/proportions_and_density_Regional.csv"))
 #isolate spring 
@@ -138,39 +137,6 @@ ARegionalPlot<-
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
-#Figure ABD RATE----
-Reg_SlopSpring$Ord2Region<-factor(Reg_SlopSpring$Index_Region, levels=c("USA","Canada"))
-
-Reg_SlopSpring$RevPeriod <- factor(Reg_SlopSpring$Period, levels = c("During Warming", "Before Warming")) 
-RegionRatesPlot<-
-  ggplot(Reg_SlopSpring , aes(x = factor(Ord2Region), y = estimate,fill=RevPeriod)) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = pd) +
-  geom_point(shape = 21, size = 3, position = pd) +
-  guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
-  scale_fill_manual(values = c("orangered","steelblue" ))+ #Reverse the colors
-  coord_flip() +
-  geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
-  ylim(-0.06, 0.06) +
- # theme_minimal() + # A cleaner minimal theme
-  theme(
-    text = element_text(family = "serif"),  
-    legend.position.inside = c(0.25, 0.6),               # Position of the legend
-    legend.box.background = element_blank(), # Transparent legend box
-    legend.title = element_blank(),             # Hide legend title
-    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
-    axis.text = element_text(size = 14),      # Customize x-axis label
-    axis.title.y = element_blank(),             # Remove y-axis label
-    axis.title.x = element_text(size = 14),      # Customize x-axis label
-    plot.margin=margin(10,40,20,30))+
-  xlab("") +                                     # Clear x-axis label
-  ylab("Rate of change in Logged Abundance/year")
-
-RegionRatesPlot
-Figure2AbdAbdRates<-plot_grid(ARegionalPlot, RegionRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
-Figure2AbdAbdRates
-#ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
-# END Plot abundance indexed regions  ----
-#ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/Figure2AbdAbdRates.jpeg"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
 #Core Area Abundance----
 #Part 2: Core Areas abundance trends
@@ -327,40 +293,7 @@ final_plot
 # Save the final plot with legend
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureAbundanceFAandMapTrends.jpeg"), plot = final_plot, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 
-#2.2 Calculate and plot the change in slope for each time period
-abundance_ind_CA$Period<-NULL
-abundance_ind_CA$Period[abundance_ind_CA$Year<2006]<-"1990-2005"
-abundance_ind_CA$Period[abundance_ind_CA$Year>2005]<-"2006-2023"
-
-CA_Abundance_coefficients_df <- abundance_ind_CA %>%
-  group_by(Index_Region,Period) %>%
-  do({
-    model <- lm((Index_Estimate) ~ Year, data = .)
-    data.frame(t(coef(model)))
-    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
-  }) %>%
-  ungroup()
-
-CA_Abundance_coefficients_df <- CA_Abundance_coefficients_df%>%
-  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
-CA_Abundance_coefficients_df$ordRegion<-factor(CA_Abundance_coefficients_df$Index_Region,levels=c("EGOM","BOF","CapeBreton","HaliChan",
-                                                                                                  "CapeCod","Browns","Gully","GrandBanks",
-                                                                                                  "Nantucket","Georges","Sable","GBTail"))
-
-pd <- position_dodge(.5)
-
-ggplot(CA_Abundance_coefficients_df  , aes(x =  fct_rev(factor(ordRegion)), y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 3,position=pd) +
-  coord_flip()+
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  #geom_vline(xintercept = seq(1.5, length(unique(filtered_df$ordCore_Area)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  # ylim(-0.018,0.018)+
-  xlab("")+  ylab("Rate of change in Abundance count/yr")+
-  ggtitle("Rate of change in Abundance Before \n and during accelerated warming , Spring ")
-#EOA plots and table ----
+#EAO ----
 #NOTE a lot of this is derived from EAOrmarkdown which is in the NancBranchDataScript folder
 #NancBranchDataScript/EAOrmarkdown.Rmd
 #where spring was isolated
@@ -831,69 +764,7 @@ suppcogca
 #END plot for Supplemental COG Lat vs Long by Core Area----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
-# PLOT COG Slopes and CI CORE AREAS and combine----
-cogCAslope$ordCoreArea<-factor(cogCAslope$Stratum, levels=c("Nantucket","Georges","CapeCod","EGOM","BOF","Browns","Sable","Gully","CapeBreton","HaliChan","GrandBanks","GBTail"))
-unique(cogCAslope$ordCoreArea)
-cogCAslope_spr<-cogCAslope[cogCAslope$Season=="Spring",]
-
-cogCAslope_spr$ord2CoreArea <- factor(cogCAslope_spr$ordCoreArea,levels = rev(unique(cogCAslope_spr$ordCoreArea)))                               
-unique(cogCAslope_spr$ord2CoreArea)
-unique(cogCAslope_spr$ordCoreArea)
-p1<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Latitude",] , aes(x = (ordCoreArea), y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 2,position=pd) +
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  #scale_x_discrete(limits = rev(levels(factor(COGSlopeCI$ordCore_Area))))+ 
-  #ylim(-0.018,0.018)+
-  xlab("")+  ylab("Rate of change (DD/yr)")+
-  annotate("text", x = 1.6, y = .015, label = "North", hjust = 0,size=4,family="serif") +
-  annotate("text", x = 1.6, y = -.012, label = "South", hjust = 0,size=4,family="serif") +
-  labs(tag = "(a) Latitude")+
-  theme(plot.tag.position = c(.3, 1.1),plot.tag = element_text(family = "serif"),
-        axis.text.x =element_text(angle=90), 
-        axis.title.y = element_text(margin = margin(r = 5)),  #  space for y-axis label
-        plot.margin = margin(5.5, 5.5, 5.5, 5.5))  # Increase left margin
-
-p1
-p2<-ggplot(cogCAslope_spr[cogCAslope_spr$AxesNE=="Longitude",] , aes(x = ordCoreArea, y = estimate,fill=Period)) +
-  geom_errorbar(aes(ymin = conf.low, ymax =conf.high),position=pd)+
-  geom_point(shape=21, size = 2,position=pd) +
-  scale_fill_manual(values=c("steelblue", "orangered"))+
-  #ylim(-0.018,0.018)+
-  coord_flip() +
-  geom_vline(xintercept = seq(1.5, length(unique(cogCAslope_spr$ordCoreArea)) - 0.5, by = 1),color = "gray", linetype = "solid", size = 0.5)+
-  geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  xlab("")+  ylab("Rate of change (DD/yr)") +
-  annotate("text", x = 3, y = -.017, label = "West", hjust = 0,size=4,family="serif") +
-  annotate("text", x = 3, y = .009, label = "East", hjust = 0,size=4,family="serif") +
-  labs(tag = "(b) Longitude",title=NULL)+
-  theme(plot.tag.position = c(.3, 1.1),plot.tag = element_text(family = "serif"),
-        axis.text.x=element_text(angle=90),
-        axis.title.x= element_text(margin = margin(b = 0)),  # Bring x-axis label closer
-        plot.margin = margin(5.5, 5.5, 5.5, 5.5))
-
-p2
-combined <- (p1 | p2) +
-  plot_layout(guides = "collect") &
-  theme(
-    legend.title=element_blank(),legend.text=element_text(family="serif"),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    legend.margin = margin(0, 0, 0, 0),
-    legend.spacing.x = unit(0.2, 'cm'),
-    plot.margin = margin(30, 0, 0, 5)
-  )
-combined
-# Save with optimal dimensions for publication
-#ggsave("combined_figure.pdf", combined, width = 10, height = 5, 
-#      dpi = 300, device = cairo_pdf)
-##END Combine----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSCOGCASlopes.jpeg"), plot = combined, dpi = 600, width =10, height = 5, units = "in", device = "jpeg")
-#END FOR SUPPLEMENTAL USING CA DATA----
-
+# FOR SLOPES got to SupplementalSlopePlots.R
 #PLOT Distance to Hague Line
 #Figure DIST REG AND CA Trends ----
 # Processing distance data for REG and CA----
