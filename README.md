@@ -17,11 +17,12 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
   - **all_raw_halibut_catch_formattedAl4.rds**: reformatted the survey catch data, suited to VAST input requirements 
 <br> 
 
-- **1.2DataPrep_addBNAMcovariates.R**: BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data. 
+- **1.2DataPrep_add_BNAM_GEBCO.R**: BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data. Also add depth from GEBCO bathymetry
   - *process_mat_to_raster_stack()*- This function processes individual .mat files and converts the data into a raster stack 
   - *process_all_mat_files()*- This function applies process_mat_to_raster_stack() to all .mat files in a  folder, and combines them into a single large raster stack. 
   - **all_raw_halibut_catch_with_covariates_Al4.csv**: Surface Temperature, Bottom Temperature, and Depth are extracted from the raster stacks and assigned to all_raw_halibut_catch_formattedAl4.rds based on the date and location. 
-  -**Halibut_Catch_Covariates_Scaled_Al14.csv**: at April 14, 2025.  Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1. 
+  - Plot How many tows occur at each depth and how much are they catching there per survey to justify 50-1000m filter 
+  -**Halibut_Catch_Covariates_Scaled_June19.csv**: at April 14, 2025.  Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1. 
 <br> 
 
 ## Run Model and Diagnostics  
