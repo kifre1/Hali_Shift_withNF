@@ -17,12 +17,16 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
   - **all_raw_halibut_catch_formattedAl4.rds**: reformatted the survey catch data, suited to VAST input requirements 
 <br> 
 
-- **1.2DataPrep_add_BNAM_GEBCO.R**: BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data. Also add depth from GEBCO bathymetry
+- **1.2DataPrep_addBNAMcovariates.R**: BNAM surface and bottom temperature folders each contain annual folders with monthly temperature .mat files.  They are to be stacked into a single raster stack and then the respective values assigned to the survey catch data. 
   - *process_mat_to_raster_stack()*- This function processes individual .mat files and converts the data into a raster stack 
   - *process_all_mat_files()*- This function applies process_mat_to_raster_stack() to all .mat files in a  folder, and combines them into a single large raster stack. 
-  - **all_raw_halibut_catch_with_covariates_Al4.csv**: Surface Temperature, Bottom Temperature, and Depth are extracted from the raster stacks and assigned to all_raw_halibut_catch_formattedAl4.rds based on the date and location. 
-  - Plot How many tows occur at each depth and how much are they catching there per survey to justify 50-1000m filter 
-  -**Halibut_Catch_Covariates_Scaled_June19.csv**: at April 14, 2025.  Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1. 
+  - **all_raw_halibut_catch_with_covariates_Al14.csv**: Surface Temperature, Bottom Temperature, and Depth are extracted from the raster stacks and assigned to all_raw_halibut_catch_formattedAl4.rds based on the date and location. 
+  - Plot How many tows occur at each depth and how much are they catching there per survey  
+  -**Halibut_Catch_Covariates_Scaled_AL14.csv**: at April 14, 2025.  Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1. 
+
+
+- **1.2DataPrep_add_BNAM_GEBCO.R**: same as above but with GEBCO depth data
+  -**Halibut_Catch_Covariates_Scaled_June19.csv**:   Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1, Filtered depth to -30 to -1000m. 
 <br> 
 
 ## Run Model and Diagnostics  
@@ -101,6 +105,7 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       - TempAfter  
       - **(PANEL D)**: TempChange (TempAfter-TempBefore)  
     - **FIGURE 2**: BeforePlot,DifferencePlot,tempBefore,tempchange
+    - STEP 4: Appendix figure, seasonal comparison of estimates 
 <br>
 
 ## Shift Analysis 
@@ -175,8 +180,8 @@ For each shift indicator, create data, fit LM, and plot
 - I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15  
 **Sup2DataPlotst.R** 
 - Plot 1: Map of Core areas ...this needs to be loaded anytime you want to do any mapping because it houses all the supporting spatial data  
-- Plot 2: A look at the distribution of RV Survey data  
 **Sup3TMB_Error_fix.R** 
 - When you try some commands that use TMB, you will get an error ('"TMBconfig" not available for .Call() for package') 
-
+**Sup4DataPlot.R**  
+- Makes Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys 
 #top 5 commercial and top 5 depleted species 
