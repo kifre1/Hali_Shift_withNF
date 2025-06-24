@@ -247,33 +247,36 @@ ggplot(Centroid_Spring, aes(x = centroid_longitude, y = centroid_latitude, color
 
 #By Core area
 
-ggplot(Centroid_CA, aes(x = centroid_longitude, y = centroid_latitude, color = Year)) +
+COG_CA<-ggplot(Centroid_CA, aes(x = centroid_longitude, y = centroid_latitude, color = Year)) +
   geom_point(na.rm=TRUE,alpha=1,size=1.5,shape=19,stroke = 1) +
-  labs(title = "Center of Gravity by Core Area (Spring)",
+  labs(title = NULL,
        x = "Longitude",
        y = "Latitude",
        color = "Year") +
-  #scale_x_continuous(labels = scales::number_format(accuracy = 0.1))+
   scale_color_gradientn(colors = c("blue", "deepskyblue1","darkorange", "red"), limits = range(Centroid_CA$Year)) +
-  #guides(color = guide_legend(reverse = TRUE))+
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 45, vjust = 0.8,size=8),
         axis.text.y = element_text(hjust = 0.8,size=8),
         plot.margin=margin(3,4,4,0),plot.title=element_text(size=12,vjust=2),
         strip.text=element_text(size=10,margin = margin()),
         panel.spacing = unit(2, 'pt'),
-        #strip.background = element_rect(size = 1,margin(t = 2, r = 0, b = 2, l = 0, unit = "pt")),
-        #panel.grid.minor = element_blank(),  
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
+        panel.grid.minor = element_line(color = "gray", linetype = "solid", linewidth = 0.35),
         legend.background=element_rect(linewidth=.6,colour="black",fill="white"),
         legend.position = "right",
-        #legend.position = c(0.84, 0.091),
         legend.direction = "vertical",  # Change legend direction
         legend.key.size = unit(.8, "cm"))+  # Change the size of legend items
-  #panel.grid.major = element_line(color = "black"),)+
-  facet_wrap(.~Stratum, scales = "free") +  
-  theme_bw()
-
+  facet_wrap(.~Stratum, scales = "free")
+library(ggpubr)
+#save this plot for appendix
+ggsave(
+  filename = "COG_FocalAreas.png",
+  plot = COG_CA,          # optional if it's the last plot
+  path =  here::here("2025-04-23/Output/GridPlot"),
+  width = 6.5,
+  height = 5,
+  dpi = 300
+)
 
 
 #skip (not effective): Plot Temporal trend of mean, median and 5 to 95---
