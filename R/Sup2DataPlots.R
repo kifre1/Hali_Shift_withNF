@@ -31,8 +31,10 @@ NAFO <- st_transform (NAFO, crs)
 Hague <- st_transform (Hague, crs)
 
 # Clip large shapefiles shapefile to  bounding box
+sf::sf_use_s2(FALSE)   # revert to GEOS-based operations
+
 EEZ <- st_intersection(EEZ, study_area_polygon)
-#land <- st_intersection(land, study_area_polygon)#maybe comment out 
+land <- st_intersection(land, study_area_polygon)#maybe comment out 
 contours <- st_intersection(contours, study_area_polygon)
 NAFO <- st_intersection(NAFO, study_area_polygon)
 
@@ -80,38 +82,4 @@ CAMAP<-ggplot() +
   theme_bw()+
   theme(axis.text = element_text(angle = 0, vjust = 0.2, hjust=1,size=8,family="serif"))
 CAMAP
-
-
-#Plot 2: A look at the distribution of RV Survey data
-Data = read.csv(here::here("R/data/halibut_all_data.csv"))
-
-DFO<-subset(Data, Data$SURVEY=="DFO")
-NMFS<-subset(Data, Data$SURVEY=="NMFS")
-
-DFOplot<- ggplot() +
-  geom_sf(data = All_region_df,  fill = NA) +
-  geom_sf(data = EEZ, color="black", lwd = 1.2) +
-  geom_sf(data = NAFO,  fill = NA) +
-  geom_sf(data = land, fill="grey") +
-  geom_point (data = NMFS, aes(x= DECDEG_BEGLON, y = DECDEG_BEGLAT), colour= "blue", alpha = .5)+
-  geom_point (data = DFO, aes(x= DECDEG_BEGLON, y = DECDEG_BEGLAT), colour= "red", alpha = .5)+
-  geom_sf(data = Hague, color="black", lwd=2) +
-  xlim(-76, -55) + ylim(35.8, 47.5)+
-  labs(title="", x= "", y="")+
-  theme_bw()
-NMFSplot<- ggplot() +
-  geom_sf(data = All_region_df,  fill = NA) +
-  geom_sf(data = EEZ, color="black", lwd = 1.2) +
-  geom_sf(data = NAFO,  fill = NA) +
-  geom_sf(data = land, fill="grey") +
-  geom_point (data = DFO, aes(x= DECDEG_BEGLON, y = DECDEG_BEGLAT), colour= "red", alpha = .5)+
-  geom_point (data = NMFS, aes(x= DECDEG_BEGLON, y = DECDEG_BEGLAT), colour= "blue", alpha = .5)+
-  geom_sf(data = Hague, color="black", lwd=2) +
-  xlim(-76, -55) + ylim(35.8, 47.5)+
-  labs(title="", x= "", y="")+
-  theme_bw()
-
-library(patchwork)
-#look at how they overlap
-DFOplot + NMFSplot
 
