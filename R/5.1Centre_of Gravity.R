@@ -255,16 +255,22 @@ COG_CA<-ggplot(Centroid_CA, aes(x = centroid_longitude, y = centroid_latitude, c
        color = "Year") +
   scale_color_gradientn(colors = c("blue", "deepskyblue1","darkorange", "red"), limits = range(Centroid_CA$Year)) +
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, vjust = 0.8,size=8),
-        axis.text.y = element_text(hjust = 0.8,size=8),
-        plot.margin=margin(3,4,4,0),plot.title=element_text(size=12,vjust=2),
-        strip.text=element_text(size=10,margin = margin()),
-        panel.spacing = unit(2, 'pt'),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_line(color = "gray", linetype = "solid", linewidth = 0.35),
-        legend.background=element_rect(linewidth=.6,colour="black",fill="white"),
+  theme(
+        plot.title=element_text(size=16,vjust=1.5,family="serif"),
+        legend.background=element_rect(size=.9,colour="white",fill="white"),
+        strip.text=element_text(size=12,family="serif",angle=0),
+        panel.border = element_rect(colour = "black",fill=NA),
+        strip.background=element_rect(colour="black",fill="white"),
+        axis.text.x = element_text(angle = 90, vjust = 1, hjust=1,size=10,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=10,family="serif"),
+        axis.title.x=element_text(size=12,hjust=0.5,vjust=1,family="serif"),
+        axis.title.y=element_text(size=12,family="serif"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray", linetype = "solid", linewidth = 0.2),
         legend.position = "right",
+        legend.title = element_blank(),
         legend.direction = "vertical",  # Change legend direction
+        legend.text = element_text(size = 10,family="serif"),
         legend.key.size = unit(.8, "cm"))+  # Change the size of legend items
   facet_wrap(.~Stratum, scales = "free")
 library(ggpubr)
