@@ -185,6 +185,14 @@ contours <- st_intersection(contours, bbox_polygon)
 NAFO <- st_intersection(NAFO, bbox_polygon)
 
 tows_df$survey <- factor(tows_df$survey, levels = c("NEFSC", "DFO", "NF") )
+library(ggplot2)
+library(cowplot)
+library(patchwork)
+library(gridExtra)
+library(RColorBrewer)
+library(scales)
+
+library(grid)  # For unit() function
 
 
 All_Trawls_Plot<-ggplot() +
@@ -201,7 +209,15 @@ All_Trawls_Plot<-ggplot() +
        fill = "Region"
        )+
   theme(legend.position = "none",
-        axis.text.x = element_text( angle = 45, hjust = 1, vjust = 1))+
+        plot.title=element_text(size=16,vjust=1.5,family="serif"),
+        legend.background=element_rect(size=.9,colour="white",fill="white"),
+        strip.text=element_text(size=14,family="serif",angle=0),
+        panel.border = element_rect(colour = "black",fill=NA),
+        panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+        strip.background=element_rect(colour="black",fill="white"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=12,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=12,family="serif"),
+        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))+
   facet_grid(. ~ survey)
 
 presence_only<-subset(catch_df, catch_df$total_abundance > 0)
@@ -221,7 +237,15 @@ All_catch_plot<-ggplot() +
        fill = "Region"
        )+
   theme(legend.position = "none",
-        axis.text.x = element_text( angle = 45, hjust = 1, vjust = 1))+
+        plot.title=element_text(size=16,vjust=1.5,family="serif"),
+        legend.background=element_rect(size=.9,colour="white",fill="white"),
+        strip.text=element_text(size=14,family="serif",angle=0),
+        panel.border = element_rect(colour = "black",fill=NA),
+        panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+        strip.background=element_rect(colour="black",fill="white"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=12,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=12,family="serif"),
+        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))+
   facet_grid(. ~ survey)
 library(gridExtra)
 library(ggpubr)
