@@ -1,0 +1,16 @@
+Indicator,Region,Value,LevValue,LevelChar
+Trend in abundance,Canada,2,2,H
+Trend in abundance,USA,1,1,M
+Area Occupied over time,Canada,1,1,M
+Area Occupied over time,USA,1,1,M
+Area Occupied vs Abundance,Canada,1,1,M
+Area Occupied vs Abundance,USA,-1,-1,VL
+Centre of Gravity ,Canada,12,1,M
+Centre of Gravity ,USA,2,0,N
+Distance To Border,Canada,-0.5,-1,VL
+Distance To Border,USA,0,0,L
+Range edge (Northing),Metapop,60,1,M
+Range edge (Easting),Metapop,159,2,H
+Total range edge shift,Metapop,169,2,H
+Deepening ,Canada,0,0,L
+Deepening ,USA,0,0,L
