@@ -186,24 +186,25 @@ NAFO <- st_intersection(NAFO, bbox_polygon)
 
 tows_df$survey <- factor(tows_df$survey, levels = c("NEFSC", "DFO", "NF") )
 library(ggplot2)
+library(gridExtra)
+library(ggpubr)
 library(cowplot)
 library(patchwork)
-library(gridExtra)
 library(RColorBrewer)
 library(scales)
-
 library(grid)  # For unit() function
 
 
 All_Trawls_Plot<-ggplot() +
   geom_sf(data = NAFO, color="darkblue", fill = NA) +
-  geom_sf(data = Hague, color="black", size = 2) +
-  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = Hague, color="black", size = 3) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 3) +
   geom_sf(data = land, fill="cornsilk") +
   geom_point (data = tows_df, aes(x= longitude , y = latitude, col= survey),  alpha = .6, size = .2, shape=19)+
+  scale_color_manual(values = c("NEFSC" = "steelblue", "DFO" =  "orangered", "NF" = "darkred"))+ 
   xlim(-77, -42) + ylim(35, 70)+
   theme_bw()+
-  labs(title="(a)", 
+  labs(title=NULL, 
        x = NULL, 
        y = NULL, 
        fill = "Region"
@@ -215,9 +216,10 @@ All_Trawls_Plot<-ggplot() +
         panel.border = element_rect(colour = "black",fill=NA),
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         strip.background=element_rect(colour="black",fill="white"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=12,family="serif"),
-        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=12,family="serif"),
-        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))+
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=10,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=10,family="serif"),
+        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"),
+        plot.margin=margin(20,3,3,3))+
   facet_grid(. ~ survey)
 
 presence_only<-subset(catch_df, catch_df$total_abundance > 0)
@@ -226,12 +228,13 @@ presence_only$survey <- factor(presence_only$survey, levels = c("NEFSC", "DFO", 
 All_catch_plot<-ggplot() +
   geom_sf(data = NAFO, color="darkblue", fill = NA) +
   geom_sf(data = Hague, color="black", size = 2) +
-  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 3) +
   geom_sf(data = land, fill="cornsilk") +
   geom_point (data = presence_only, aes(x= longitude , y = latitude, col= survey),  alpha = .6, size = .2, shape=19)+
+  scale_color_manual(values = c("NEFSC" = "steelblue", "DFO" =  "orangered", "NF" = "darkred"))+ 
   xlim(-77, -42) + ylim(35, 70)+
   theme_bw()+
-  labs(title="(b)", 
+  labs(title=NULL, 
        x = NULL, 
        y = NULL, 
        fill = "Region"
@@ -243,19 +246,26 @@ All_catch_plot<-ggplot() +
         panel.border = element_rect(colour = "black",fill=NA),
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         strip.background=element_rect(colour="black",fill="white"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=12,family="serif"),
-        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=12,family="serif"),
-        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))+
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size=10,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=10,family="serif"),
+        axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"),
+        plot.margin=margin(20,3,3,3))+
   facet_grid(. ~ survey)
-library(gridExtra)
-library(ggpubr)
-SurveyPlot<-grid.arrange(All_Trawls_Plot,All_catch_plot,   padding = unit(0, "line"))
 
+SurveyPlot<-grid.arrange(All_Trawls_Plot,All_catch_plot, padding = unit(0, "line"))
+#add labels 
+SurveyPlot_final <- ggdraw(SurveyPlot) +
+  draw_plot_label(label = "(a)", x = 0.12, y = 0.998, size = 12) + 
+  draw_plot_label(label = "(b)", x = 0.385, y = 0.998, size = 12) +   
+  draw_plot_label(label = "(c)", x = 0.657, y = 0.998, size = 12) + 
+  draw_plot_label(label = "(d)", x = 0.12, y = 0.5, size = 12) +  
+  draw_plot_label(label = "(e)", x = 0.385, y = 0.5, size = 12) +  
+  draw_plot_label(label = "(f)", x = 0.657, y = 0.5, size = 12)    
 
 ggsave(
-  filename = "SurveyPlot.png",
-  plot = SurveyPlot,          # optional if it's the last plot
-  path =  here::here("2025-04-23/Output/GridPlot"),
+  filename = "SurveyLocPlot.png",
+  plot = SurveyPlot_final,          # optional if it's the last plot
+  path =  here::here("2025-04-23/FinalPlots"),
   width = 6.5,
   height = 7.5,
   dpi = 300
