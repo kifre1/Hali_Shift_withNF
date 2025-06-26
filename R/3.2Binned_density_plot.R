@@ -82,7 +82,7 @@ season_times<-summer_times
 fall_times<- as.character(seq(1, 101, by = 3)) #because there are 3 seasons for each year in the model 
 fall_range <- range(as.numeric(fall_times))
 #set up the timeframes to plot (before and after accelerated warming period (2005))
-bin_edges <- c(fall_range[1], 49, summer_range[2])# Bin 1: 1990 to 2005 (47) # Bin 2: 2006 to 2023
+bin_edges <- c(fall_range[1], 49, fall_range[2])# Bin 1: 1990 to 2005 (47) # Bin 2: 2006 to 2023
 bin_years <- cut(as.numeric(fall_times), breaks = bin_edges, labels = FALSE, include.lowest = TRUE)
 print(bin_years)
 print(fall_times)
@@ -171,8 +171,8 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
                         dimnames = dimnames(index_data_filtered)[1:3])
     #pred_array <- log(pmax(pred_array, 1e-10))
    # pred_array <- log(pred_array+ 0.1) #plot pred_array instead of log
-   # pred_array <-sqrt(pred_array)
-    pred_array <- pred_array ##May29 (divided by 1000000?)
+    pred_array <-sqrt(pred_array)
+   # pred_array <- pred_array ##May29 (divided by 1000000?)
     
   } else {
     pred_array <- vast_fit$Report[[spatial_var]]
@@ -287,9 +287,9 @@ vast_fit_plot_spatial_kf_binned_new <- function(vast_fit, manual_pred_df, pred_g
   }
 }
 
-
-vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Spring",SelectedSeason= "Spring", spatial_var = "Index_gctl", 
-                                    nice_category_names = "AtlanticHalibut_Index_gctl_raw", mask = region_shape, all_times = all_times, 
+#change the titles to match the season and distribution that you selected 
+vast_fit_plot_spatial_kf_binned_new(vast_fit = fit, manual_pred_df=NULL, pred_label="Summer",SelectedSeason= "Summer", spatial_var = "Index_gctl", 
+                                    nice_category_names = "AtlanticHalibut_Index_gctl_sqrt", mask = region_shape, all_times = all_times, 
                                     plot_times = season_times, land_sf = land_use, xlim = xlim_use, ylim = ylim_use, crs=crs, bin_years = bin_years,
                                     lab_lat = lab_lat, lab_lon = lab_lon, panel_or_gif = "panel", out_dir = out_dir, land_color = "#d9d9d9", 
                                     panel_cols = 2, panel_rows = 1, bins=2, start_year=start_year, season_increment=season_increment,legend_title=legend_title )    

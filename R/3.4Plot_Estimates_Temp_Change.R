@@ -16,11 +16,13 @@
 
 #save as GridPlot_BTemp
 #STEP 1 Plotting abundance estimates and difference---
+
+library(ggplot2)
+library(sf)
+library(dplyr) 
+library(scales)
 library(terra)
 library(here)
-library(sf)
-library(ggplot2)
-
 #read in the rasters(from 3.2Binned_Density_Plot.R)
 out_dir <- here::here("2025-04-23/Output/GridPlot")#for output
 
@@ -57,7 +59,8 @@ BeforePlot<- ggplot() +
   theme_bw()+
   labs(title="(a) Mean Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
   theme(
-    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -111,7 +114,7 @@ max(diff_rast)
 diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_rast_df)[3] <- "difference"
 
-library(scales)
+
 #set up how the colour gradient will be defined
 min_val  <- min(diff_rast_df$difference, na.rm = TRUE)
 max_val <- max(diff_rast_df$difference, na.rm = TRUE)
@@ -143,7 +146,8 @@ DifferencePlot<-ggplot() +
   theme_bw()+
   labs(title="(b) Change in Estimated Abundance (2006-2023)", x = NULL, y = NULL, fill = "Avg.\nCount")+
   theme(
-    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -169,6 +173,8 @@ ChangePlot<-ggplot() +
   labs(title="Percent Change", x = NULL, y = NULL)+
   theme_bw()+
   theme(
+    plot.margin = grid::unit(c(.3, .1, .3, .1), "cm"),
+    axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -193,7 +199,7 @@ library(lubridate)
 
 mat_test <- readMat("C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/TSsfce_1990.mat", fixNames = TRUE)
 
-# Function to process individual .mat files----
+#SKIP FOR PLOTTING ONLY  Function to process individual .mat files----
 process_mat_to_raster_stack <- function(mat_file, info_file, yearrange, variable_name) {
   # Load .mat files
   mat_data <- readMat(mat_file, fixNames = TRUE)
@@ -279,8 +285,8 @@ process_all_mat_files <- function(mat_folder, info_file, variable_name) {
   final_raster_stack <- stack(all_raster_stacks)
   return(final_raster_stack)
 }
-#----
-#Make rasters----
+
+#Make rasters
 # Surface Temperature
 #mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/"  #Surface
 mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSbtm-20250319T175520Z-001/TSbtm/"  #bottom
@@ -321,7 +327,7 @@ writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Btemp_rast_annual.
 
 #STEP3 plot temperature and temperature change----
 library(scico)
-library(ggplot2)
+
 BT1_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_Before_annual.tif"))
 BT2_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_During_annual.tif"))
 BTchange_r <- rast(here::here("2025-04-23/Output/GridPlot/diff_Btemp_rast_annual.tif"))
@@ -337,6 +343,7 @@ range(BT1_r_df)
 hist(BT1_r_df$Temperature)
 min_BT  <- min(BT1_r_df$Temperature, na.rm = TRUE)
 max_BT <- max(BT1_r_df$Temperature, na.rm = TRUE)
+sf::sf_use_s2(FALSE)  # needed for clean cropping sometimes
 
 #(PANEL C)
 tempBefore<- ggplot() +
@@ -351,6 +358,8 @@ tempBefore<- ggplot() +
   #scale_fill_scico(palette = "vik", name = "Temp (°C)")+
   #scale_fill_gradientn(colors = c("blue1", "red"), na.value = "transparent") +
   coord_sf() +
+  #scale_x_continuous(expand = c(0, 0)) +  # Remove x-axis expansion
+  #scale_y_continuous(expand = c(0, 0)) +  # Remove y-axis expansion
   geom_sf(data = NAFO, color="darkgrey", fill = NA) +
   geom_sf(data = Hague, color="black", size = 2) +
   geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
@@ -359,7 +368,7 @@ tempBefore<- ggplot() +
   theme_bw()+
   labs(title="(c) Mean Bottom Temp. (1990-2005)", x = NULL, y = NULL, fill = "°C")+
   theme(
-    plot.margin = grid::unit(c(0, 0, 0, 0), "cm"),
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
@@ -411,6 +420,8 @@ tempchange<-ggplot() +
   theme_bw()+
   labs(title="(d) Change in Mean BTemp. (2006-2023)", x = NULL, y = NULL, fill = "°C")+
   theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -422,6 +433,271 @@ library(gridExtra)
 grid.arrange(tempBefore, tempchange, ncol = 2)
 
 #FIGURE 2:
-grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2)
-
+grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2, padding = unit(0, "line"))
 #save as GridPlot_BTemp
+
+
+#STEP 4: Appendix figure, seasonal comparison of estimates 
+
+library(ggplot2)
+library(sf)
+library(dplyr) 
+library(scales)
+library(terra)
+library(here)
+#read in the rasters(from 3.2Binned_Density_Plot.R)
+out_dir <- here::here("2025-04-23/Output/GridPlot")#for output
+
+region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
+region_shape <- st_make_valid(region_shape)
+
+Spring1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
+Spring2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
+Summer1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin1.tif"))
+Summer2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin2.tif"))
+Fall1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin1.tif"))
+Fall2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin2.tif"))
+
+#function to mask the raster with the study are shapefile, and turn it into a df for plotting 
+process_estimate_raster <- function(raster_obj) {
+  masked <- mask(raster_obj, region_shape)
+  plot(masked)
+  df <- as.data.frame(masked, xy = TRUE, na.rm = TRUE)
+  names(df)[3] <- "EstimatedAbundance"
+  
+  return(df)
+}
+
+Spring1_df <- process_estimate_raster(Spring1)
+range(Spring1_df$EstimatedAbundance)
+Spring2_df <- process_estimate_raster(Spring2)
+range(Spring2_df$EstimatedAbundance)
+Summer1_df <- process_estimate_raster(Summer1)
+range(Summer1_df$EstimatedAbundance)
+Summer2_df <- process_estimate_raster(Summer2)
+range(Summer2_df$EstimatedAbundance)
+Fall1_df <- process_estimate_raster(Fall1)
+range(Fall1_df$EstimatedAbundance)
+Fall2_df <- process_estimate_raster(Fall2)
+range(Fall2_df$EstimatedAbundance)
+
+#to fix the legend scale
+rast_lims<-c(0,110)
+
+#Spring 1990-2005
+Spring1_plot<-ggplot() +
+  geom_raster(data = Spring1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(a)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Spring: 1990-2005",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+
+#Spring 2006-2023
+Spring2_plot<-ggplot() +
+  geom_raster(data = Spring2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(b)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Spring: 2006-2023",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+
+#Summer 1990-2005
+Summer1_plot<-ggplot() +
+  geom_raster(data = Summer1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(c)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Summer: 1990-2005",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+
+#Summer 2006-2023
+Summer2_plot<-ggplot() +
+  geom_raster(data = Summer2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(d)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Summer: 2006-2023",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+
+#Fall 1990-2005
+Fall1_plot<-ggplot() +
+  geom_raster(data = Fall1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(e)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Fall: 1990-2005",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+
+#Fall 2006-2023
+Fall2_plot<-ggplot() +
+  geom_raster(data = Fall2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(f)", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  annotate(
+    "text",
+    x = -Inf, y = 51.7,
+    label = " Fall: 2006-2023",
+    hjust = 0, vjust = 1,
+    size = 3.75
+  ) +
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "none"
+  )
+library(gridExtra)
+library(ggpubr)
+grid.arrange(Spring1_plot, Spring2_plot, Summer1_plot, Summer2_plot, Fall1_plot, Fall2_plot, ncol = 2, padding = unit(0, "line"))
+
+#put the legend outside the plot
+get_plot_legend<-ggplot() +
+  geom_raster(data = Spring1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  scale_fill_viridis_c(limits = rast_lims)+
+  # scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="darkgrey", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="(a) Spring, 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  theme(
+    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
+  )
+
+legend <- get_legend(
+  get_plot_legend + theme_bw()
+)
+
+SeasonalPlot<-grid.arrange(
+  grobs = list(Spring1_plot, Spring2_plot, Summer1_plot, Summer2_plot, Fall1_plot, Fall2_plot, legend),
+  layout_matrix = rbind(
+    c(1, 2, 7),
+    c(3, 4, NA),
+    c(5, 6, NA)
+  ),
+  padding = unit(0, "line"),
+  widths = c(1, 1, 0.2)  # adjust the third column width as needed
+)
+
+ggsave(
+  filename = "SeasonalEstimates.png",
+  plot = SeasonalPlot,          # optional if it's the last plot
+  path =  here::here("2025-04-23/Output/GridPlot"),
+  width = 6.5,
+  height = 7.5,
+  dpi = 300
+)

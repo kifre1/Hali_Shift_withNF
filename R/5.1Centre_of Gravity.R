@@ -247,33 +247,49 @@ ggplot(Centroid_Spring, aes(x = centroid_longitude, y = centroid_latitude, color
 
 #By Core area
 
-ggplot(Centroid_CA, aes(x = centroid_longitude, y = centroid_latitude, color = Year)) +
-  geom_point(na.rm=TRUE,alpha=1,size=1.5,shape=19,stroke = 1) +
-  labs(title = "Center of Gravity by Core Area (Spring)",
+COG_CA<-ggplot(Centroid_CA, aes(x = centroid_longitude, y = centroid_latitude, color = Year)) +
+  geom_point(na.rm=TRUE,alpha=1,size=1,shape=19,stroke = 1) +
+  labs(title = NULL,
        x = "Longitude",
        y = "Latitude",
        color = "Year") +
-  #scale_x_continuous(labels = scales::number_format(accuracy = 0.1))+
   scale_color_gradientn(colors = c("blue", "deepskyblue1","darkorange", "red"), limits = range(Centroid_CA$Year)) +
-  #guides(color = guide_legend(reverse = TRUE))+
-  theme(axis.text.x = element_text(angle = 45, vjust = 0.8,size=8),
-        axis.text.y = element_text(hjust = 0.8,size=8),
-        plot.margin=margin(3,4,4,0),plot.title=element_text(size=12,vjust=2),
-        strip.text=element_text(size=10,margin = margin()),
-        panel.spacing = unit(2, 'pt'),
-        #strip.background = element_rect(size = 1,margin(t = 2, r = 0, b = 2, l = 0, unit = "pt")),
-        #panel.grid.minor = element_blank(),  
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_line(color = "gray", linetype = "dashed", linewidth = 0.5),
-        legend.background=element_rect(linewidth=.6,colour="black",fill="white"),
-        legend.position = "right",
-        #legend.position = c(0.84, 0.091),
-        legend.direction = "vertical",  # Change legend direction
-        legend.key.size = unit(.8, "cm"))+  # Change the size of legend items
-  #panel.grid.major = element_line(color = "black"),)+
-  facet_wrap(.~Stratum, scales = "free") +  
-  theme_bw()
+  theme_bw()+
+  theme(
+    plot.margin = margin(3, 3, 3, 3),
+    plot.title=element_text(size=16,vjust=1.5,family="serif"),
+        legend.background=element_rect(size=.9,colour="white",fill="white"),
+        strip.text=element_text(size=12,family="serif",angle=0),
+        panel.border = element_rect(colour = "black",fill=NA),
+        strip.background=element_rect(colour="black",fill="white"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=0.5,size=10,family="serif"),
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=0.5,size=10,family="serif"),
+        #axis.title.x=element_text(size=12,hjust=0.5,vjust=1,family="serif"),
+        #axis.title.y=element_text(size=12,family="serif"),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray", linetype = "solid", linewidth = 0.2),
+        legend.position = "bottom",
+        legend.box.spacing = unit(0, "pt"),
+        legend.title = element_blank(),
+        legend.direction = "horizontal",  # Change legend direction
+        legend.text = element_text(size = 10,family="serif"),
+        legend.key.height   = unit(.4, "cm"),
+        legend.key.width = unit(1.3, "cm"))+  # Change the size of legend items
+  facet_wrap(.~Stratum, scales = "free")
+COG_CA
+library(ggpubr)
+# combine and SAVE plot SUPPLEMTAL FIGURE 5
 
+  ggsave(
+  filename = "COG_FocalAreas.png",
+  plot = COG_CA,          # optional if it's the last plot
+  path =  here::here("2025-04-23/FinalPlots"),
+  width = 6.5,
+  height = 6,
+  dpi = 300
+)
 
 
 #skip (not effective): Plot Temporal trend of mean, median and 5 to 95---

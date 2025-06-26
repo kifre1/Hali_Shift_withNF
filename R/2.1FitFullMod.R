@@ -1,10 +1,11 @@
 Sys.setenv(OMP_NUM_THREADS = 4)#increase the amount of cores delegated to this script
 
-#REworking the original model to include NFdata
-#to do list
-#change index shape files
-#change the way "swept" is used
-#check that ID format is ok
+#run in terminal:
+#set PATH=%PATH%;C:\Program Files\R\R-4.4.1\bin
+#R --version 
+#cd C:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF/R
+#Rscript 2.1FitFullMod
+
 
 
 
@@ -99,7 +100,7 @@ if(first_run){
   dir.create(date_dir, recursive = TRUE)
   
   # Load data
-  Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_Al14.csv"))
+  Data = read.csv(here::here("Data/Derived/Halibut_Catch_Covariates_Scaled_June19.csv"))
 
   #OPTIONS FOR REDUCED MODEL 
     # Data <- Data[Data$YEAR %in% seq(1990, 2023, by = 3), ]
