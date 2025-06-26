@@ -481,7 +481,79 @@ range.spr$Period<-NULL
 range.spr$Period[range.spr$Year<2006]<-"Before Warming"
 range.spr$Period[range.spr$Year>2005]<-"During Warming"
 names(range.spr);summary(range.spr)
+##slope for range----
+range.sprE_coefficients_df <- range.spr %>%
+  group_by(Period) %>%
+  do({
+    model <- lm((Estimate_km_E_quantile_0.5) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+range.sprN_coefficients_df <- range.spr %>%
+  group_by(Period) %>%
+  do({
+    model <- lm((Estimate_km_N_quantile_0.5) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+range.sprE_coefficients_df <- range.sprE_coefficients_df%>%
+  filter(term == "Year")
+range.sprN_coefficients_df <- range.sprN_coefficients_df%>%
+  filter(term == "Year")
+
+##END slope for range----
 # Create a jitter object with both horizontal and vertical displacement
+library(geosphere)
+range.sprAgg<-range.spr%>% 
+    mutate(
+  # YearGroup = cut(Year, breaks = seq(1990, 2023, by = 5), right = FALSE)
+    YearGroup = cut(Year, breaks = seq(1990, 2025, by = 5), right = FALSE)
+  ) %>%
+  group_by(YearGroup) %>%
+  summarise(AveE = mean(Estimate_km_E_quantile_0.5, na.rm = TRUE),
+            AveN = mean(Estimate_km_N_quantile_0.5, na.rm = TRUE))
+# Reference point (first group)
+trail_point <- range.sprAgg %>%
+  filter(YearGroup == unique(YearGroup)[1]) %>%
+  slice(1)  # just in case there are multiple rows
+
+# Reference point (last group)
+lead_point <- range.sprAgg %>%
+  filter(YearGroup == unique(YearGroup)[7]) %>%
+  slice(1) 
+
+# Vector of distances from the reference point to each group
+# Calculate Euclidean distance to all other points
+range.sprAgg <- range.sprAgg %>%
+  arrange(YearGroup) %>%  # ensure chronological order
+  mutate(
+    PrevE = lag(AveE),
+    PrevN = lag(AveN),
+    StepDist = sqrt((AveE - PrevE)^2 + (AveN - PrevN)^2),
+    CumulativeDist = cumsum(replace_na(StepDist, 0))
+  )
+library(dplyr)
+
+library(dplyr)
+centroid_1 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[1]) %>% slice(1)
+centroid_7 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[7]) %>% slice(1)
+
+# Directional shifts
+shift_Easting <- centroid_7$AveE - centroid_1$AveE
+shift_Northing <- centroid_7$AveN - centroid_1$AveN
+
+# Total Euclidean shift
+total_shift <- sqrt(shift_Easting^2 + shift_Northing^2)
+shift_summary <- tibble(
+  Direction = c("Easting", "Northing", "Total"),
+  Shift = c(shift_Easting, shift_Northing, total_shift)
+)
+
+print(shift_summary)
+
 set.seed(123)  # For reproducibility
 pos_jitter <- position_jitter(width = .1, height = .1)  # Jitter both horizontally and vertically
 # Range Edge Plot with Blue-Orange Year Gradient----
@@ -1113,3 +1185,128 @@ FigureDeepDeepRates
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureDeepDeepRates.jpeg"), plot = FigureDeepDeepRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #
 #COmmit
+#END Plot deepening----
+library(dplyr)
+library(ggplot2)
+library(stringr)
+#find the hypoteneuse for sqrt((250^2)+(125^2))
+hypotenuse <- function(a, b) {
+  sqrt(a^2 + b^2)
+}
+# Calculate the distance between two points (x1, y1) and (x2, y2)
+calculate_distance <- function(x1, y1, x2, y2) {
+  sqrt((x2 - x1)^2 + (y2 - y1)^2)
+}
+
+# Calculate the angle in radians between two points (x1, y1) and (x2, y2)
+
+#Schematic #7/
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(here)
+library(readr)
+
+schem <- read_csv(here("2025-04-23/Output/Shift_Indicators/SchematicFig.csv"))
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(here)
+library(readr)
+
+schem <- read_csv(here::here("2025-04-23/Output/Shift_Indicators/SchematicFig.csv"),show_col_types = FALSE)
+
+plot_df <- schem %>%
+  group_by(Indicator, Region) %>%
+  summarise(
+    sum_length = sum(LevValue),
+    mean_score = mean(as.numeric(LevValue)),
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  mutate(mean_score = round(mean_score, digits = 0))
+plot_df <- plot_df %>%
+  mutate(
+    Indicator_wrapped = str_wrap(Indicator, 12),
+    Indicator_ordered = fct_reorder(Indicator_wrapped, sum_length)
+  )
+
+# Find positions of indicators in the circular axis
+indicator_levels <- levels(plot_df$Indicator_ordered)
+
+divider_positions <- seq(1.5, length(indicator_levels) - 0.5, by = 1)
+
+
+plt <- ggplot(plot_df) +
+  # Add category dividers
+  geom_vline(xintercept = divider_positions, color = "grey80", linewidth = 0.4) +
+  
+  # Grid lines
+  geom_hline(aes(yintercept = y), data.frame(y = -1:3), color = "lightgrey") +
+  
+  # Bars per region
+  geom_col(
+    aes(
+      x = Indicator_ordered,
+      y = sum_length,
+      fill = Region
+    ),
+    position = position_dodge2(preserve = "single"),
+    alpha = 0.9
+  ) +
+  
+  # Mean score dots
+  geom_point(
+    aes(
+      x = Indicator_ordered,
+      y = mean_score,
+      group = Region
+    ),
+    position = position_dodge2(width = 0.9, preserve = "single"),
+    size = 3,
+    color = "gray12"
+  ) +
+  
+  # Lollipop lines
+  geom_segment(
+    aes(
+      x = Indicator_ordered,
+      y = -1,
+      xend = Indicator_ordered,
+      yend = 3,
+      group = Region
+    ),
+    linetype = "dashed",
+    color = "gray12",
+    position = position_dodge2(width = 0.9)
+  ) +
+  
+  coord_polar() +
+  
+  scale_y_continuous(
+    limits = c(-1, 2),
+    expand = c(0, 0),
+    breaks = c(-1, 1, 2, 3)
+  ) +
+  scale_fill_manual(values = c("red", "violet", "blue")) +
+  guides(
+    fill = guide_legend(title = "Region", title.position = "top", title.hjust = 0.5)
+  ) +
+  theme_minimal(base_family = "Times") +
+  theme(
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(color = "gray12", size = 10),
+    legend.position = "bottom",
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = "white", color = NA)
+  ) +
+  labs(
+    title = "\nShift Indicators",
+    subtitle = "\n Relative indicator magnitude"
+  )
+plt
+plt+theme(margin=c(0,0,0,0)) # Remove margins around the plot
+ggsave("schematic_plot.png", plt, width = 12, height = 12, dpi = 300)
+
