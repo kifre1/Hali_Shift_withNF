@@ -137,17 +137,32 @@ ARegionalPlot<-
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
+Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
+names(Reg_SlopSpring)
+#scaling slopes per region period
+##slope for Abundace----
+RegionAbd_coefficients_df <- FigAbd.Region.Spring %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale((log10(Index_Estimate))) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+RegionAbd_coefficients_df<- RegionAbd_coefficients_df%>%
+  filter(term == "scale(Year)")
+##END scaled slope for Abundace----
+
 
 #Core Area Abundance----
 #Part 2: Core Areas abundance trends
-Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
-names(Reg_SlopSpring)
 
 abundance_ind_CA <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"),row.names=NULL)
 names(abundance_ind_CA)
 abundance_ind_CA.spr<- subset(abundance_ind_CA, abundance_ind_CA$Season == "Spring")
 
-#2.1 plot abundance trends, spring
+#2.1 CA plot abundance trends, spring
 #assign colors----
 abundance_ind_CA.spr$Index_Region <- factor(abundance_ind_CA.spr$Index_Region, levels = c("EGOM", "BOF", "CapeBreton", "HaliChan", "CapeCod", "Browns", "Gully", "GrandBanks", "Nantucket", "Georges", "Sable", "GBTail"))
 region_colours <- c(
@@ -300,7 +315,19 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureAbundanceFAandMa
 # PLOT EAO,----
 Area_ThresholdsforEAO<- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
 names(Area_ThresholdsforEAO)
+#slopes for EAO over time----
 
+Area_ThresholdsforEAO_coefficients_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(log10((Area_Threshold))) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
+  filter(term == "scale(Year)")
+#END slopes for EAO over time----
 ##PlotEOA----
 #IN Appendix S1 Fig S EAO 
 EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
@@ -389,7 +416,18 @@ PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
 
 # Display the plot
 print(PlotEAOAbd)
-
+#scaled slopes fro EAO vs Abundance----
+Area_ThresholdsforEAO_coefficientsABD_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale(log10((Area_Threshold))) ~ scale(log10(Total_Abundance)), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Area_ThresholdsforEAO_coefficientsABD_df<- Area_ThresholdsforEAO_coefficientsABD_df%>%
+  filter(term == "scale(log10(Total_Abundance))")
+#END scaled slopes fro EAO vs Abundance----
 # Alternative: If you want different colors for periods----
 # PlotEAOAbd + scale_color_manual(values = c("Period1" = "steelblue", "Period2" = "orangered"))
 
@@ -418,7 +456,7 @@ names(range.spr);summary(range.spr)
 range.sprE_coefficients_df <- range.spr %>%
   group_by(Period) %>%
   do({
-    model <- lm((Estimate_km_E_quantile_0.5) ~ Year, data = .)
+    model <- lm(scale((Estimate_km_E_quantile_0.5)) ~ scale(Year), data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
@@ -426,16 +464,18 @@ range.sprE_coefficients_df <- range.spr %>%
 range.sprN_coefficients_df <- range.spr %>%
   group_by(Period) %>%
   do({
-    model <- lm((Estimate_km_N_quantile_0.5) ~ Year, data = .)
+    model <- lm(scale((Estimate_km_N_quantile_0.5)) ~ scale(Year), data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
   ungroup()
 
 range.sprE_coefficients_df <- range.sprE_coefficients_df%>%
-  filter(term == "Year")
+  filter(term == "scale(Year)")
 range.sprN_coefficients_df <- range.sprN_coefficients_df%>%
-  filter(term == "Year")
+  filter(term == "scale(Year)")
+
+
 
 ##END slope for range----
 # Create a jitter object with both horizontal and vertical displacement
@@ -617,8 +657,9 @@ CombEAOABDrANGE
 ##END Plot Range Edge----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #END Combo plot: Proper nested approach----
-#LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r
+#LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r (has spatial libraries)
 cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"))
+names(cogreg)
 cogregslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_Regional.csv"))
 names(cogregslope)
 unique(cogreg$Season)
@@ -641,6 +682,9 @@ centroid_CA_sf_spr <- na.omit(centroid_CA_sf_spr)
 cogCAslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_CoreAreas.csv"))
 
 names(cogregslope)
+#Scaled slopes for COG by region period 
+#modified in 5.2 and save there as write.csv(Reg_ScaledCOGtoYearCoefficients,here::here("R/DataforFinalFigs/Reg_ScaledCOGtoYearCoefficients.csv"),row.names = F)
+#Scaled slopes for COG by region period----
 
 #Plot COGMap----
 COG_Reg_map<-ggplot() +
@@ -837,6 +881,7 @@ suppcogca
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
 # FOR SLOPES got to SupplementalSlopePlots.R
+
 #PLOT Distance to Hague Line
 #Figure DIST REG AND CA Trends ----
 # Processing distance data for REG and CA----
@@ -1006,6 +1051,10 @@ Slope_Reg.spr<-Slope_Reg.spr%>%
   mutate(estimateNeg = estimate*-1, 
          conf.lowNeg = conf.low*-1, 
          conf.highNeg = conf.high*-1)  # Negate the slope and confidence intervals
+#Scaled slopes for DEEP by region period 
+#modified in 8.1 and you can serach there for filtered_Deepening_coefficients_Reg_ScaledSpr
+
+#Scaled slopes for COG by region period----
 ##Figure DEEP Panel A----
 regpal<- c("orange", "darkblue")
 
