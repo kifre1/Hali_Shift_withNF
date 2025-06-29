@@ -1,0 +1,33 @@
+TrendIndicator,Region,Period,ScaledSlopeCoefficient,Signif
+Abundance,Canada,Before,-0.281,NS
+Abundance,USA,Before,0.00113,NS
+Centre of Gravity Long,Canada,Before,-0.409,NS
+Centre of Gravity Long,USA,Before,0.7635,<0.001
+Centre of Gravity Lat,Canada,Before,0.209,NS
+Centre of Gravity Lat,USA,Before,0.9497,<0.001
+Area Occupied ,Canada,Before,0.362,NS
+Area Occupied ,USA,Before,-0.951,<0.001
+Area Occupied vs Abundance,Canada,Before,-0.459,NS
+Area Occupied vs Abundance,USA,Before,-0.129,NS
+Distance To Border,Canada,Before,-0.569,<0.05
+Distance To Border,USA,Before,0.18,NS
+Range edge (Northing),All,Before,0.517,<0.05
+Range edge (Easting),All,Before,-0.072,NS
+Deepening ,Canada,Before,-0.44,NS
+Deepening ,USA,Before,0.506,<0.05
+Abundance,Canada,During,0.887,<0.001
+Abundance,USA,During,-0.148,NS
+Centre of Gravity Long,Canada,During,0.9344,<0.001
+Centre of Gravity Long,USA,During,-0.661,<0.01
+Centre of Gravity Lat,Canada,During,0.9411,<0.001
+Centre of Gravity Lat,USA,During,-0.7625,<0.001
+Area Occupied ,Canada,During,0.813,<0.001
+Area Occupied ,USA,During,0.719,<0.001
+Area Occupied vs Abundance,Canada,During,0.75,<0.001
+Area Occupied vs Abundance,USA,During,-0.683,<0.01
+Distance To Border,Canada,During,0.893,<0.001
+Distance To Border,USA,During,0.413,NS
+Range edge (Northing),All,During,0.297,NS
+Range edge (Easting),All,During,0.689,<0.01
+Deepening ,Canada,During,-0.375,NS
+Deepening ,USA,During,-0.237,NS
