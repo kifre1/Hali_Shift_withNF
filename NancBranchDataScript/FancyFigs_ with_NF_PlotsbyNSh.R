@@ -140,7 +140,7 @@ ARegionalPlot
 Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
 names(Reg_SlopSpring)
 #scaling slopes per region period
-##slope for Abundace----
+##Scale slope for Abundace----
 RegionAbd_coefficients_df <- FigAbd.Region.Spring %>%
   group_by(Region,Period) %>%
   do({
@@ -320,13 +320,15 @@ names(Area_ThresholdsforEAO)
 Area_ThresholdsforEAO_coefficients_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
   group_by(Region,Period) %>%
   do({
-    model <- lm(scale(log10((Area_Threshold))) ~ scale(Year), data = .)
+    #model <- lm(scale(log10((Area_Threshold))) ~ scale(Year), data = .)
+    model <- lm(log10((Area_Threshold)) ~ Year, data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
   ungroup()
 Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
-  filter(term == "scale(Year)")
+  #filter(term == "scale(Year)")
+  filter(term == "Year")
 #END slopes for EAO over time----
 ##PlotEOA----
 #IN Appendix S1 Fig S EAO 
@@ -420,13 +422,15 @@ print(PlotEAOAbd)
 Area_ThresholdsforEAO_coefficientsABD_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
   group_by(Region,Period) %>%
   do({
-    model <- lm(scale(log10((Area_Threshold))) ~ scale(log10(Total_Abundance)), data = .)
+    #model <- lm(scale(log10((Area_Threshold))) ~ scale(log10(Total_Abundance)), data = .)
+    model <- lm(log10((Area_Threshold)) ~ log10(Total_Abundance), data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
   ungroup()
 Area_ThresholdsforEAO_coefficientsABD_df<- Area_ThresholdsforEAO_coefficientsABD_df%>%
-  filter(term == "scale(log10(Total_Abundance))")
+  #filter(term == "scale(log10(Total_Abundance))")
+filter(term == "log10(Total_Abundance)")
 #END scaled slopes fro EAO vs Abundance----
 # Alternative: If you want different colors for periods----
 # PlotEAOAbd + scale_color_manual(values = c("Period1" = "steelblue", "Period2" = "orangered"))
@@ -452,11 +456,14 @@ range.spr$Period<-NULL
 range.spr$Period[range.spr$Year<2006]<-"Before Warming"
 range.spr$Period[range.spr$Year>2005]<-"During Warming"
 names(range.spr);summary(range.spr)
-##slope for range----
-range.sprE_coefficients_df <- range.spr %>%
+
+##slope for range ----
+#Leading Edge N95 dna E 95 From Canada?
+range.sprE_coefficients_df <- range.spr %>% 
   group_by(Period) %>%
   do({
-    model <- lm(scale((Estimate_km_E_quantile_0.5)) ~ scale(Year), data = .)
+    model <- lm(scale((Estimate_km_E_quantile_0.95)) ~ scale(Year), data = .)
+   # model <- lm(Estimate_km_E_quantile_0.5~ Year, data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
@@ -464,7 +471,8 @@ range.sprE_coefficients_df <- range.spr %>%
 range.sprN_coefficients_df <- range.spr %>%
   group_by(Period) %>%
   do({
-    model <- lm(scale((Estimate_km_N_quantile_0.5)) ~ scale(Year), data = .)
+    model <- lm(scale((Estimate_km_N_quantile_0.95)) ~ scale(Year), data = .)
+    #model <- lm(Estimate_km_N_quantile_0.5 ~ Year, data = .)
     data.frame(t(coef(model)))
     tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
   }) %>%
@@ -472,9 +480,37 @@ range.sprN_coefficients_df <- range.spr %>%
 
 range.sprE_coefficients_df <- range.sprE_coefficients_df%>%
   filter(term == "scale(Year)")
+ # filter(term == "Year")
 range.sprN_coefficients_df <- range.sprN_coefficients_df%>%
   filter(term == "scale(Year)")
+  #filter(term == "Year")
+#Trailing 05 and assign to  USA?
 
+range.sprE_coefficients_dfTR <- range.spr %>% 
+group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_E_quantile_0.05)) ~ scale(Year), data = .)
+    # model <- lm(Estimate_km_E_quantile_0.5~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+range.sprN_coefficients_dfTR <- range.spr %>%
+  group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_N_quantile_0.05)) ~ scale(Year), data = .)
+    #model <- lm(Estimate_km_N_quantile_0.5 ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+range.sprE_coefficients_dfTR <- range.sprE_coefficients_dfTR%>%
+  filter(term == "scale(Year)")
+# filter(term == "Year")
+range.sprN_coefficients_dfTR <- range.sprN_coefficients_dfTR%>%
+  filter(term == "scale(Year)")
+#filter(term == "Year")
 
 
 ##END slope for range----
@@ -662,6 +698,7 @@ cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv
 names(cogreg)
 cogregslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_Regional.csv"))
 names(cogregslope)
+cogregslope[cogregslope$Season=="Spring" & cogregslope$AxesNE=="Longitude",]
 unique(cogreg$Season)
 cogreg_spring<-cogreg[cogreg$Season=="Spring",]
 centroid_reg_sf_spr <- st_as_sf(cogreg_spring, coords = c("centroid_longitude", "centroid_latitude"))
@@ -880,7 +917,7 @@ suppcogca
 #END plot for Supplemental COG Lat vs Long by Core Area----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
-# FOR SLOPES got to SupplementalSlopePlots.R
+# FOR CA SLOPES got to SupplementalSlopePlots.R
 
 #PLOT Distance to Hague Line
 #Figure DIST REG AND CA Trends ----
@@ -1130,114 +1167,3 @@ calculate_distance <- function(x1, y1, x2, y2) {
 }
 
 # Calculate the angle in radians between two points (x1, y1) and (x2, y2)
-
-#Schematic #7/
-library(ggplot2)
-library(dplyr)
-library(stringr)
-library(here)
-library(readr)
-
-schem <- read_csv(here("2025-04-23/Output/Shift_Indicators/SchematicFig.csv"))
-library(ggplot2)
-library(dplyr)
-library(stringr)
-library(here)
-library(readr)
-
-schem <- read_csv(here::here("2025-04-23/Output/Shift_Indicators/SchematicFig.csv"),show_col_types = FALSE)
-
-plot_df <- schem %>%
-  group_by(Indicator, Region) %>%
-  summarise(
-    sum_length = sum(LevValue),
-    mean_score = mean(as.numeric(LevValue)),
-    n = n(),
-    .groups = "drop"
-  ) %>%
-  mutate(mean_score = round(mean_score, digits = 0))
-plot_df <- plot_df %>%
-  mutate(
-    Indicator_wrapped = str_wrap(Indicator, 12),
-    Indicator_ordered = fct_reorder(Indicator_wrapped, sum_length)
-  )
-
-# Find positions of indicators in the circular axis
-indicator_levels <- levels(plot_df$Indicator_ordered)
-
-divider_positions <- seq(1.5, length(indicator_levels) - 0.5, by = 1)
-
-
-plt <- ggplot(plot_df) +
-  # Add category dividers
-  geom_vline(xintercept = divider_positions, color = "grey80", linewidth = 0.4) +
-  
-  # Grid lines
-  geom_hline(aes(yintercept = y), data.frame(y = -1:3), color = "lightgrey") +
-  
-  # Bars per region
-  geom_col(
-    aes(
-      x = Indicator_ordered,
-      y = sum_length,
-      fill = Region
-    ),
-    position = position_dodge2(preserve = "single"),
-    alpha = 0.9
-  ) +
-  
-  # Mean score dots
-  geom_point(
-    aes(
-      x = Indicator_ordered,
-      y = mean_score,
-      group = Region
-    ),
-    position = position_dodge2(width = 0.9, preserve = "single"),
-    size = 3,
-    color = "gray12"
-  ) +
-  
-  # Lollipop lines
-  geom_segment(
-    aes(
-      x = Indicator_ordered,
-      y = -1,
-      xend = Indicator_ordered,
-      yend = 3,
-      group = Region
-    ),
-    linetype = "dashed",
-    color = "gray12",
-    position = position_dodge2(width = 0.9)
-  ) +
-  
-  coord_polar() +
-  
-  scale_y_continuous(
-    limits = c(-1, 2),
-    expand = c(0, 0),
-    breaks = c(-1, 1, 2, 3)
-  ) +
-  scale_fill_manual(values = c("red", "violet", "blue")) +
-  guides(
-    fill = guide_legend(title = "Region", title.position = "top", title.hjust = 0.5)
-  ) +
-  theme_minimal(base_family = "Times") +
-  theme(
-    axis.title = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text.y = element_blank(),
-    axis.text.x = element_text(color = "gray12", size = 10),
-    legend.position = "bottom",
-    panel.grid = element_blank(),
-    panel.background = element_rect(fill = "white", color = NA)
-  ) +
-  labs(
-    title = "\nShift Indicators",
-    subtitle = "\n Relative indicator magnitude"
-  )
-plt
-plt+theme(margin=c(0,0,0,0)) # Remove margins around the plot
-ggsave("schematic_plot.png", plt, width = 12, height = 12, dpi = 300)
-
