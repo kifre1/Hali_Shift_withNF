@@ -192,8 +192,9 @@ Deepening_coefficients_Reg <- D_data_Reg %>%
   }) %>%
   ungroup()
 summary(Deepening_coefficients_Reg)
-filtered_Reg <- Deepening_coefficients_Reg %>%
+Deepening_coefficients_Reg_Spr <- Deepening_coefficients_Reg %>%filter(Season=="Spring") %>%
   filter(term == "Year")  # to isolate the effects of year and plot slopes and CIs
+
 #Regional Scaled
 Deepening_coefficients_Reg_ScaledSpr <- D_data_Reg %>%filter(Season=="Spring") %>%
   group_by(Period,Stratum) %>%
