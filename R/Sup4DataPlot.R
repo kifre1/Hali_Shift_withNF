@@ -262,6 +262,7 @@ SurveyPlot_final <- ggdraw(SurveyPlot) +
   draw_plot_label(label = "(e)", x = 0.385, y = 0.5, size = 12) +  
   draw_plot_label(label = "(f)", x = 0.657, y = 0.5, size = 12)    
 
+#SAVE plots SUPPLEMTAL FIGURE 1
 ggsave(
   filename = "SurveyLocPlot.png",
   plot = SurveyPlot_final,          # optional if it's the last plot
