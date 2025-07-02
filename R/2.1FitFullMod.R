@@ -1,10 +1,13 @@
 Sys.setenv(OMP_NUM_THREADS = 4)#increase the amount of cores delegated to this script
 
+
 #run in terminal:
 #set PATH=%PATH%;C:\Program Files\R\R-4.4.1\bin
 #R --version 
-#cd C:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF/R
-#Rscript 2.1FitFullMod
+#cd C:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF
+#set PATH=%PATH%;:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF
+#Rscript R/2.1FitFullMod.R
+
 
 
 
@@ -340,8 +343,8 @@ if(first_run){
   # Spatio-temporal #this one turns on spatial and spatio-temporal variability through the omegas and epsilon
   env_sp_st_sets <- env_sp_sets
   env_sp_st_sets$FieldConfig <- c("Omega1" = 1, "Epsilon1" = 1, "Omega2" = 1, "Epsilon2" = 1)# 
-  env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 2, "Epsilon2" = 4) #Defaults for AR1=TRUE
-  #env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 3, "Epsilon1" = 2, "Epsilon2" = 4) #
+  env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 4, "Epsilon1" = 2, "Epsilon2" = 4) #Defaults for AR1=TRUE (4), 
+  #env_sp_st_sets$RhoConfig <- c("Beta1" = 2, "Beta2" = 2, "Epsilon1" = 2, "Epsilon2" = 4) # When GEBCO depth was added and depth filtered to -30 - -1000 VAST documentation recommends 4 to 2(RW)  when beta_rho2_f hits the upper boundary of 1
   
   # Bundle together in a list that we can loop through
   settings_all<- list("Null" = null_sets, "EnvOnly" = env_only_sets, "Sp" = env_sp_sets, "SpST" = env_sp_st_sets)
