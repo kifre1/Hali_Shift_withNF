@@ -165,10 +165,10 @@ For each shift indicator, create data, fit LM, and plot
   - **Output**: *Seasonal_Deepening.csv, Seasonal_Deepening_Reg.csv, Seasonal_Deepening_CA.csv*  
   - Step3: perform lm on Stratum groups (region and CA) and extract coefficients, and filter on Year  
   - **Output**: *Deepening_Slope_All.csv, Deepening_Slope_Reg.csv, Deepening_Slope_CA.csv*  
-  - Step 4: Plotting
+  - Step 4: Plotting supplemental figure, deepening by Focal area combined plot 1&2 
       - Plot 1: Mean depth over time  
       - Plot 2: Rate of change in depth between the 2 time frames  
-
+  
 
 
 
