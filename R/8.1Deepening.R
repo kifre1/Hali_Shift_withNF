@@ -350,6 +350,14 @@ Slope_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Sl
 Slope_All_spring<-subset(Slope_All, Slope_All$Season =="Spring")
 Slope_Reg_spring<-subset(Slope_Reg, Slope_Reg$Season =="Spring")
 
+Slope_CA_spring<-subset(Slope_CA, Slope_CA$Season =="Spring")
+Slope_CA_spring$Stratum<-factor(Slope_CA_spring$Stratum,levels=c("Nantucket","CapeCod","EGOM","Georges",
+                                                                 "BOF","Browns","Sable", "CapeBreton",
+                                                                 "Gully","HaliChan","GrandBanks","GBTail" ))
+unique(Slope_CA_spring$Period)
+Slope_CA_spring$Period<-factor(Slope_CA_spring$Period,levels=c("During Warming","Before Warming"))
+head(Slope_All_spring)
+
 ggplot(Slope_All_spring , aes(x=Period, y = estimate,fill=Period)) +
   geom_linerange(aes(ymin =conf.low, ymax =conf.high),position=pd,color="darkgrey",size=1.5)+
   geom_point(shape=21, size = 4,position=pd) +
