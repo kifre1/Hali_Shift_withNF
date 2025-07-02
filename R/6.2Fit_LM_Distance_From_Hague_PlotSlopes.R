@@ -198,9 +198,9 @@ dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hag
 
 dist_hague_Reg$Period<-NULL
 pd <- position_dodge(.75)
-dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"Earlier 1985-2005"
+dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"Before Warming"
 
-dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"Later 2006-2019"
+dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"During Warming"
 
 Overall.DFHcoefficients_df <- dist_hague_Reg %>%
   
@@ -218,10 +218,25 @@ Overall.DFHcoefficients_df <- dist_hague_Reg %>%
     ungroup()
 
 Overall.DFHfiltered_df <- Overall.DFHcoefficients_df[Overall.DFHcoefficients_df$Season=="Spring",]%>%
-  
-  filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
+    filter(term == "Year")  # Replace "x" with "Intercept" to plot intercept
 Overall.DFHfiltered_df$Stratum<-factor(Overall.DFHfiltered_df$Stratum,levels=c("USA","Canada"))
+#Scaled Region Slopes
+Overall.DFHcoefficients_df.Scaled.Spring <- dist_hague_Reg %>% filter(Season == "Spring")%>%
+    group_by(Stratum,Period) %>%
+  
+  do({
+    
+    model <- lm(scale(Dist_Mean) ~ scale(Year), data = .)
+    
+    data.frame(t(coef(model)))
+    
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+    
+  }) %>%
+  ungroup()
 
+Overall.DFHcoefficients_df.Scaled.Spring<- Overall.DFHcoefficients_df.Scaled.Spring%>%
+  filter(term == "scale(Year)")  # Replace "x" with "Intercept" to plot intercept
 
 ggplot(Overall.DFHfiltered_df  , aes(x = factor(Stratum), y = estimate,fill=Period)) +
   geom_errorbar(aes(ymin = conf.low, ymax =conf.high, , color = factor(Stratum)),position=pd, , show.legend = FALSE)+

@@ -137,17 +137,32 @@ ARegionalPlot<-
         plot.margin=margin(10, 5, 10, 15))
 ARegionalPlot
 #END Figure ABD A----
+Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
+names(Reg_SlopSpring)
+#scaling slopes per region period
+##Scale slope for Abundace----
+RegionAbd_coefficients_df <- FigAbd.Region.Spring %>%
+  group_by(Region,Period) %>%
+  do({
+    model <- lm(scale((log10(Index_Estimate))) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+RegionAbd_coefficients_df<- RegionAbd_coefficients_df%>%
+  filter(term == "scale(Year)")
+##END scaled slope for Abundace----
+
 
 #Core Area Abundance----
 #Part 2: Core Areas abundance trends
-Reg_SlopSpring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/RegionAbdSlope.Spring.csv"),row.names=NULL)
-names(Reg_SlopSpring)
 
 abundance_ind_CA <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_CA.csv"),row.names=NULL)
 names(abundance_ind_CA)
 abundance_ind_CA.spr<- subset(abundance_ind_CA, abundance_ind_CA$Season == "Spring")
 
-#2.1 plot abundance trends, spring
+#2.1 CA plot abundance trends, spring
 #assign colors----
 abundance_ind_CA.spr$Index_Region <- factor(abundance_ind_CA.spr$Index_Region, levels = c("EGOM", "BOF", "CapeBreton", "HaliChan", "CapeCod", "Browns", "Gully", "GrandBanks", "Nantucket", "Georges", "Sable", "GBTail"))
 region_colours <- c(
@@ -300,7 +315,21 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureAbundanceFAandMa
 # PLOT EAO,----
 Area_ThresholdsforEAO<- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
 names(Area_ThresholdsforEAO)
+#slopes for EAO over time----
 
+Area_ThresholdsforEAO_coefficients_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
+  group_by(Region,Period) %>%
+  do({
+    #model <- lm(scale(log10((Area_Threshold))) ~ scale(Year), data = .)
+    model <- lm(log10((Area_Threshold)) ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
+  #filter(term == "scale(Year)")
+  filter(term == "Year")
+#END slopes for EAO over time----
 ##PlotEOA----
 #IN Appendix S1 Fig S EAO 
 EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
@@ -389,7 +418,20 @@ PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
 
 # Display the plot
 print(PlotEAOAbd)
-
+#scaled slopes fro EAO vs Abundance----
+Area_ThresholdsforEAO_coefficientsABD_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
+  group_by(Region,Period) %>%
+  do({
+    #model <- lm(scale(log10((Area_Threshold))) ~ scale(log10(Total_Abundance)), data = .)
+    model <- lm(log10((Area_Threshold)) ~ log10(Total_Abundance), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Area_ThresholdsforEAO_coefficientsABD_df<- Area_ThresholdsforEAO_coefficientsABD_df%>%
+  #filter(term == "scale(log10(Total_Abundance))")
+filter(term == "log10(Total_Abundance)")
+#END scaled slopes fro EAO vs Abundance----
 # Alternative: If you want different colors for periods----
 # PlotEAOAbd + scale_color_manual(values = c("Period1" = "steelblue", "Period2" = "orangered"))
 
@@ -414,7 +456,113 @@ range.spr$Period<-NULL
 range.spr$Period[range.spr$Year<2006]<-"Before Warming"
 range.spr$Period[range.spr$Year>2005]<-"During Warming"
 names(range.spr);summary(range.spr)
+
+##slope for range ----
+#Leading Edge N95 dna E 95 From Canada?
+range.sprE_coefficients_df <- range.spr %>% 
+  group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_E_quantile_0.95)) ~ scale(Year), data = .)
+   # model <- lm(Estimate_km_E_quantile_0.5~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+range.sprN_coefficients_df <- range.spr %>%
+  group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_N_quantile_0.95)) ~ scale(Year), data = .)
+    #model <- lm(Estimate_km_N_quantile_0.5 ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+range.sprE_coefficients_df <- range.sprE_coefficients_df%>%
+  filter(term == "scale(Year)")
+ # filter(term == "Year")
+range.sprN_coefficients_df <- range.sprN_coefficients_df%>%
+  filter(term == "scale(Year)")
+  #filter(term == "Year")
+#Trailing 05 and assign to  USA?
+
+range.sprE_coefficients_dfTR <- range.spr %>% 
+group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_E_quantile_0.05)) ~ scale(Year), data = .)
+    # model <- lm(Estimate_km_E_quantile_0.5~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+range.sprN_coefficients_dfTR <- range.spr %>%
+  group_by(Period) %>%
+  do({
+    model <- lm(scale((Estimate_km_N_quantile_0.05)) ~ scale(Year), data = .)
+    #model <- lm(Estimate_km_N_quantile_0.5 ~ Year, data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+range.sprE_coefficients_dfTR <- range.sprE_coefficients_dfTR%>%
+  filter(term == "scale(Year)")
+# filter(term == "Year")
+range.sprN_coefficients_dfTR <- range.sprN_coefficients_dfTR%>%
+  filter(term == "scale(Year)")
+#filter(term == "Year")
+
+
+##END slope for range----
 # Create a jitter object with both horizontal and vertical displacement
+library(geosphere)
+range.sprAgg<-range.spr%>% 
+    mutate(
+  # YearGroup = cut(Year, breaks = seq(1990, 2023, by = 5), right = FALSE)
+    YearGroup = cut(Year, breaks = seq(1990, 2025, by = 5), right = FALSE)
+  ) %>%
+  group_by(YearGroup) %>%
+  summarise(AveE = mean(Estimate_km_E_quantile_0.5, na.rm = TRUE),
+            AveN = mean(Estimate_km_N_quantile_0.5, na.rm = TRUE))
+# Reference point (first group)
+trail_point <- range.sprAgg %>%
+  filter(YearGroup == unique(YearGroup)[1]) %>%
+  slice(1)  # just in case there are multiple rows
+
+# Reference point (last group)
+lead_point <- range.sprAgg %>%
+  filter(YearGroup == unique(YearGroup)[7]) %>%
+  slice(1) 
+
+# Vector of distances from the reference point to each group
+# Calculate Euclidean distance to all other points
+range.sprAgg <- range.sprAgg %>%
+  arrange(YearGroup) %>%  # ensure chronological order
+  mutate(
+    PrevE = lag(AveE),
+    PrevN = lag(AveN),
+    StepDist = sqrt((AveE - PrevE)^2 + (AveN - PrevN)^2),
+    CumulativeDist = cumsum(replace_na(StepDist, 0))
+  )
+library(dplyr)
+
+library(dplyr)
+centroid_1 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[1]) %>% slice(1)
+centroid_7 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[7]) %>% slice(1)
+
+# Directional shifts
+shift_Easting <- centroid_7$AveE - centroid_1$AveE
+shift_Northing <- centroid_7$AveN - centroid_1$AveN
+
+# Total Euclidean shift
+total_shift <- sqrt(shift_Easting^2 + shift_Northing^2)
+shift_summary <- tibble(
+  Direction = c("Easting", "Northing", "Total"),
+  Shift = c(shift_Easting, shift_Northing, total_shift)
+)
+
+print(shift_summary)
+
 set.seed(123)  # For reproducibility
 pos_jitter <- position_jitter(width = .1, height = .1)  # Jitter both horizontally and vertically
 # Range Edge Plot with Blue-Orange Year Gradient----
@@ -545,10 +693,12 @@ CombEAOABDrANGE
 ##END Plot Range Edge----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #END Combo plot: Proper nested approach----
-#LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r
+#LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r (has spatial libraries)
 cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"))
+names(cogreg)
 cogregslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_Regional.csv"))
 names(cogregslope)
+cogregslope[cogregslope$Season=="Spring" & cogregslope$AxesNE=="Longitude",]
 unique(cogreg$Season)
 cogreg_spring<-cogreg[cogreg$Season=="Spring",]
 centroid_reg_sf_spr <- st_as_sf(cogreg_spring, coords = c("centroid_longitude", "centroid_latitude"))
@@ -569,6 +719,9 @@ centroid_CA_sf_spr <- na.omit(centroid_CA_sf_spr)
 cogCAslope<- read.csv(here::here("R/DataforFinalFigs/COGSlopeCI_CoreAreas.csv"))
 
 names(cogregslope)
+#Scaled slopes for COG by region period 
+#modified in 5.2 and save there as write.csv(Reg_ScaledCOGtoYearCoefficients,here::here("R/DataforFinalFigs/Reg_ScaledCOGtoYearCoefficients.csv"),row.names = F)
+#Scaled slopes for COG by region period----
 
 #Plot COGMap----
 COG_Reg_map<-ggplot() +
@@ -764,7 +917,8 @@ suppcogca
 #END plot for Supplemental COG Lat vs Long by Core Area----
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jpeg"), plot =suppcogca, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
-# FOR SLOPES got to SupplementalSlopePlots.R
+# FOR CA SLOPES got to SupplementalSlopePlots.R
+
 #PLOT Distance to Hague Line
 #Figure DIST REG AND CA Trends ----
 # Processing distance data for REG and CA----
@@ -934,6 +1088,10 @@ Slope_Reg.spr<-Slope_Reg.spr%>%
   mutate(estimateNeg = estimate*-1, 
          conf.lowNeg = conf.low*-1, 
          conf.highNeg = conf.high*-1)  # Negate the slope and confidence intervals
+#Scaled slopes for DEEP by region period 
+#modified in 8.1 and you can serach there for filtered_Deepening_coefficients_Reg_ScaledSpr
+
+#Scaled slopes for COG by region period----
 ##Figure DEEP Panel A----
 regpal<- c("orange", "darkblue")
 
@@ -995,3 +1153,17 @@ FigureDeepDeepRates
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureDeepDeepRates.jpeg"), plot = FigureDeepDeepRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #
 #COmmit
+#END Plot deepening----
+library(dplyr)
+library(ggplot2)
+library(stringr)
+#find the hypoteneuse for sqrt((250^2)+(125^2))
+hypotenuse <- function(a, b) {
+  sqrt(a^2 + b^2)
+}
+# Calculate the distance between two points (x1, y1) and (x2, y2)
+calculate_distance <- function(x1, y1, x2, y2) {
+  sqrt((x2 - x1)^2 + (y2 - y1)^2)
+}
+
+# Calculate the angle in radians between two points (x1, y1) and (x2, y2)

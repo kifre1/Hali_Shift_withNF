@@ -64,6 +64,38 @@ filtered_df <- COGcoefficientsJt_df %>%
 write.csv(filtered_df,here::here("R/DataforFinalFigs/COGSlopeCI_CoreAreas.csv"),row.names = F)
 ##end CORE AREA SLOPES AND LM----
 # REGIONAL Perform lm on each group and extract coefficients----
+centroid_data_Reg
+Reg_SprCOGcoefficientsLat_df <- centroid_data_Reg %>%filter(Season=="Spring")%>%
+  group_by(Stratum,Period) %>%
+  do({
+    model <- lm(scale(centroid_latitude) ~ scale(Year), data = .)
+    data.frame(t(coef(model)))
+    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+Reg_SprCOGcoefficientsLat_df$AxesNE<-"Latitude"
+
+Reg_SprCOGcoefficientsLon_df <- centroid_data_Reg %>%filter(Season=="Spring")%>%
+  group_by(Stratum,Period) %>%
+  do({
+    modlong<-lm(scale(centroid_longitude)~scale(Year), data=.)
+    data.frame(t(coef(modlong)))
+    tidy(modlong, conf.int = TRUE) # Includes coefficients with 95% CI by default
+  }) %>%
+  ungroup()
+
+Reg_SprCOGcoefficientsLon_df$AxesNE<-"Longitude"
+
+Reg_SprCOGcoefficientsJt_df<-merge (Reg_SprCOGcoefficientsLat_df,Reg_SprCOGcoefficientsLon_df,all=T)
+
+summary(Reg_SprCOGcoefficientsJt_df)
+
+Reg_ScaledCOGtoYearCoefficients <- Reg_SprCOGcoefficientsJt_df %>%
+  filter(term == "scale(Year)" )  # Replace "x" with "Intercept" to plot intercept
+
+write.csv(Reg_ScaledCOGtoYearCoefficients,here::here("R/DataforFinalFigs/Reg_ScaledCOGtoYearCoefficients.csv"),row.names = F)
+#END REGIONAL COG SLOPES AND LM----
+#Scaled Regional COG SLOPES AND LM----
 Reg_COGcoefficientsLat_df <- centroid_data_Reg %>%
   group_by(Period,Season,Stratum) %>%
   do({
@@ -94,7 +126,6 @@ Reg_filtered_df <- Reg_COGcoefficientsJt_df %>%
 
 write.csv(Reg_filtered_df,here::here("R/DataforFinalFigs/COGSlopeCI_Regional.csv"),row.names = F)
 #END REGIONAL COG SLOPES AND LM----
-
 
 #Take only Spring data
 Reg_filtered_df <- read.csv(here::here("","R/DataforFinalFigs/COGSlopeCI_Regional.csv"),sep = ",")
