@@ -418,19 +418,7 @@ PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
 
 # Display the plot
 print(PlotEAOAbd)
-#scaled slopes fro EAO vs Abundance----
-Area_ThresholdsforEAO_coefficientsABD_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
-  group_by(Region,Period) %>%
-  do({
-    #model <- lm(scale(log10((Area_Threshold))) ~ scale(log10(Total_Abundance)), data = .)
-    model <- lm(log10((Area_Threshold)) ~ log10(Total_Abundance), data = .)
-    data.frame(t(coef(model)))
-    tidy(model, conf.int = TRUE) # Includes coefficients with 95% CI by default
-  }) %>%
-  ungroup()
-Area_ThresholdsforEAO_coefficientsABD_df<- Area_ThresholdsforEAO_coefficientsABD_df%>%
-  #filter(term == "scale(log10(Total_Abundance))")
-filter(term == "log10(Total_Abundance)")
+
 #END scaled slopes fro EAO vs Abundance----
 # Alternative: If you want different colors for periods----
 # PlotEAOAbd + scale_color_manual(values = c("Period1" = "steelblue", "Period2" = "orangered"))

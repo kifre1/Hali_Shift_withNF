@@ -39,16 +39,16 @@ pd <- position_dodge(.5)
 
 #Schematic #7/
 
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
 
 schem <- read_csv(here::here("2025-04-23/Output/Shift_Indicators/SchematicFigIndicatorScaledCoefficients.csv"),show_col_types = FALSE)
 names(schem)
 View(schem)
 #----
 # Assuming your data is in a data frame called `schem`
-
-library(ggplot2)
-library(dplyr)
-library(tidyr)
 
 # Clean and prepare your data
 schem_clean <- schem %>%
@@ -59,7 +59,7 @@ schem_clean <- schem %>%
     Period = factor(Period, levels = c("Before", "During"))
   )
 
-# Plot
+# FlowerePlot----
 flowpot<-ggplot(schem_clean, aes(x = TrendIndicator, y = ScaledSlopeCoefficient, fill = Period)) +
   #geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.4), width = .5) +
@@ -98,10 +98,21 @@ flowpot<-flowpot+theme_minimal() +
       )
 flowpot
 #flowpot<-plot_grid(DistReg, DistHag, nrow = 2,rel_heights = c(1, 2),labels = c("(a)", "(b)"),align = "v", axis = "lr") # Add labels
+#barplot
+
+flowpot<- flowpot+geom_text(data = radial_labels, aes(x = x, y = y, label = label),
+                            inherit.aes = FALSE, angle = 0, hjust = -0.2, size = 4)
+
+flowpot
+#flowpot<-plot_grid(DistReg, DistHag, nrow = 2,rel_heights = c(1, 2),labels = c("(a)", "(b)"),align = "v", axis = "lr") # Add labels
 
 
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FLowPot.jpeg"), plot = flowpot, dpi = 600, width = 12, height = 10, units = "in", device = "jpeg")
-#barplot
+
+
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FLowPot.jpeg"), plot = flowpot, dpi = 600, width = 12, height = 10, units = "in", device = "jpeg")
+# END FlowerePlot----
+#barplot----
 summarypot<-ggplot(schem_clean, aes(x = fct_rev(TrendIndicator), y = ScaledSlopeCoefficient, fill = Period))+
   #geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.4), width = .8) +
@@ -138,17 +149,77 @@ summarypot<-summarypot+theme_minimal() +
 summarypot
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/SchematicSummaryPot.jpeg"), plot = 
          summarypot, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-#barplot
+#END barplot----
+#CI plot
 
-flowpot<- flowpot+geom_text(data = radial_labels, aes(x = x, y = y, label = label),
-                            inherit.aes = FALSE, angle = 0, hjust = -0.2, size = 4)
+CI <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x)) * qt(0.975, df = length(x) - 1)
+ggplot(schem_clean, aes(x = TrendIndicator, y = ScaledSlopeCoefficient, fill = Period)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = pd) +
+  geom_point(shape = 21, size = 3, position = pd) +
+  guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
+  scale_fill_manual(values = c("orangered","steelblue" ))+ #Reverse the colors
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
+  ylim(-0.1,0.1)+
+  # theme_minimal() + # A cleaner minimal theme
+  theme(
+    text = element_text(family = "serif"),  
+    legend.position = "top",
+    #legend.position.inside = c(0.25, 0.6),               # Position of the legend
+    legend.box.background = element_blank(), # Transparent legend box
+    legend.title = element_blank(),             # Hide legend title
+    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
+    axis.text = element_text(size = 14),      # Customize x-axis label
+    axis.title.y = element_blank(),             # Remove y-axis label
+    axis.title.x = element_text(size = 14),      # Customize x-axis label
+    plot.margin=margin(0,0,0,0))+
+  xlab("")    +                                 # Clear x-axis label
+  ylab("")
 
-flowpot
-#flowpot<-plot_grid(DistReg, DistHag, nrow = 2,rel_heights = c(1, 2),labels = c("(a)", "(b)"),align = "v", axis = "lr") # Add labels
+  geom_point(aes(color = Period), 
+             size = 2.5, 
+             alpha = 0.7) +
+  scale_color_manual(values = c("Before Warming" = "steelblue", "During Warming" = "orangered"))+
+  # Smoothed regression lines
+  #geom_smooth(method = "lm", 
+   #           se = TRUE,
+    #          aes(group = interaction(Region, Period), 
+     #             color = Period),
+      #        alpha = .1) +  # Make confidence bands more subtle
+  # Add a horizontal line at y = 0# Faceting by region
+facet_wrap(Region ~ ., 
+           scales = "free",
+           labeller = label_wrap_gen(width = 15)) +  # Wrap long region names
+  
+  # Improved labels with log notation
+  labs(title = "",
+       x = expression("Total Annual Abundance (log"[10]*")"),
+       y = expression("Area km"^2*" (log"[10]*")"),
+       color = "Period") +
+  #  Remove fill from legend, keep only color
+  guides(fill = "none") +
+  # Clean theme
+  theme_bw() +
+  theme(
+    text = element_text(family = "serif"),  
+    legend.box.background = element_blank(), # Transparent legend box
+    #legend.position = c(.5,.1),
+    legend.position = "top",
+    axis.title = element_text(size = 12, family = "serif"),
+    axis.text = element_text(size = 12, family = "serif"),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8, family = "serif"),
+    legend.key = element_rect(fill = "white", color = NA),
+    strip.text = element_text(size = 11, family = "serif"),
+    strip.background = element_rect(colour = "black", fill = "white"),
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.grid.major = element_blank(),  #
+    #legend.position = "bottom"  # Move legend to bottom for better space usage
+  )
 
 
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FLowPot.jpeg"), plot = flowpot, dpi = 600, width = 12, height = 10, units = "in", device = "jpeg")
-
+# Load necessary libraries
 
 library(ggplot2)
 library(dplyr)
