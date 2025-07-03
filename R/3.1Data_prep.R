@@ -113,12 +113,16 @@ str(pred_array) #this gives the density (count/biomass per km²) for each: site 
 #this can be multiplied by the cell area to get counts, however it gets  lower counts 
 #because the extrapolation grid is equal area,area weights used for the predictions correspond to a smaller scale (observation level)
 #cell area is technically not the same multiplier used in the model 
-unique(fit$extrapolation_list$Area_km2) 
-unique(fit$data_frame$a_i)    
 
+#Instead of the equally spaced prediction grid, 
+#VAST aggregates over a smaller number of unique area-weighted locations 
+#(usually integration points or centroids of spatial knots or prediction grid cells).
+#Index_gctl already includes area-weighted contribution it is ok that it has strayed from the regular grid
+#it is a spatially representative subset that makes the model run better
 #Index_gctl multiplies D_gct by the site and area weight from the model 
 pred_array_ind <- fit$Report$Index_gctl 
 str(pred_array_ind)#the indexed prediction array has total abundance for each category (halibut) time step(102), grid location(3247) and index region(15)
+
 #Turn it into a df
 pred_df_ind <- as.data.frame.table(pred_array_ind, responseName = "Abundance") %>%
   rename(Site = Site, Category = Category, Time = Time, Stratum = Stratum) %>%
@@ -128,9 +132,13 @@ pred_df_ind <- as.data.frame.table(pred_array_ind, responseName = "Abundance") %
     Time = as.numeric(Time),
     Stratum = as.character(Stratum)
   )
+
 pred_df_ind <- pred_df_ind %>%
   mutate(Site = as.integer(as.character(Site)))#convert it back to int so that it can be joined with the spatial data
 summary(pred_df_ind)#$Stratum  is generic (1:15)--replace these with their actual names (accessed in get_vast_index_timeseries())
+
+
+
 #Create a named lookup for associated stratum 
 stratum_map <- data.frame(
   Stratum = paste0("Stratum_", 1:length(unique(abundance_ind$Index_Region))),
@@ -167,6 +175,7 @@ head(pred_df_ind)
 str(pred_df_ind)#Abundance (count) per: Site(grid centriod), Category, Time,  Stratum, Lon, Lat
 write.csv(pred_df_ind, (here::here("2025-04-23/Output/IndexAbundance/Mod_Pred_Abundance_grid_Locs.csv")))
 
+
 #Summarize these counts for indexed totals 
 Pred_df_all<-subset(pred_df_ind, Stratum == "All")#start with just "all" and check against the 
 ind_from_dgcl <- Pred_df_all %>%
@@ -197,8 +206,8 @@ ggplot(ai_all, aes(x = Time, y = Index_Estimate)) +
     title = "Generated Index Estimates"
   )
 
-#Step 3, Add season, Year, and save the data for shift analysis 
-raster_data<-read.csv(here::here("2025-04-23/Output/Mod_Pred_Abundance_grid_Locs.csv"))
+#Step 3, Add season, Year, subset based on use in indexing and save the data for shift analysis 
+raster_data<-read.csv(here::here("2025-04-23/Output/IndexAbundance/Mod_Pred_Abundance_grid_Locs.csv"))
 summary(raster_data)
 raster_data_copy<-raster_data
 raster_data<-raster_data_copy
@@ -242,7 +251,7 @@ str(raster_data)
 
 
 raster_data <- subset(raster_data, select = -X)
-unique(raster_data$Core_Area)
+unique(raster_data$Stratum)
 str(raster_data)
 
 #CORE AREA (and respective km2)
@@ -262,10 +271,9 @@ raster_data <- merge(raster_data, CoreAreas_km2, by = "Stratum", all.x = TRUE)
 summary(raster_data)
 Core_Area_data <- raster_data[!is.na(raster_data$Area_km2), ]#subset CA data only 
 unique(Core_Area_data$Stratum)#check
-Core_Area_data <- Core_Area_data[ , !(names(Core_Area_data) %in% "X.1")]
+#Core_Area_data <- Core_Area_data[ , !(names(Core_Area_data) %in% "X.1")]
 summary(Core_Area_data)
 str(Core_Area_data)
-write.csv(Core_Area_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA.csv")))
 
 #REGION KM2
 Regional_data<-subset(raster_data, raster_data$Stratum =="Canada" | raster_data$Stratum =="USA")
@@ -295,7 +303,58 @@ Regional_data <- merge(Regional_data, Regions_combined, by = "Stratum", all.x = 
 summary(Regional_data)
 str(Regional_data)
 unique(Regional_data$Stratum)
-write.csv(Regional_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg.csv")))
-write.csv(All_data, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All.csv")))
 
+#CLEAN
+#remove sites that were not used in the index calculation 
+#create dfs of used sites for each stratum grouping
+fit<- readRDS( here::here("2025-04-23/Halibut_BC/SpSt_mod_fit.rds")) 
+used_sites_by_stratum <- drop_units(fit$extrapolation_list$a_el) > 0
+# Convert to data frame for easier manipulation
+used_df <- as.data.frame(used_sites_by_stratum)
+used_df$Site <- 1:nrow(used_df)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+# 1. All
+used_all <- used_df[, c(1, 16)]
+used_all <- used_all[rowSums(used_all[1]) > 0, ]
+used_all <- used_all %>%
+  pivot_longer(cols = c(1), names_to = "Stratum", values_to = "Used") %>%
+  filter(Used) %>%
+  dplyr::select(Site, Stratum)
+str(used_all)
+# 2. Canada USA
+used_Reg <- used_df[, c(2:3, 16)]
+used_Reg <- used_Reg[rowSums(used_Reg[1:2]) > 0, ]
+used_Reg <- used_Reg %>%
+  pivot_longer(cols = c(1:2), names_to = "Stratum", values_to = "Used") %>%
+  filter(Used) %>%
+  dplyr::select(Site, Stratum)
+str(used_Reg)
+used_Reg %>%
+  count(Stratum)
+# 3. Core areas
+used_CA <- used_df[, c(4:16)]
+used_CA <- used_CA[rowSums(used_CA[1:12]) > 0, ]
+used_CA <- used_CA %>%
+  pivot_longer(cols = c(1:12), names_to = "Stratum", values_to = "Used") %>%
+  filter(Used) %>%
+  dplyr::select(Site, Stratum)
+str(used_CA)
+used_CA %>%
+  count(Stratum)
 
+filtered_All <- All_data %>%
+  semi_join(used_all, by = c("Site", "Stratum"))
+filtered_Reg <- Regional_data %>%
+  semi_join(used_Reg, by = c("Site", "Stratum"))
+filtered_CA <- Core_Area_data %>%
+  semi_join(used_CA, by = c("Site", "Stratum"))
+
+write.csv(filtered_Reg, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_Reg_May20.csv")))
+write.csv(filtered_All, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_All_May20.csv")))
+write.csv(filtered_CA, (here::here("2025-04-23/Output/IndexAbundance/ForShiftAnalysis/AbundanceEstimates_GridCentriods_CA_May20.csv")))
+
+ggplot(filtered_CA, aes(x = Lon, y = Lat, color = Stratum)) +
+  geom_point(size = 2) +
+  theme_minimal() 

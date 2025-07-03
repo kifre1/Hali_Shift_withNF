@@ -1,4 +1,4 @@
-
+#DATA PRODUCED HERE FOR Null, Env, and Sp models were moved to ignore files for clarity because they do not end up being used 
 #####
 # Model diagnostics, evaluation and validation statistics, mostly based on: https://github.com/aallyn/TargetsSDM/blob/main/Vignette.Rmd
 #####
@@ -417,7 +417,7 @@ ggplot(halidf, aes(x = Lon_i, y = Lat_i, color = a_i)) +
 # DHARMA residuals, deviance explained, root mean square error, and a combined Taylor Diagram
 # this code takes a very long time and is quite finicky. I prefer the above methods,
 # but this can technically be more handsoff if that is what you are looking for. 
-date_dir<- here::here("2024-10-04/Halibut_BC/")
+date_dir<- here::here("2024-04-23/Halibut_BC/")
 # Get a list of fitted models and read them in...,"SpST" removed for now 
 mod_fit_names <- c("Null", "EnvOnly", "Sp", "SpST")
 all_fits <- vector("list", length(mod_fit_names))

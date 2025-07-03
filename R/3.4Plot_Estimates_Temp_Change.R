@@ -29,8 +29,8 @@ out_dir <- here::here("2025-04-23/Output/GridPlot")#for output
 region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
 region_shape <- st_make_valid(region_shape)
 
-r1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
-r2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
+r1 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
+r2 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
 r1<- mask(r1, region_shape)
 r2<- mask(r2, region_shape)
 plot(r1)
@@ -57,15 +57,23 @@ BeforePlot<- ggplot() +
   geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(a) Mean Estimated Abundance, 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  labs(title=NULL, x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = unit(c(23,3,0,2), "pt"),
+    #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    plot.title=element_text(size=16,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
   )
 
 #During, 2006-2023
@@ -94,8 +102,8 @@ DuringPlot<- ggplot() +
 
 #Difference
 #to get the difference and percent change we will difference the raw data 
-r1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin1.tif"))
-r2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin2.tif"))
+r1 <- rast(here::here("2025-04-23/Output/GridPlot/EstimateDifference/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin1.tif"))
+r2 <- rast(here::here("2025-04-23/Output/GridPlot/EstimateDifference/AtlanticHalibut_Index_gctl_raw_Spring_Index_gctl_bin2.tif"))
 
 max(r1)
 
@@ -114,11 +122,10 @@ max(diff_rast)
 diff_rast_df <- as.data.frame(diff_rast, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(diff_rast_df)[3] <- "difference"
 
-
 #set up how the colour gradient will be defined
 min_val  <- min(diff_rast_df$difference, na.rm = TRUE)
 max_val <- max(diff_rast_df$difference, na.rm = TRUE)
-values <- rescale(c(min_val,-30,  -0.01, 0, 0.01, 500, max_val))
+values <- scales::rescale(c(min_val,-30,  -0.01, 0, 0.01, 500, max_val))
 range(diff_rast_df$difference)#min:-446.4199 max: 5781.7812
 
 scico::scico(n = 10, palette = "vik")
@@ -144,15 +151,23 @@ DifferencePlot<-ggplot() +
   geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(b) Change in Estimated Abundance (2006-2023)", x = NULL, y = NULL, fill = "Avg.\nCount")+
+  labs(title=NULL, x = NULL, y = NULL, fill = "Avg.\nCount")+
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = unit(c(23,3,0,2), "pt"),
+  #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    plot.title=element_text(size=16,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
   )
 DifferencePlot
 DifferencePlot+BeforePlot
@@ -173,11 +188,12 @@ ChangePlot<-ggplot() +
   labs(title="Percent Change", x = NULL, y = NULL)+
   theme_bw()+
   theme(
-    plot.margin = grid::unit(c(.3, .1, .3, .1), "cm"),
+    plot.margin = grid::unit(c(1, 1,1, 1)),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
     legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
   )
@@ -185,8 +201,8 @@ ChangePlot<-ggplot() +
 BeforePlot+DifferencePlot
 
 #save the rasters for difference and change
-writeRaster(diff_rast, filename = paste0(out_dir, "/diff_rast_spring.tif"), overwrite = TRUE)
-writeRaster(percent_change_rast, filename = paste0(out_dir, "/percent_change_rast_spring.tif"), overwrite = TRUE)
+writeRaster(diff_rast, filename = paste0(out_dir, "/EstimateDifference/diff_rast_spring.tif"), overwrite = TRUE)
+writeRaster(percent_change_rast, filename = paste0(out_dir, "/EstimateDifference/percent_change_rast_spring.tif"), overwrite = TRUE)
 
 
 #STEP2: TEMPERATURE...prepare temperature and temperature change rasters from BNAM .mat files ----
@@ -313,24 +329,24 @@ plot(diff_temp_rast)
 
 out_dir <- here::here("2025-04-23/Output/GridPlot")
 #annual mean Bottom 
-writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_bottom_temperature_Before_annual.tif"), overwrite = TRUE)
-writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_bottom_temperature_During_annual.tif"), overwrite = TRUE)
-writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Btemp_rast_annual.tif"), overwrite = TRUE)
+writeRaster(mean_Braster, filename = paste0(out_dir, "/BTChange/mean_bottom_temperature_Before_annual.tif"), overwrite = TRUE)
+writeRaster(mean_Araster, filename = paste0(out_dir, "/BTChange/mean_bottom_temperature_During_annual.tif"), overwrite = TRUE)
+writeRaster(diff_temp_rast, filename = paste0(out_dir, "/BTChange/diff_Btemp_rast_annual.tif"), overwrite = TRUE)
 #annual mean surface
-#writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_temperature_Before_annual.tif"), overwrite = TRUE)
-#writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_temperature_During_annual.tif"), overwrite = TRUE)
-#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_temp_rast_annual.tif"), overwrite = TRUE)
+#writeRaster(mean_Braster, filename = paste0(out_dir, "/STChange/mean_temperature_Before_annual.tif"), overwrite = TRUE)
+#writeRaster(mean_Araster, filename = paste0(out_dir, "/STChange/mean_temperature_During_annual.tif"), overwrite = TRUE)
+#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/STChange/diff_Stemp_rast_annual.tif"), overwrite = TRUE)
 #spring mean surface
-#writeRaster(mean_Braster, filename = paste0(out_dir, "/mean_surface_temperature_Before_Spring.tif"), overwrite = TRUE)
-#writeRaster(mean_Araster, filename = paste0(out_dir, "/mean_surface_temperature_During_Spring.tif"), overwrite = TRUE)
-#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/diff_Stemp_rast_Spring.tif"), overwrite = TRUE)
+#writeRaster(mean_Braster, filename = paste0(out_dir, "/STChange/mean_surface_temperature_Before_Spring.tif"), overwrite = TRUE)
+#writeRaster(mean_Araster, filename = paste0(out_dir, "/STChange/mean_surface_temperature_During_Spring.tif"), overwrite = TRUE)
+#writeRaster(diff_temp_rast, filename = paste0(out_dir, "/STChange/diff_Stemp_rast_Spring.tif"), overwrite = TRUE)
 
 #STEP3 plot temperature and temperature change----
 library(scico)
 
-BT1_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_Before_annual.tif"))
-BT2_r <- rast(here::here("2025-04-23/Output/GridPlot/mean_bottom_temperature_During_annual.tif"))
-BTchange_r <- rast(here::here("2025-04-23/Output/GridPlot/diff_Btemp_rast_annual.tif"))
+BT1_r <- rast(here::here("2025-04-23/Output/GridPlot/BTChange/mean_bottom_temperature_Before_annual.tif"))
+BT2_r <- rast(here::here("2025-04-23/Output/GridPlot/BTChange/mean_bottom_temperature_During_annual.tif"))
+BTchange_r <- rast(here::here("2025-04-23/Output/GridPlot/BTChange/diff_Btemp_rast_annual.tif"))
 BT1_r_df <- as.data.frame(BT1_r, xy = TRUE, na.rm = TRUE)  # Include coordinates
 names(BT1_r_df)[3] <- "Temperature"
 BT2_r_df <- as.data.frame(BT2_r, xy = TRUE, na.rm = TRUE)  # Include coordinates
@@ -366,17 +382,24 @@ tempBefore<- ggplot() +
   geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(c) Mean Bottom Temp. (1990-2005)", x = NULL, y = NULL, fill = "°C")+
+  labs(title=NULL, x = NULL, y = NULL, fill = "°C")+
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = unit(c(23,3,0,2), "pt"),
+    #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    plot.title=element_text(size=16,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
-
-    )
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
+  )
 tempBefore
 
 tempAfter<- ggplot() +
@@ -418,23 +441,49 @@ tempchange<-ggplot() +
   geom_sf(data = land, fill="cornsilk") +
   xlim(-73, -48) + ylim(39, 52)+
   theme_bw()+
-  labs(title="(d) Change in Mean BTemp. (2006-2023)", x = NULL, y = NULL, fill = "°C")+
+  labs(title=NULL, x = NULL, y = NULL, fill = "°C")+
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = unit(c(23,3,0,2), "pt"),
+    #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    plot.title=element_text(size=16,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
     legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
-    legend.justification.inside = c(0, 1)  # anchor legend to top-left of its box
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
   )
 
 library(gridExtra)
+library(cowplot)
 grid.arrange(tempBefore, tempchange, ncol = 2)
 
 #FIGURE 2:
-grid.arrange(BeforePlot,DifferencePlot,tempBefore,tempchange, ncol = 2, padding = unit(0, "line"))
+
+Figure2<-plot_grid(BeforePlot,DifferencePlot,tempBefore,tempchange, 
+                   nrow = 2,ncol=2, labels = c("(a)", "(b)", "(c)", "(d)"),
+                   align = "v", axis = "lr",rel_heights = c(.5,.5),
+                   label_x      = c(0, 0, 0, 0),  # move labels slightly right
+                   label_y      = c(0.995, 0.995, 0.995, 0.995),  # move labels down a bit
+                   #hjust        = 0,              # left-aligned relative to label_x
+                   #vjust        = .9,               # top-aligned relative to label_y
+                   panel_spacing = unit(0, "lines"))
+
 #save as GridPlot_BTemp
+ggsave(
+  filename = "Fig2_change_Maps.png",
+  plot = Figure2,          # optional if it's the last plot
+  path =  here::here("2025-04-23/FinalPlots"),
+  width = 6.35,
+  height = 5.1,
+  dpi = 300
+)
 
 
 #STEP 4: Appendix figure, seasonal comparison of estimates 
@@ -451,12 +500,12 @@ out_dir <- here::here("2025-04-23/Output/GridPlot")#for output
 region_shape <- st_read(here::here("R/Shapefiles/IndexShapefiles/Full_RegionAl14.shp"))#for clipping interpolation
 region_shape <- st_make_valid(region_shape)
 
-Spring1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
-Spring2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
-Summer1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin1.tif"))
-Summer2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin2.tif"))
-Fall1 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin1.tif"))
-Fall2 <- rast(here::here("2025-04-23/Output/GridPlot/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin2.tif"))
+Spring1 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin1.tif"))
+Spring2 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Spring_Index_gctl_bin2.tif"))
+Summer1 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin1.tif"))
+Summer2 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Summer_Index_gctl_bin2.tif"))
+Fall1 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin1.tif"))
+Fall2 <- rast(here::here("2025-04-23/Output/GridPlot/SeasonalSQRT/AtlanticHalibut_Index_gctl_sqrt_Fall_Index_gctl_bin2.tif"))
 
 #function to mask the raster with the study are shapefile, and turn it into a df for plotting 
 process_estimate_raster <- function(raster_obj) {
@@ -696,7 +745,7 @@ SeasonalPlot<-grid.arrange(
 ggsave(
   filename = "SeasonalEstimates.png",
   plot = SeasonalPlot,          # optional if it's the last plot
-  path =  here::here("2025-04-23/Output/GridPlot"),
+  path =  here::here("2025-04-23/FinalPlots"),
   width = 6.5,
   height = 7.5,
   dpi = 300
