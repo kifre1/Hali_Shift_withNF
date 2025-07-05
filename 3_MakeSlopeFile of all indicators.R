@@ -220,7 +220,12 @@ ScaledSlopeIndicators$Period <- factor(ScaledSlopeIndicators$Period, levels = c(
 ScaledSlopeIndicators$OrdIndicator<-factor(ScaledSlopeIndicators$Indicator, 
                                           levels = c("Abundance","COG_North", "COG_East", "Deepening", "Area Occupied", "AOvsAbd",   "Leading Edge N", "Leading Edge E", 
                                                      "Trailing Edge N", "Trailing Edge E","Dist to Border", ordered = TRUE))
+
 #Save
+2025-04-23/Output/Shift_Indicators
+write.csv(ScaledSlopeIndicators,here::here("2025-04-23/Output/Shift_Indicators/ScaledSlopeIndicators.csv"),row.names = F)
+ScaledSlopeIndicators<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/ScaledSlopeIndicators.csv"),row.names = NULL)
+# Plotting the Scaled Slope Indicators
 pd<-position_dodge(.3)
 indicator_dividers <- data.frame(xintercept = c(1.5,2.5, 5.5,7.5,8.5,10.5))  # Replace with your actual breaks
 ggplot(ScaledSlopeIndicators,aes(y = estimate, x = fct_rev(OrdIndicator),fill=Period)) +
@@ -228,7 +233,7 @@ ggplot(ScaledSlopeIndicators,aes(y = estimate, x = fct_rev(OrdIndicator),fill=Pe
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = pd) +
     geom_point(shape = 21, size = 3, position = pd) +
   geom_vline(data = indicator_dividers, aes(xintercept = xintercept),
-             linetype = "dashed", color = "grey60", size = 0.4) +
+             linetype = "solid", color = "grey60", size = 0.4) +
   guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
     scale_fill_manual(values = c("steelblue","orangered" ))+ #Reverse the colors
           coord_flip() +  
@@ -254,7 +259,7 @@ facet_wrap(Region ~ .,
            labeller = label_wrap_gen(width = 15)) +  # Wrap long region names
    # Improved labels with log notation
   labs(title = "",
-       x = expression("Scaled Slope of Indicator"),
+       y = expression("Scaled Slope of Indicator"),
        y = expression(""),
        color = "Period") +
   #  Remove fill from legend, keep only color

@@ -99,6 +99,7 @@ CI <- function(x) {
 ARegionalPlot<- 
   ggplot(data = FigAbd.Region.Spring, aes(x = Year, y = log10(Index_Estimate)),group=Region)+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
+  scale_y_log10() +
   scale_x_continuous(breaks = seq(1990, 2023, by = 5)) + # Set x-axis breaks
   #geom_errorbar(data =  FigAbd.Region.Spring, aes(x = Year, ymin = (Index_Estimate/1000000 - Index_SD/1000000), ymax = (Index_Estimate/1000000 + Index_SD/1000000), color = Region, group = Region), alpha = 0.65) +
   geom_ribbon(aes(x = Year, 
@@ -106,9 +107,9 @@ ARegionalPlot<-
                   #ymax = Index_Estimate/1000000 +Index_SD/1000000, 
                   ymin = log10(Index_Estimate+1) - CI(log10(Index_Estimate+1)), 
                   ymax = log10(Index_Estimate+1) +CI(log10(Index_Estimate+1)), 
-                  fill = Region), alpha = 0.12) +  # Use geom_ribbon for the SE band
+                  fill = Region), alpha = 0.3) +  # Use geom_ribbon for the SE band
   geom_line(aes(color =  Region), linewidth = 1) +                         # Line for the group
-  geom_point(aes(color = Region), shape = 19,size=2.5) +                        # Points for data
+  #geom_point(aes(color = Region), shape = 19,size=2.5) +                        # Points for data
   scale_fill_manual(values = regpal) +                    # Custom fill colors
   scale_color_manual(values = regpal) +
   # Combine legends
@@ -218,9 +219,9 @@ CAPlot<- ggplot(data = abundance_ind_CA.spr, aes(x = Year, y = LogAbd, color = o
   geom_ribbon(aes(x = Year, 
                   ymin = LogAbd - CI(LogAbd), 
                   ymax = LogAbd + CI(LogAbd), 
-                  fill = ordCoreArea), alpha = 0.12,colour=NA) +  # Use geom_ribbon for the SE band
+                  fill = ordCoreArea), alpha = 0.3,colour=NA) +  # Use geom_ribbon for the SE band
   geom_line(aes(color =  ordCoreArea), linewidth = .9) +                         # Line for the group
-  geom_point(aes(color = ordCoreArea), shape = 19,size=2) +                        # Points for data
+  #geom_point(aes(color = ordCoreArea), shape = 19,size=2) +                        # Points for data
   scale_fill_manual(values = region_colours) +                    # Custom fill colors
   scale_color_manual(values = region_colours)+
   geom_vline(xintercept = 2005, linetype = "dashed", color = "black", size = 1)+
@@ -239,6 +240,7 @@ CAPlot
 
 #Figure4: plot abundance trends with a map of the core areas 
 #go to Sup2DataPlots.R to make CAMAP 
+#CAMAP in C:\Users\shackelln\Documents\My_Program_Files\R\Hali_Shift_withNF\R\Sup2DataPlots.R
 library(patchwork)
 library(grid)  # for textGrob
 
@@ -246,18 +248,18 @@ ARegionalPlot_clean <- ARegionalPlot +
 theme(
   axis.title.y = element_blank(),
   legend.position = "none",
-  plot.margin = margin(2, 2, 2, 2)  # Tight margins
+  plot.margin = margin(t=2, r=2, b=2, l=5)  # Tight margins
 )
 
 CAPlot_clean <- CAPlot +
   theme(
     axis.title.y = element_blank(),
     legend.position = "none",
-    plot.margin = margin(2, 2, 2, 2)  # Tight margins
+    plot.margin = margin(t=2, r=10, b=2, l=2)  # Tight margins
   )
 
 # Create shared y-axis label
-shared_y <- textGrob("Modelled Abundance", 
+shared_y <- textGrob("Modelled Abundance/n(log10)", 
                      rot = 90, 
                      gp = gpar(fontsize = 10, fontfamily = "serif"))
 
@@ -267,6 +269,7 @@ bottom_row <- plot_grid(shared_y,plot_grid(CAPlot_clean,ARegionalPlot_clean, nco
                         ncol = 2, 
                         rel_widths = c(0.05, 1)
 )
+
 # Extract legend using cowplot
 legend_CAMAP <- get_legend(CAMAP + theme(legend.position = "right"))
 CAMAP_2col <- CAMAP +
@@ -285,24 +288,43 @@ camap_with_legend <- plot_grid(
   align = "h"
 )
 
-#manual labels
-final_plot <- camap_with_legend / bottom_row +
-  plot_layout(heights = c(1, 1))+
-  plot_annotation(tag_levels = 'a', tag_suffix = ')') & 
-  theme(plot.margin = margin(1, 10, 1, 0),plot.tag.position = c(0.02, 0.98),  # top-left inside
-        plot.tag = element_text(size = 14, face = "bold"))
-  
-final_plot
-#manual labels----
-#library(cowplot)
-final_plot <- draw_plot_label(
-  final_plot,
-  label = c("a", "b", "c"),
-  x = c(0.01, 0.01, 0.52),  # x-positions for labels (in [0, 1] units)
-  y = c(0.99, 0.48, 0.48),  # y-positions (top of each panel)
-  size = 14,
-  fontface = "bold"
+
+
+# 1. Manually label bottom plots
+camap_with_legend_tagged<-camap_with_legend+labs(tag = "a)")
+CAPlot_tagged <- CAPlot_clean + labs(tag = "b)")
+ARegionalPlot_tagged <- ARegionalPlot_clean + labs(tag = "c)")
+
+# 2. Create vertical shared axis
+shared_y <- textGrob("Abundance (log10)", 
+                     rot = 90, 
+                     gp = gpar(fontsize = 10, fontfamily = "serif"))
+
+# 3. Arrange bottom row with shared y-axis and tags
+bottom_row_with_y <- arrangeGrob(
+  shared_y,
+  CAPlot_tagged,
+  ARegionalPlot_tagged,
+  ncol = 3,
+  widths = unit.c(unit(1.5, "lines"), unit(1, "null"), unit(1, "null"))
 )
+
+# 4. Wrap in patchwork
+bottom_row_patchwork <- wrap_elements(full = bottom_row_with_y)
+
+# 5. Combine with top plot
+final_plot <- camap_with_legend_tagged / bottom_row_patchwork +
+  plot_layout(heights = c(1.5, 1.2)) +
+  #plot_annotation(tag_levels = 'a', tag_suffix = ')') & 
+  theme(
+    plot.margin = margin(t = 5, r = 10, b = 5, l = 10),
+   # plot.tag.position = c(0.01, 0.98),
+    #plot.tag = element_text(size = 14, face = "bold")
+  )
+
+# Display
+final_plot
+
 #END manual labels----
 final_plot
 # Save the final plot with legend
