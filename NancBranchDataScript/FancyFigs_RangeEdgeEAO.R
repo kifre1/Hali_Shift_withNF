@@ -69,11 +69,11 @@ Area_ThresholdsforEAO_coefficients_df <- Area_ThresholdsforEAO %>%filter(Thresho
   }) %>%
   ungroup()
 Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
-  #filter(term == "scale(Year)")
+  filter(term == "scale(Year)")
   filter(term == "Year")
 #END slopes for EAO over time----
 ##PlotEOA----
-#IN Appendix S1 Fig S EAO 
+#IN 
 EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
                 aes(x = Year, y =Area_Threshold/1000000, color = Region, group = Region)) +
   geom_line(size = 2) +
@@ -136,12 +136,12 @@ PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
     text = element_text(family = "serif"),  
     legend.box.background = element_blank(),
     legend.position = "top",
-    axis.title = element_text(size = 12, family = "serif"),
-    axis.text = element_text(size = 12, family = "serif"),
+    axis.title = element_text(size = 14, family = "serif"),
+    axis.text = element_text(size = 14, family = "serif"),
     legend.title = element_blank(),
-    legend.text = element_text(size = 10, family = "serif"),
+    legend.text = element_text(size = 14, family = "serif"),
     legend.key = element_rect(fill = "white", color = NA),
-    strip.text = element_text(size = 11, family = "serif"),
+    strip.text = element_text(size = 12, family = "serif"),
     strip.background = element_rect(colour = "black", fill = "white"),
     panel.grid.minor = element_blank(),
     panel.grid.major = element_blank()
@@ -222,29 +222,31 @@ range.sprN_coefficients_dfTR <- range.sprN_coefficients_dfTR%>%
 
 
 ##END slope for range----
-# Create a jitter object with both horizontal and vertical displacement----
+# Estimate distance shifted.----
 library(geosphere)
-range.sprAgg<-range.spr%>% 
+names(range.spr)
+##CHECK THE FLOOLOOWING.
+Leadrange.sprAgg<-range.spr%>% group_by(Period)
   mutate(
     # YearGroup = cut(Year, breaks = seq(1990, 2023, by = 5), right = FALSE)
     YearGroup = cut(Year, breaks = seq(1990, 2025, by = 5), right = FALSE)
   ) %>%
   group_by(YearGroup) %>%
-  summarise(AveE = mean(Estimate_km_E_quantile_0.5, na.rm = TRUE),
-            AveN = mean(Estimate_km_N_quantile_0.5, na.rm = TRUE))
+  summarise(AveE = mean(Estimate_km_E_quantile_0.95, na.rm = TRUE),
+            AveN = mean(Estimate_km_N_quantile_0.95, na.rm = TRUE))
 # Reference point (first group)
-trail_point <- range.sprAgg %>%
+ref_point <- Leadrange.sprAgg%>%
   filter(YearGroup == unique(YearGroup)[1]) %>%
   slice(1)  # just in case there are multiple rows
 
 # Reference point (last group)
-lead_point <- range.sprAgg %>%
+final_point <- Leadrange.sprAgg %>%
   filter(YearGroup == unique(YearGroup)[7]) %>%
   slice(1) 
 
 # Vector of distances from the reference point to each group
 # Calculate Euclidean distance to all other points
-range.sprAgg <- range.sprAgg %>%
+Leadrange.sprAgg <- Leadrange.sprAgg %>%
   arrange(YearGroup) %>%  # ensure chronological order
   mutate(
     PrevE = lag(AveE),
@@ -252,11 +254,11 @@ range.sprAgg <- range.sprAgg %>%
     StepDist = sqrt((AveE - PrevE)^2 + (AveN - PrevN)^2),
     CumulativeDist = cumsum(replace_na(StepDist, 0))
   )
-library(dplyr)
+
 
 library(dplyr)
-centroid_1 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[1]) %>% slice(1)
-centroid_7 <- range.sprAgg %>% filter(YearGroup == unique(YearGroup)[7]) %>% slice(1)
+centroid_1 <- Leadrange.sprAgg %>% filter(YearGroup == unique(YearGroup)[1]) %>% slice(1)
+centroid_7 <- Leadrange.sprAgg %>% filter(YearGroup == unique(YearGroup)[7]) %>% slice(1)
 
 # Directional shifts
 shift_Easting <- centroid_7$AveE - centroid_1$AveE
@@ -341,10 +343,10 @@ RangeEdgeV3_large_terminal <- ggplot(range.spr,
            #y = range.spr$Estimate_km_N_quantile_0.05[range.spr$Year == max(range.spr$Year, na.rm = TRUE)] + 
             # (max(range.spr$Estimate_km_N_quantile_0.05, na.rm = TRUE) - 
              #   min(range.spr$Estimate_km_N_quantile_0.05, na.rm = TRUE)) * 0.03,
-          x=-125,y=4750,
+          x=-100,y=4750,
            label = "Trailing Edge",
            color = "black",
-           size = 4,
+           size = 5,
            family = "serif") +
   
   # Annotation for 0.95 quantile terminal point  
@@ -353,10 +355,10 @@ RangeEdgeV3_large_terminal <- ggplot(range.spr,
            #y = range.spr$Estimate_km_N_quantile_0.95[range.spr$Year == max(range.spr$Year, na.rm = TRUE)] + 
             # (max(range.spr$Estimate_km_N_quantile_0.95, na.rm = TRUE) - 
              #   min(range.spr$Estimate_km_N_quantile_0.95, na.rm = TRUE)) * 0.03,
-          x=500,y=5250,
+          x=500,y=5300,
            label = "Leading Edge",
            color = "black",
-           size = 4,
+           size = 5,
            family = "serif") +
   
   # Blue to orange gradient for Year
@@ -378,25 +380,25 @@ RangeEdgeV3_large_terminal <- ggplot(range.spr,
     axis.text.x = element_text(angle = 90, 
                                vjust = 0, 
                                hjust = 0.5, 
-                               size = 12, 
+                               size = 14, 
                                family = "serif"),
     axis.text.y = element_text(angle = 0, 
                                vjust = 0.5, 
                                hjust = 0, 
-                               size = 12, 
+                               size = 14, 
                                family = "serif"),
-    axis.title.x = element_text(size = 12, 
+    axis.title.x = element_text(size = 14, 
                                 hjust = 0.5, 
                                 vjust = -2, 
                                 family = "serif"),
-    axis.title.y = element_text(size = 12, 
+    axis.title.y = element_text(size = 14, 
                                 hjust = 0.5, 
                                 vjust = 4, 
                                 angle = 90, 
                                 family = "serif"),
     legend.title = element_blank(),
-    legend.text = element_text(size = 12, family = "serif"),
-    strip.text = element_text(size = 12, 
+    legend.text = element_text(size = 14, family = "serif"),
+    strip.text = element_text(size = 14, 
                               family = "serif", 
                               angle = 0),
     strip.background = element_rect(colour = "black", 
@@ -441,9 +443,9 @@ EAORangeCombo_alt <- plot_grid(
   rel_heights = c(.55,.45)
 )
 EAORangeCombo_final <- ggdraw(EAORangeCombo_alt) +
-  draw_plot_label(label = "(a)", x = 0.01, y = 0.99, size = 12) +   # Top left
-  draw_plot_label(label = "(b)", x = 0.01, y = 0.45, size = 12) +   # Top right  
-  draw_plot_label(label = "(c)", x = 0.52, y = 0.45, size = 12)     # Bottom (centered plot)
+  draw_plot_label(label = "(a)", x = 0.01, y = 0.99, size = 14) +   # Top left
+  draw_plot_label(label = "(b)", x = 0.01, y = 0.45, size = 14) +   # Top right  
+  draw_plot_label(label = "(c)", x = 0.52, y = 0.45, size = 14)     # Bottom (centered plot)
 
 
 # Display the result

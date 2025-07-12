@@ -131,59 +131,7 @@ range.sprN_coefficients_dfTR <- range.sprN_coefficients_dfTR%>%
 
 
 ##END slope for range----
-# Create a jitter object with both horizontal and vertical displacement
-library(geosphere)
-
-#Combineplots
-# Ensure both plots have identical margins
-RangeEdge2 <- RangeEdge2 + theme(plot.margin = margin(10, 0,20,0))
-PlotEAOAbd <- PlotEAOAbd + theme(plot.margin = margin(0, 0,10,10))#,axis.title.y = element_blank())
-EAOplot <- EAOplot + theme(plot.margin = margin(15, 0,20,0))#,axis.title.y = element_blank())
-
-
-# Combo plot: Proper nested approach----
-# Create top row WITHOUT labels (labels will be added at the end)
-top_row <- plot_grid(
-  EAOplot, 
-  PlotEAOAbd, 
-  ncol = 2, 
-  rel_heights = c(1,1),rel_widths =c(.5,.5), 
-  align = "h",
-  axis = "b"
-)
-
-# Create bottom row WITHOUT labels
-bottom_centered <- plot_grid(
-  NULL, 
-  RangeEdge2, 
-  NULL,
-  ncol = 3,
-  rel_widths = c(0.1, .8, 0.1)
-)
-
-# Combine rows and add ALL labels at this final step
-# Combine rows WITHOUT automatic labels
-EAORangeCombo_alt <- plot_grid(
-  top_row,
-  bottom_centered,
-  nrow = 2,
-  rel_heights = c(.55,.45)
-)
-EAORangeCombo_final <- ggdraw(EAORangeCombo_alt) +
-  draw_plot_label(label = "(a)", x = 0.01, y = 0.99, size = 12) +   # Top left
-  draw_plot_label(label = "(b)", x = 0.52, y = 0.99, size = 12) +   # Top right  
-  draw_plot_label(label = "(c)", x = 0.01, y = 0.45, size = 12)     # Bottom (centered plot)
-
-
-# Display the result
-print(EAORangeCombo_final)
-
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/EAORangeCombo_final.jpeg"), plot = EAORangeCombo_final, dpi = 600, width = 10, height = 8, units = "in", device = "jpeg") 
-
-CombEAOABDrANGE
-##END Plot Range Edge----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
-#END Combo plot: Proper nested approach----
+#COP Maps----
 #LOAD Sup2DataPlots.R and alter MakingMapArrowsandTables.r (has spatial libraries)
 cogreg<- read.csv(here::here("R/DataforFinalFigs/centroid_dataRegionalforFig.csv"))
 names(cogreg)
@@ -221,27 +169,36 @@ COG_Reg_map<-ggplot() +
   geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
   geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
   geom_sf(data = land, fill = "cornsilk") +  
-  geom_sf(data = centroid_reg_sf_spr, aes(color = Year),size =1.5, alpha = .5,shape=16) +  
-  xlim(-70.5, -48) + ylim(39.5, 50)+
+  geom_sf(data = centroid_reg_sf_spr, aes(color = Year),size =3, alpha = .5,shape=16) +  
+  xlim(-70.1, -49.7) + ylim(40, 47.5)+
   labs(title = "", x = "",y = "",
        color = "Year") +
-  scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(centroid_reg_sf_spr$Year)) +
-  geom_segment(data = arrow_dataRegion,aes(x = x,y = y,xend = xend,yend = yend),
+  #scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(centroid_reg_sf_spr$Year)) +
+  scale_color_gradient2(low = "steelblue3",   mid = "yellow", 
+high = "orangered", 
+midpoint = 2005, 
+name = "Year",limits = range(cogCA_spr$Year)) +
+  geom_segment(data = arrow_dataRegion,
+               aes(x = x + 0.4,        # Offset values
+                   y = y + 0.4, 
+                   xend = xend + 0.4, 
+                   yend = yend + 0.4),
                arrow = arrow(length = unit(0.35, "cm")),
                color = "black",
                alpha = .7,
-               size = 1.5) +
-    annotate("text",x=-69,y=45,label="USA", vjust = 0,color = "black",size = 3.5) +
-  annotate("text",x=-66.,y=46,label="Canada", vjust = 0,color = "black",size = 3.5) +
+               size = 2)+
+  annotate("text",x=-70,y=44.5,label="USA", vjust = 0,color = "black",size = 4) +
+  annotate("text",x=-65.9,y=46,label="Canada", vjust = 0,color = "black",size = 4) +
+  # #a
   theme_bw()+
   theme(text = element_text(family = "serif",size =12),  
-        legend.key.size = unit(0.2, "cm"),  # Reduce legend key size
-        legend.position = c(0.75, 0.2),                 # Position of the legend
+        legend.key.size = unit(.7, "cm"),  # Reduce legend key size
+        legend.position = c(0.68, 0.23),                 # Position of the legend
         legend.direction = "horizontal",
         legend.box.background =element_rect(color = "black",fill = "white",linewidth = .5),
-        legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0),
+        legend.box.margin = margin(t = 0, r = 0, b = 0, l = 10),
         legend.title = element_blank(),             # Hide legend title
-        legend.text = element_text(angle=45,size = 7, family = "serif",h=1), # Customize legend text
+        legend.text = element_text(angle=45,size = 10, family = "serif",h=1), # Customize legend text
         axis.title.y = element_blank(),             # Remove y-axis label
         axis.title.x = element_blank(),      # Customize x-axis label
         #axis.text.x = element_blank(),      # Customize x-axis label
@@ -258,12 +215,16 @@ COG_CA_map<-ggplot() +
   geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
   geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
   geom_sf(data = land, fill="cornsilk") +
-  geom_sf(data = centroid_CA_sf_spr, aes(color = Year),size =1.5, alpha = .5,shape=16) +  # Adjust size and alpha here
+  geom_sf(data = centroid_CA_sf_spr, aes(color = Year),size =3, alpha = .5,shape=16) +  # Adjust size and alpha here
   #labs(title = "Centre of Gravity (Mean) within Core Areas:Spring", x = "Longitude", y = "Latitude",
   #   color = "Year") +
-  scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(centroid_CA_sf_spr$Year)) +
-  annotate("text",x=-69,y=45,label="USA", vjust = 0,color = "black",size = 3.5) +
-  annotate("text",x=-66,y=46,label="Canada", vjust = 0,color = "black",size = 3.5) +
+  #scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(centroid_CA_sf_spr$Year)) +
+  scale_color_gradient2(low = "steelblue3",   mid = "yellow", 
+                        high = "orangered", 
+                        midpoint = 2005, 
+                        name = "Year",limits = range(cogCA_spr$Year)) +
+  annotate("text",x=-70,y=44.5,label="USA", vjust = 0,color = "black",size = 4) +
+  annotate("text",x=-65.9,y=46,label="Canada", vjust = 0,color = "black",size = 4) +
   # #annotateCA----
 #annotate("text",x=-69.7,y=40.5,label="NanSh", color = "black",size = 2.9) +
 #  annotate("text",x=-68.5,y=43.1,label="EGoM", vjust = 0, color = "black",size = 2.9) +
@@ -277,21 +238,18 @@ COG_CA_map<-ggplot() +
   #annotate("text",x=-69,y=45,label="USA", vjust = 0,color = "black",size = 4) +
   #annotate("text",x=-66.1,y=46,label="Canada", vjust = 0,color = "black",size = 4) +
   #ENDannotateCA----
-xlim(-70.5, -48) + ylim(39.5, 50)+
+xlim(-70.1, -49.7) + ylim(40, 47.5)+
   labs(title = "", x = "",y = "",color = "Year") +
-  geom_segment(
-    data = arrow_data_CA,
-    aes(
-      x = x,
-      y = y,
-      xend = xend,
-      yend = yend
-    ),
-    arrow = arrow(length = unit(0.35, "cm")),
-    color = "black",
-    alpha = .7,
-    size = 1.5
-  )+theme_bw()+
+  geom_segment(data = arrow_data_CA,
+                 aes(x = x + 0.2,        # Offset values
+                     y = y + 0.2, 
+                     xend = xend + 0.2, 
+                     yend = yend + 0.2),
+                 arrow = arrow(length = unit(0.35, "cm")),
+                 color = "black",
+                 alpha = .7,
+                 size = 1.5)+
+      theme_bw()+
   theme(text = element_text(family = "serif",size=12),  
         legend.position = "none",               # Position of the legend
         legend.direction = "horizontal",
@@ -301,27 +259,41 @@ xlim(-70.5, -48) + ylim(39.5, 50)+
         legend.text = element_text(angle=45,size = 12, family = "serif",h=1), # Customize legend text
         axis.title.y = element_blank(),             # Remove y-axis label
         #axis.title.x = element_blank(),      # Customize x-axis label
-        plot.margin=margin(.1,.1,.5,.1))
+        plot.margin=margin(0,0,0,0))
 COG_CA_map
 #END PLOT COG CA ----
 # Ensure both plots have identical margins
-COG_Reg_map <- COG_Reg_map + theme(plot.margin = margin(0, 0,0,0),axis.title.y = element_blank())
-COG_CA_map <- COG_CA_map + theme(plot.margin = margin(0, 0,0,0),axis.title.y = element_blank())
+COG_Reg_map2 <- COG_Reg_map + 
+  theme(plot.margin = margin(t=0, r=15, b=-5, l=0, "pt"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),  # Remove x-axis title too
+        panel.spacing = unit(0, "lines"),
+        axis.text.x = element_blank(),   # Remove x-axis text if not needed
+        axis.ticks.x = element_blank())  # Remove x-axis ticks
 
-# Combine plots with better alignment
-COGCombo <- plot_grid(
-  COG_Reg_map, 
-  COG_CA_map, 
-  nrow = 2, 
-  #rel_heights = c(1,2),rel_widths =c(1,1), 
-  labels = c("(a)", "(b)"), 
-  align = "vh",  # Align both horizontally and vertically
-  axis = "tblr"  # Align all axes
+COG_CA_map2 <- COG_CA_map + 
+  theme(plot.margin = margin(t=-5, r=10, b=0, l=15, "pt"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),  # Remove x-axis title too
+        panel.spacing = unit(0, "lines"))
+# Create the combined plot with precise spacing control using egg
+library(gridExtra)
+library(egg)
+
+COGCombo <- ggarrange(
+  COG_Reg_map2, 
+  COG_CA_map2,
+  nrow = 2,
+  heights = c(1, 1),
+  labels = c("(a)", "(b)"),
+  label.args = list(gp = gpar(fontsize = 12))
 )
+
 COGCombo
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/COGCombo.jpeg"), plot = COGCombo, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg") 
 
 #Making supplemental tables for distances and for slopes----
+
 #Distance estimates MADE IN MakingMapArrowsandTables.r
 
 COGSupptable<-merge(COGRegMovement,COGCoreMovement,all=T)
@@ -394,13 +366,16 @@ print(COGSlopeSupptabledoc2, target = here::here("NancBranchDataScript/FancyFigu
 
 #Plot script from 05_Centre of gravity
 #plot for Supplemental COG Lat vs Long by Core Area----
+
 suppcogca<-ggplot(cogCA_spr, aes(x = centroid_longitude, y = centroid_latitude, color = Year)) +
   geom_point(na.rm=TRUE,alpha=1,size=1.5,shape=19) +
   labs(title = "Center of Gravity by Core Area: Spring",
        x = "Longitude",
        y = "Latitude",
        color = "Year") +
-  scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(cogCA_spr$Year)) +
+  #scale_color_gradientn(colors = c("darkblue",  "lightblue","orange", "red"), limits = range(cogCA_spr$Year)) +
+  scale_color_gradient2(low = "steelblue3",   mid = "yellow", high = "orangered", midpoint = 2005, 
+                        name = "Year",limits = range(cogCA_spr$Year)) +
   theme_bw()+
   theme(axis.text.x=element_text(angle=90))+
   facet_wrap(.~ordCoreArea,scales="free",nrow=3)
