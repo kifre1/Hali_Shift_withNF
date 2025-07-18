@@ -139,6 +139,8 @@ For each shift indicator, create data, fit LM, and plot
   2. *find_nearest_point():* function identifies the nearest hague_point to each centroid in the timeseries and creates a df that has a "closest" point for each year/season/grouping 
   3. *calculate_distances():* function created df by calculating the distance between each "closest" point and the corresponding centriod 
   4. **Output** for Mean, Median, Q5 and Q95 (by year/season/grouping) are joined into one dataframe: *dist_hague_all_seasonal.csv, dist_hague_Reg_seasonal.csv, dist_hague_CA_seasonal.csv*    
+  
+Note from Jim: You could instead do this similar to Deepening, but instead using Water Distance to Border instead of bathymetry as covariate for abundance-weighted averaging.
 <br> 
 
 **6.2Fit_LM_Distance_From_Hague_PlotSlopes.R**: Statistics that fall in the US (regional and CA) are transformed to have negative values (hague being zero) 
@@ -183,5 +185,7 @@ For each shift indicator, create data, fit LM, and plot
 **Sup3TMB_Error_fix.R** 
 - When you try some commands that use TMB, you will get an error ('"TMBconfig" not available for .Call() for package') 
 **Sup4DataPlot.R**  
-- Makes Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys 
+- Makes Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys
+- Makes Supplemental Figure 2: Panel plot showing the data availability by Year
+
 #top 5 commercial and top 5 depleted species 
