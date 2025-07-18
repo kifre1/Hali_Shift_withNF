@@ -1,10 +1,12 @@
-
+#Step1: process annual .mat files 
+#Step2: make raster stacks for annual surface temperature, bottom temperature, and a depth raster
+#Step 3: join raster data to respective survey points
 library(R.matlab)
 library(raster)
 library(sp)
 library(lubridate)
 
-# Function to process individual .mat files----
+#step 1:  Function to process individual .mat files----
 process_mat_to_raster_stack <- function(mat_file, info_file, variable_name) {
   # Load .mat files
   mat_data <- readMat(mat_file, fixNames = TRUE)
@@ -78,7 +80,7 @@ process_all_mat_files <- function(mat_folder, info_file, variable_name) {
   return(final_raster_stack)
 }
 
-#Make rasters----
+#Step 2: Make rasters----
 # Surface Temperature
 mat_folder <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/TSsfce-20250319T175426Z-001/TSsfce/"
 info_file <- "C:/Users/fergusonk/Documents/Shapefiles/BNAM/Brickman2055/bnam_grid_info.mat"
@@ -135,7 +137,7 @@ plot(Depth_raster)
 
 #----
 
-#join raster data to survey points----
+#Step 3: join raster data to survey points----
 #SurfaceTemperature_stack, BottomTemperature_stack, Depth_raster
 catch_data <- read_rds(here("Data/Derived/all_raw_halibut_catch_formattedAl4.rds"))
 
