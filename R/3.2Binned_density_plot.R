@@ -1,5 +1,6 @@
-# Interpolate and map the predicted density (log+1) from grid centroids,  over a regular grid. Plot two bins: before and after accelerated warming period (2005)
-
+# Interpolate and map the predicted density (log+1) from grid centroids,  over a regular grid. 
+# Produces rasters and roughly plots two bins: before and after accelerated warming period (2005)
+  # used in 3.4Plot_Estimates_Temp_Change, and Sup4DataPlot.R
 
   # Load package
 library(VAST)
