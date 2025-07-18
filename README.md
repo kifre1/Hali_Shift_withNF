@@ -105,7 +105,7 @@ Model output are huge .rds files that contain everything (input, estimates, indi
       - TempAfter  
       - **(PANEL D)**: TempChange (TempAfter-TempBefore)  
     - **FIGURE 2**: BeforePlot,DifferencePlot,tempBefore,tempchange
-    - STEP 4: Appendix figure, seasonal comparison of estimates 
+    - STEP 4: Appendix figure3, seasonal comparison of estimates 
 <br>
 
 ## Shift Analysis 
