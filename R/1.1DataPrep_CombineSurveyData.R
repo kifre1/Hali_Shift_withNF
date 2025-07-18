@@ -70,8 +70,10 @@ nefsc_tows <- read_rds(here("Data/TrawlSurvey_data/nefsc_both_weight_at_length.r
 nf_all <- get(load(here("Data/TrawlSurvey_data/abun_nl_all85to24.Rdata"))) |>
   ungroup() |>
   filter(NAFOdiv %in% c("3K", "3L", "3P", "3N", "3O", "4V", "4U")) |> #take out the stuff that is super north (cut at 3K, 2J border )
-  distinct(year, month, day, lat.start, long.start, NAFOdiv, dist.towed) |>
-  mutate(trawl_id = as.character(row_number()), survey = "NF")
+  distinct(year, month, day, lat.start, long.start, NAFOdiv, dist.towed, data.series) |>
+  mutate(trawl_id =paste0(row_number(), "_", data.series), survey = "NF")
+nf_all$data.series <- NULL
+
 # Yankee or Engel wing spread is roughly 45 feet (up to 1995)
 # Campelen or Modified Campelen, it’s 55.25 feet. 
 #Wing spread * tow distance will get you the offset you need for tow area.
@@ -235,6 +237,7 @@ catch_data <- catch_data |>
   mutate(X = row_number())|> 
   mutate(NMFS_SVSPP = 101)|> 
   mutate(DFO_SPEC = 30)|>
+ # mutate(DFONF_SPEC = 893)|>  #will be tidier if this is added in future
   mutate(trawl_id = gsub("-", "", trawl_id))
 names(catch_data)[names(catch_data) == "trawl_id"] <-"ID" #renamed but not reformatted   
 names(catch_data)[names(catch_data) == "date"] <-"DATE"          
@@ -290,12 +293,28 @@ catch_data <- catch_data %>%
   filter(EST_YEAR !=2024)
 names(catch_data)
 
+
+write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_formattedAl14.rds"), compress = "gz")
+#go to 1.2 data_prep_ExtractBNAM to get covariates 
+
 catch_data %>%
   group_by(SURVEY, Swept) %>%
   summarize(count = n(), .groups = "drop")
 hist(catch_data$Swept)
 
-write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_formattedAl14.rds"), compress = "gz")
-#go to 1.2 data_prep_ExtractBNAM to get covariates 
+table(catch_data$SEASON, catch_data$SURVEY)
+head(catch_data)
 
+catch_data_summary <- catch_data %>%
+  group_by(SEASON, SURVEY) %>%
+  summarise(
+    n = n(),                         # count of rows
+    sum_presence = sum(PRESENCE),
+    percent_presence = round(100 * sum_presence / n, 1) # total number of presences (1s)
+  )
 
+table(nf_tows$data.series, nf_tows$year, nf_tows$season)
+nf_tows <- nf_tows %>%
+  filter(season !="Winter")
+nf_tows <- nf_tows %>%
+  filter(year !=2024)
