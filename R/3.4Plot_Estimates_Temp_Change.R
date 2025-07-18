@@ -13,6 +13,7 @@
   #TempAfter, 
   #(PANEL D): TempChange (TempAfter-TempBefore)
   #FIGURE 2: BeforePlot,DifferencePlot,tempBefore,tempchange
+#STEP 4: Appendix figure3, seasonal comparison of estimates 
 
 #save as GridPlot_BTemp
 #STEP 1 Plotting abundance estimates and difference---
@@ -486,7 +487,7 @@ ggsave(
 )
 
 
-#STEP 4: Appendix figure, seasonal comparison of estimates 
+#STEP 4: Appendix figure3, seasonal comparison of estimates 
 
 library(ggplot2)
 library(sf)
@@ -549,17 +550,23 @@ Spring1_plot<-ggplot() +
   annotate(
     "text",
     x = -Inf, y = 51.7,
-    label = " Spring: 1990-2005",
-    hjust = 0, vjust = 1,
-    size = 3.75
+   label = " Spring: 1990-2005",
+   hjust = 0, vjust = 1,
+   size = 4,
+   family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text(family = "serif",size=10),
+    axis.text.y = element_text( family = "serif",size=10)
   )
+
 
 #Spring 2006-2023
 Spring2_plot<-ggplot() +
@@ -579,16 +586,20 @@ Spring2_plot<-ggplot() +
     x = -Inf, y = 51.7,
     label = " Spring: 2006-2023",
     hjust = 0, vjust = 1,
-    size = 3.75
+    size = 4,
+    family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text( family = "serif",size=10),
+    axis.text.y = element_text( family = "serif",size=10)
   )
-
 #Summer 1990-2005
 Summer1_plot<-ggplot() +
   geom_raster(data = Summer1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
@@ -607,14 +618,19 @@ Summer1_plot<-ggplot() +
     x = -Inf, y = 51.7,
     label = " Summer: 1990-2005",
     hjust = 0, vjust = 1,
-    size = 3.75
+    size = 4,
+    family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text(family = "serif",size=10),
+    axis.text.y = element_text( family = "serif",size=10)
   )
 
 #Summer 2006-2023
@@ -635,14 +651,19 @@ Summer2_plot<-ggplot() +
     x = -Inf, y = 51.7,
     label = " Summer: 2006-2023",
     hjust = 0, vjust = 1,
-    size = 3.75
+    size = 4,
+    family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text(family = "serif",size=10),
+    axis.text.y = element_text( family = "serif",size=10)
   )
 
 #Fall 1990-2005
@@ -663,14 +684,19 @@ Fall1_plot<-ggplot() +
     x = -Inf, y = 51.7,
     label = " Fall: 1990-2005",
     hjust = 0, vjust = 1,
-    size = 3.75
+    size = 4,
+    family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text( family = "serif",size=10),
+    axis.text.y = element_text( family = "serif",size=10)
   )
 
 #Fall 2006-2023
@@ -691,14 +717,19 @@ Fall2_plot<-ggplot() +
     x = -Inf, y = 51.7,
     label = " Fall: 2006-2023",
     hjust = 0, vjust = 1,
-    size = 3.75
+    size = 4,
+    family = "serif"
   ) +
   theme(
-    plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
+    plot.margin = grid::unit(c(.05, .1, .05,.1), "cm"),
+    plot.title = element_text(face = "bold"),
     axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
-    legend.position = "none"
+    legend.position = "none",
+    axis.text.x = element_text( family = "serif",size=10),
+    axis.text.y = element_text(family = "serif",size=10)
   )
 library(gridExtra)
 library(ggpubr)
@@ -720,6 +751,8 @@ get_plot_legend<-ggplot() +
   theme(
     plot.margin = grid::unit(c(.1, .1, .1,.1), "cm"),
     axis.title.y = element_blank(),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
     panel.grid.major = element_blank(),  # removes major grid lines
     panel.grid.minor = element_blank(),   # removes minor grid lines
     legend.position = "inside",
@@ -728,8 +761,14 @@ get_plot_legend<-ggplot() +
   )
 
 legend <- get_legend(
-  get_plot_legend + theme_bw()
+  get_plot_legend + theme_bw()+
+    theme(
+      text = element_text(family = "serif", size = 10),       # applies globally
+      legend.text = element_text(family = "serif", size = 10),
+      legend.title = element_text(family = "serif", size = 10)
+    )
 )
+
 
 SeasonalPlot<-grid.arrange(
   grobs = list(Spring1_plot, Spring2_plot, Summer1_plot, Summer2_plot, Fall1_plot, Fall2_plot, legend),
@@ -747,6 +786,8 @@ ggsave(
   plot = SeasonalPlot,          # optional if it's the last plot
   path =  here::here("2025-04-23/FinalPlots"),
   width = 6.5,
-  height = 7.5,
+  height = 7.3,
   dpi = 300
 )
+
+
