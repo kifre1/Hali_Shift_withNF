@@ -1,5 +1,5 @@
 #Part1: pull in ALL NEFSC, DFO Maritimes and NF data to plot the distribution of tows and presence
-#Part2: Make Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys 
+#Part2: Make Appendix Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys 
 
 
 library(tidyverse)
