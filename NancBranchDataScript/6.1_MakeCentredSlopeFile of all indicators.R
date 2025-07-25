@@ -1,5 +1,5 @@
 #MakeSlopeFile of all indicators----
-
+Sys.setenv(OMP_NUM_THREADS = 4)#increase the amount of cores delegated to this script
 library(tidyverse)
 library(broom)
 library(dplyr)
@@ -185,6 +185,7 @@ centroid_dataRegionalforFigLAT_df2 <- centroid_dataRegionalforFigLAT_df %>%
 
 centroid_dataRegionalforFigLAT_df2$Indicator<-NULL
 centroid_dataRegionalforFigLAT_df2$Indicator<-"COG North"
+V
 #Now for COG East
 #COG Lon----
 centroid_dataRegionalforFigLON_df <- centroid_dataRegionalforFig %>%

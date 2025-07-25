@@ -1,5 +1,5 @@
 #MakeSlopeFile of all indicators----
-
+Sys.setenv(OMP_NUM_THREADS = 4)#increase the amount of cores delegated to this script
 library(tidyverse)
 library(broom)
 library(dplyr)
@@ -10,20 +10,20 @@ library(patchwork)
 library(gridExtra)
 library(RColorBrewer)
 library(scales)
-Load required libraries
-library(ggplot2)
+
+
 library(ggpubr)
 library(grid)
 
 # First, create a standardized theme for all plots to ensure consistency
-standard_theme <- function(show_legend = FALSE, bottom_margin = 5, top_margin = 5) {
+standard_theme <- function(show_legend = FALSE, bottom_margin = 3, top_margin = 3) {
   theme_bw(base_family = "serif") +
     theme(
       legend.position = if(show_legend) "bottom" else "none",
       legend.title = element_blank(),
       legend.text = element_text(size = 12),
       legend.key = element_rect(fill = "white", color = NA),
-      axis.text.y = element_text(size = 12),
+      axis.text.y = element_text(size = 12,angle = 0),
       axis.text.x = element_text(size = 10, angle = 0, hjust = 0.5, vjust = 0.5),
       axis.title = element_text(size = 12),
       axis.title.x = element_text(margin = margin(t = 8)),
@@ -31,7 +31,7 @@ standard_theme <- function(show_legend = FALSE, bottom_margin = 5, top_margin = 
       strip.background = element_rect(colour = "black", fill = "white"),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
-      plot.margin = margin(top_margin, 10, bottom_margin, 10),
+      plot.margin = margin(top_margin, 15, bottom_margin, 15),
       panel.spacing = unit(0.3, "cm")
     )
 }
@@ -80,18 +80,17 @@ rangpl<-ggplot(rangcoef, aes(y = estimate, x = fct_rev(Indicator), fill = Period
                      labels = scales::number_format(accuracy = 1)) +
   # Flip coordinates
   coord_flip() +
-  
+  annotate("text", x = 4.3, y = 15, label = "Northward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 4.3, y = -25, label = "Southward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 3.3, y = -25, label = "Eastward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 3.3, y = 15, label = "Westward", 
+           family = "serif", size = 4, hjust = 0)+
   # Manual fill colors
   scale_fill_manual(values = c("steelblue", "orangered")) +
-  annotate("text", x = 4.2, y = 19, label = "Northward", 
-           family = "serif", size = 4, hjust = 0)+
-  annotate("text", x = 4.2, y = -30, label = "Southward", 
-           family = "serif", size = 4, hjust = 0)+
-  annotate("text", x = 2.8, y = 19, label = "Eastward", 
-           family = "serif", size = 4, hjust = 0)+
-  annotate("text", x = 2.8, y = -30, label = "Westward", 
-           family = "serif", size = 4, hjust = 0)+
-  # Facet by Region 
+    # Facet by Region 
   facet_wrap(~Region, scales = "free", labeller = label_wrap_gen(width = 15)) +
   # Labels
   labs(
@@ -102,21 +101,7 @@ rangpl<-ggplot(rangcoef, aes(y = estimate, x = fct_rev(Indicator), fill = Period
   ) +
   
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "top",
-    legend.title = element_blank(),
-    legend.text = element_text(size = 14),
-    legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12,angle=0, hjust = .5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 10, 10, 10)
-  )
+  standard_theme()
 rangpl
 #ENDRangeplot----
 #ALL THE REST
@@ -154,22 +139,7 @@ abdpl <- ggplot(abdcoef, aes(y = estimate, x = Indicator, fill = Period)) +
     fill = "Period"
   ) +
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  standard_theme()
 
 abdpl
 #ENDABD----
@@ -178,50 +148,42 @@ cogcoef<-rocoef%>%filter(Indicator=="COG North" | Indicator=="COG East")
 cogpl <- ggplot(cogcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   # Error bars
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = pd, width = 0, linewidth = 0.9, color = "black") +
+                position = pd, width = 0, linewidth = .8, color = "black") +
   # Points
-  geom_point(size = 3, position = pd, stroke = 0.3, shape = 21, color = "black") +
+  geom_point(size = 2.5, position = pd, stroke = 0.3, shape = 21, color = "black") +
   # Optional indicator divider lines
   geom_vline(data = indicator_dividers, aes(xintercept = xintercept), 
              linetype = "solid", color = "grey60", size = 0.4) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
   # y-axis ticks
-  scale_y_continuous(breaks = seq(-0.20, 0.20, by = 0.05), 
-                     limits = c(-0.10, 0.20), 
-                     labels = scales::number_format(accuracy = 0.01)) +
+  scale_y_continuous(breaks = seq(-0.20, 0.20, by = 0.1), 
+                     limits = c(-0.20, 0.20), 
+                     labels = scales::number_format(accuracy = 0.1)) +
   # Flip coordinates
   coord_flip() +
-  # Manual fill colors for Period
+    # Manual fill colors for Period
   #guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
   scale_fill_manual(values = c("steelblue", "orangered")) +
   # Facet by Region 
   facet_wrap(Region ~ ., nrow=1,scales = "fixed", labeller = label_wrap_gen(width = 15)) +
+  #direction
+  annotate("text", x = 2.3, y = .05, label = "Northward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 2.3, y = -.2, label = "Southward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 1.3, y = .05, label = "Eastward", 
+           family = "serif", size = 4, hjust = 0)+
+  annotate("text", x = 1.3, y = -.20, label = "Westward", 
+           family = "serif", size = 4, hjust = 0)+
   # Labels
   labs(
     #y = "Centered Slope of Indicator",
     y="",
     x = NULL,
     fill = "Period"
-  ) +
-  # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    #strip.text = element_text(size = 14),
-    strip.text = element_blank(),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  ) +standard_theme()
+  
 
 cogpl
 #END COGpl---
@@ -241,7 +203,7 @@ AOcoefpl <- ggplot(AOcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
   # y-axis ticks
-  scale_y_continuous(breaks = seq(-0.10, 0.10, by = 0.005), 
+  scale_y_continuous(breaks = seq(-0.020, 0.02, by = 0.01), 
                      limits = c(-0.02, 0.02), 
                      labels = scales::number_format(accuracy = 0.001)) +
   # Flip coordinates
@@ -259,22 +221,7 @@ AOcoefpl <- ggplot(AOcoef, aes(y = estimate, x = Indicator, fill = Period)) +
     fill = "Period"
   ) +
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  standard_theme()
 
 AOcoefpl
 
@@ -293,9 +240,9 @@ AOabdpl <- ggplot(AOabdcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
   # y-axis ticks
-  scale_y_continuous(breaks = seq(-1, 1, by = 0.25), 
+  scale_y_continuous(breaks = seq(-1, 1, by = 0.5), 
                      limits = c(-1, 1), 
-                     labels = scales::number_format(accuracy = 0.01)) +
+                     labels = scales::number_format(accuracy = 0.1)) +
   # Flip coordinates
   coord_flip() +
   # Manual fill colors for Period
@@ -311,22 +258,7 @@ AOabdpl <- ggplot(AOabdcoef, aes(y = estimate, x = Indicator, fill = Period)) +
     fill = "Period"
   ) +
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  standard_theme()
 
 AOabdpl
 #END AOAB----
@@ -344,8 +276,8 @@ dwapl <- ggplot(dwacoef, aes(y = estimate, x = Indicator, fill = Period)) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
   # y-axis ticks
-  scale_y_continuous(breaks = seq(-15, 5, by = 5), 
-                     limits = c(-15, 5), 
+  scale_y_continuous(breaks = seq(-12, 12, by = 4), 
+                     limits = c(-12,12), 
                      labels = scales::number_format(accuracy = 1)) +
   # Flip coordinates
   coord_flip() +
@@ -362,22 +294,7 @@ dwapl <- ggplot(dwacoef, aes(y = estimate, x = Indicator, fill = Period)) +
     fill = "Period"
   ) +
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  standard_theme() 
 dwapl
 #END DWA----
 #DTB----
@@ -394,8 +311,8 @@ dtbpl <- ggplot(dtbcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", size = 0.8) +
   # y-axis ticks
-  scale_y_continuous(breaks = seq(-15, 25, by = 5), 
-                     limits = c(-15, 25), 
+  scale_y_continuous(breaks = seq(-25, 25, by = 10), 
+                     limits = c(-25, 25), 
                      labels = scales::number_format(accuracy = 1)) +
   # Flip coordinates
   coord_flip() +
@@ -412,22 +329,7 @@ dtbpl <- ggplot(dtbcoef, aes(y = estimate, x = Indicator, fill = Period)) +
     fill = "Period"
   ) +
   # Theme
-  theme_bw(base_family = "serif") +
-  theme(
-    legend.position = "none",  # No legend for COG plot
-    #legend.title = element_blank(),
-    #legend.text = element_text(size = 14),
-    #legend.text = element_blank(),
-    #legend.key = element_rect(fill = "white", color = NA),
-    axis.text.y = element_text(size = 14),
-    axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5, vjust = 0.5),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    strip.background = element_rect(colour = "black", fill = "white"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 0, 0, 10)
-  )
+  standard_theme()
 dtbpl
 #END DTB----
 
@@ -437,59 +339,38 @@ dtbpl
 dwapl
 cogpl
 rangpl
-simple_combo <- ggarrange(
-  abdpl + theme(legend.position = "none",plot.margin = margin(5, 10, 5, 10),),
-  cogpl + theme(legend.position = "none",strip.text = element_blank()),
-  AOcoefpl + theme(legend.position = "none",strip.text = element_blank()),
-  AOabdpl + theme(legend.position = "none",strip.text = element_blank()),
-  rangpl + theme(legend.position = "none",strip.text = element_blank()),
-  dwapl + theme(legend.position = "none",strip.text = element_blank()),
-  dtbpl + theme(legend.position = "none",strip.text = element_blank()),
-  nrow =8,
-  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)","(g)"))
 
 # Combine all plots into one figure---
 
 rangpl<-rangpl + 
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 0, top_margin = 0)
 abdpl<-abdpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
 cogpl<-cogpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
 AOcoefpl<-AOcoefpl+
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
 AOabdpl<-AOabdpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
 dwapl<-dwapl +
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
 dtbpl<-dtbpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 2, top_margin = 2)
+    standard_theme(show_legend = TRUE, bottom_margin = 1, top_margin = 1)
 
 
 library(gridExtra)
 library(egg)
 
-plots_list <- list(
-  abdpl + standard_theme(show_legend = FALSE),
-  cogpl + standard_theme(show_legend = FALSE),
-  AOcoefpl + standard_theme(show_legend = FALSE),
-  AOabdpl + standard_theme(show_legend = FALSE),
-  rangpl +    standard_theme(show_legend = FALSE),
-  dwapl + standard_theme(show_legend = FALSE),
-  dtbpl + standard_theme(show_legend = FALSE)
-)
-
-# Combine plots without legends
-slopCombo_clean <- ggarrange(
-  plotlist = plots_list,
-  nrow = 6,
-  ncol = 1,
-  heights = c(1, 1, 1, 1, 1.5, 1),
-  align = "v",
-  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)"),
-  label.x = 0.02,
-  label.y = 0.98,
-  font.label = list(size = 12, color = "black", face = "bold")
-)
-
-  
+simple_combo <- ggarrange(
+  abdpl + theme(legend.position = "none"),
+  cogpl + theme(legend.position = "none",strip.text = element_blank()),
+  AOcoefpl + theme(legend.position = "none",strip.text = element_blank()),
+  AOabdpl + theme(legend.position = "none",strip.text = element_blank()),
+  rangpl + theme(legend.position = "none",strip.text = element_blank()),
+  dwapl + theme(legend.position = "none",strip.text = element_blank()),
+  dtbpl + theme(legend.position = "bottom",strip.text = element_blank()),
+  nrow =7,
+  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)","(g)"))
+# Save the combined plot
+ 
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/CentredSlopeCombo.jpeg"), plot = simple_combo, dpi = 600, width = 8, height = 11, units = "in", device = "jpeg") 
