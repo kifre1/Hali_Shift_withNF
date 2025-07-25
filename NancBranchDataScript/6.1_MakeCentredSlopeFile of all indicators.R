@@ -59,7 +59,7 @@ RegionAbd_coefficients_df2 <- RegionAbd_coefficients_df %>%
 RegionAbd_coefficients_df2$Indicator<-NULL
 RegionAbd_coefficients_df2$Indicator<-"Abundance"
 # Save the coefficients to a CSV file
-#write.csv(RegionAbd_coefficients_df2, here::here("2025-04-23/Output/IndexAbundance/RegionAbd_coefficients_df2.csv"), row.names = FALSE)
+write.csv(RegionAbd_coefficients_df2, here::here("NancBranchDataScript/RegionAbd_coefficients_df2.csv"), row.names = FALSE)
 #END Abundance----
 #AO----
 Area_ThresholdsforEAO<- read.csv(here::here("R/DataforFinalFigs/Area_ThresholdsforEAO.csv"))
@@ -93,7 +93,9 @@ Area_ThresholdsforEAO_coefficients_df2 <- Area_ThresholdsforEAO_coefficients_df 
     percent_change_upper = (10^conf.high - 1) * 100
   )
 Area_ThresholdsforEAO_coefficients_df2$Indicator<-NULL
-Area_ThresholdsforEAO_coefficients_df$Indicator<-"Area Occupied"
+Area_ThresholdsforEAO_coefficients_df2$Indicator<-"Area Occupied"
+write.csv(Area_ThresholdsforEAO_coefficients_df2, 
+           here::here("NancBranchDataScript/NancOutput/Area_ThresholdsforEAO_coefficients_df2.csv"), row.names = FALSE)
 #scaled slopes fro EAO vs Abundance----
 Area_ThresholdsforEAO_coefficientsABD_df <- Area_ThresholdsforEAO %>%filter(Threshold == 90)%>%
   group_by(Region,Period) %>%
@@ -124,6 +126,8 @@ Area_ThresholdsforEAO_coefficientsABD_df2 <- Area_ThresholdsforEAO_coefficientsA
   )
 Area_ThresholdsforEAO_coefficientsABD_df2$Indicator<-NULL
 Area_ThresholdsforEAO_coefficientsABD_df2$Indicator<-"AO vs Abd"
+write.csv(Area_ThresholdsforEAO_coefficientsABD_df2, 
+           here::here("NancBranchDataScript/NancOutput/Area_ThresholdsforEAO_coefficientsABD_df2.csv"), row.names = FALSE)
 # END AO----
 #COG----
 #COG
@@ -185,7 +189,10 @@ centroid_dataRegionalforFigLAT_df2 <- centroid_dataRegionalforFigLAT_df %>%
 
 centroid_dataRegionalforFigLAT_df2$Indicator<-NULL
 centroid_dataRegionalforFigLAT_df2$Indicator<-"COG North"
-V
+#Does not save properly...read from here
+View(centroid_dataRegionalforFigLAT_df2)
+write.csv(centroid_dataRegionalforFigLAT_df2, 
+           here::here("NancBranchDataScript/NancOutput/centroid_dataRegionalforFigLAT_df2.csv"), row.names = FALSE)
 #Now for COG East
 #COG Lon----
 centroid_dataRegionalforFigLON_df <- centroid_dataRegionalforFig %>%
@@ -241,6 +248,8 @@ centroid_dataRegionalforFigLON_df2 <- centroid_dataRegionalforFigLON_df %>%
   )
 centroid_dataRegionalforFigLON_df2$Indicator<-NULL
 centroid_dataRegionalforFigLON_df2$Indicator<-"COG East"
+write.csv(centroid_dataRegionalforFigLON_df2, 
+           here::here("NancBranchDataScript/NancOutput/centroid_dataRegionalforFigLON_df2.csv"), row.names = FALSE)
 #End COG Lon----
 #Deepening----
 D_data_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
@@ -307,6 +316,8 @@ D_data_Reg_df2 <- D_data_Reg_df %>%
   )
 D_data_Reg_df2$Indicator<-NULL
 D_data_Reg_df2$Indicator<-"Depth-wtd Abd"
+write.csv(D_data_Reg_df2, 
+           here::here("NancBranchDataScript/NancOutput/DepWtAve_df2.csv"), row.names = FALSE)
 #END Deepening----
 #Distance ot Hague----
 dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
@@ -387,6 +398,8 @@ Overall.DFHcoefficients_df.Spring <- dist_hague_Reg %>%
   )
 Overall.DFHcoefficients_df.Spring$Indicator<-NULL
 Overall.DFHcoefficients_df.Spring$Indicator<-"Distance to Border"
+write.csv(Overall.DFHcoefficients_df.Spring, 
+           here::here("NancBranchDataScript/NancOutput/Overall.DFHcoefficients_df.Spring.csv"), row.names = FALSE)
 View(Overall.DFHcoefficients_df.Spring)
 #End DFH----
 #Leading and Trailing Edges----
@@ -440,6 +453,8 @@ range.sprE_coefficients_df <- range.spr %>%
     
     Indicator = "Leading Edge E"
   )
+write.csv(range.sprE_coefficients_df , 
+                    here::here("NancBranchDataScript/NancOutput/range.sprE_coefficients_df.csv"), row.names = FALSE)
 #END Leading edgeE----
 # Leading Edge North (95th percentile)----
 range.sprN_coefficients_df <- range.spr %>%
@@ -484,6 +499,8 @@ range.sprN_coefficients_df <- range.spr %>%
     
     Indicator = "Leading Edge N"
   )
+write.csv(range.sprN_coefficients_df, 
+           here::here("NancBranchDataScript/NancOutput/range.sprN_coefficients_df.csv"), row.names = FALSE)
 #END Leading edgeN----
 # Trailing Edge East (5th percentile)----
 range.sprE_coefficients_dfTR <- range.spr %>% 
@@ -528,6 +545,8 @@ range.sprE_coefficients_dfTR <- range.spr %>%
     
     Indicator = "Trailing Edge E"
   )
+write.csv(range.sprE_coefficients_dfTR, 
+           here::here("NancBranchDataScript/NancOutput/range.sprE_coefficients_dfTR.csv"), row.names = FALSE)
 #end trailedge E----
 # Trailing Edge North (5th percentile)----
 range.sprN_coefficients_dfTR <- range.spr %>%
@@ -572,7 +591,10 @@ range.sprN_coefficients_dfTR <- range.spr %>%
     
     Indicator = "Trailing Edge N"
   )
-#end trail----
+write.csv(range.sprN_coefficients_dfTR, 
+           here::here("NancBranchDataScript/NancOutput/range.sprN_coefficients_dfTR.csv"), row.names = FALSE)
+#
+end trail----
 #Combine all coefficients into one data frame
 
 
