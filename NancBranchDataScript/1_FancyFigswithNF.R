@@ -391,8 +391,8 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSUPPCOG_CAMap.jp
 
 dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
 dist_hague_Reg$Period<-NULL
-dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"Before Warming"
-dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"During Warming"
+dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"1990-2005"
+dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"2006-2023"
 dist_hague_Reg_spr<-dist_hague_Reg[dist_hague_Reg$Season=="Spring",]
 dist_hague_Reg_spr_agg<-dist_hague_Reg_spr %>%
   group_by(Stratum,Period) %>%
@@ -406,8 +406,8 @@ dist_hague_Reg_spr_agg<-dist_hague_Reg_spr %>%
 
 dist_hague_CA<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_CA_seasonal.csv"))
 dist_hague_CA$Period<-NULL
-dist_hague_CA$Period[dist_hague_CA$Year<2006]<-"Before Warming"
-dist_hague_CA$Period[dist_hague_CA$Year>2005]<-"During Warming"
+dist_hague_CA$Period[dist_hague_CA$Year<2006]<-"1990-2005"
+dist_hague_CA$Period[dist_hague_CA$Year>2005]<-"2006-2023"
 dist_hague_CA_spr<-dist_hague_CA[dist_hague_CA$Season=="Spring",]
 #aggregate values by Stratum and Period
 dist_hague_CA_spr_agg<-dist_hague_CA_spr %>%
@@ -468,7 +468,7 @@ dist_hague_CAFromZero2<-dist_hague_CAFromZero %>%
   mutate(
     Dist_Q5= case_when(
       Stratum %in% "Georges" ~ Dist_Q5 * -1,
-      TRUE ~ Dist_Q95
+      TRUE ~ Dist_Q5
     )
   ) 
 #END Must TRANSFORM USA distances to be negative for plotting----
@@ -505,7 +505,8 @@ DistReg<-ggplot(dist_hague_RegFromZero, aes(x = Ord2Region, y = Dist_Mean,fill=P
 DistReg
 ##Plot Distance for CA----
 dist_hague_CAFromZero2
-dist_hague_CAFromZero2$ordCoreArea<-factor(dist_hague_CAFromZero$Stratum, levels=c("Nantucket","CapeCod","EGOM","Georges","BOF","Browns","Sable","CapeBreton","Gully","HaliChan","GrandBanks","GBTail"))
+dist_hague_CAFromZero2$ordCoreArea<-factor(dist_hague_CAFromZero2$Stratum, levels=c("Nantucket","CapeCod","EGOM","Georges","BOF","Browns","Sable","CapeBreton","Gully","HaliChan","GrandBanks","GBTail"))
+View(dist_hague_CAFromZero2)
 pd <- position_dodge(.5)
 DistHag<-ggplot(dist_hague_CAFromZero2, aes(x = factor(ordCoreArea), y = Dist_Mean,fill=Period)) +
   geom_linerange(aes(ymin = Dist_Q5, ymax =Dist_Q95),position=pd,color="darkgrey",size=1.5)+
@@ -514,7 +515,7 @@ DistHag<-ggplot(dist_hague_CAFromZero2, aes(x = factor(ordCoreArea), y = Dist_Me
   coord_flip()+
   #geom_vline(xintercept=c(1.5,2.5),lty=2,col="gray50")+
   geom_hline(yintercept=0,lty=2)+#geom_text(aes(label=paste("R2=",signif(R2,digits=2)),x=1.2,y=min(slope)),cex=2)+
-  xlab("")+  ylab("Distance from Hague line (km)")+
+  xlab("")+  ylab("Distance to Border (km)")+
   scale_y_continuous(breaks = seq(-400, 1500, by = 200)) +  # set tick marks
   theme_bw() + # A clean theme
   theme(
@@ -538,88 +539,7 @@ DistHagCombo
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/DistHag.jpeg"), plot = DistHagCombo, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #
 #END PLOT Distance to Hague Line
-#Plot deepening----
-deepReg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
-names(deepReg);summary(deepReg)
-deepReg.spr<-deepReg[deepReg$Season=="Spring",]
-deepReg.spr$ordRegion <- factor(deepReg.spr$Stratum, levels = c("USA", "Canada"))  # Set order for regions
-deepReg.spr<-deepReg.spr%>% 
-  mutate(Depth_MeanNeg = Depth_Mean*-1, 
-         Depth_Q5Neg = Depth_Q5 *-1, 
-         Depth_Q95Neg = Depth_Q95*-1)
-Slope_Reg<- read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_Reg.csv"))
-Slope_Reg.spr<-Slope_Reg[Slope_Reg$Season=="Spring",]
-names(Slope_Reg.spr);summary(Slope_Reg.spr)
-Slope_Reg.spr<-Slope_Reg.spr%>% 
-  mutate(estimateNeg = estimate*-1, 
-         conf.lowNeg = conf.low*-1, 
-         conf.highNeg = conf.high*-1)  # Negate the slope and confidence intervals
-#Scaled slopes for DEEP by region period 
-#modified in 8.1 and you can serach there for filtered_Deepening_coefficients_Reg_ScaledSpr
-
-#Scaled slopes for COG by region period----
-##Figure DEEP Panel A----
-regpal<- c("orange", "darkblue")
-
-DeepPlot<- 
-  ggplot(data = deepReg.spr, aes(x = Year, y = Depth_MeanNeg),group=ordRegion)+
-  geom_vline(xintercept=2005,lty=2,lwd=1.2)+
- geom_ribbon(aes(x = Year, ymin =  Depth_MeanNeg- Depth_Q5Neg, 
-                  ymax = Depth_MeanNeg +Depth_Q95Neg, 
-                  fill = ordRegion), alpha = 0.12) +  # Use geom_ribbon for the SE band
-  geom_line(aes(color =  ordRegion), linewidth = 1) +                         # Line for the group
-  geom_point(aes(color = ordRegion), shape = 19,size=2.5) +                        # Points for data
-  scale_fill_manual(values = regpal) +                    # Custom fill colors
-  scale_color_manual(values = regpal) +
-  # Combine legends
-  guides(color = guide_legend(title = ""),
-         fill = "none") + 
-  labs(y="COG by Depth (m)", x="")+
-  guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1996, y = 4.3, label = "Before Warming", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2014, y = 4.3, label = "During Warming", color = "black", size = 5,family = "serif") +
-  theme(text = element_text(family = "serif"),  
-        legend.box.background = element_blank(), # Transparent legend box
-        legend.position.inside = c(.15,.7),
-        legend.text = element_text(size = 14,family="serif"),
-        plot.margin=margin(10, 5, 10, 15))
-DeepPlot
-#END Figure ABD A----
-#Figure ABD RATE----
-Slope_Reg.spr$Ord2Region<-factor(Slope_Reg.spr$Stratum, levels=c("USA","Canada"))
-
-Slope_Reg.spr$RevPeriod <- factor(Slope_Reg.spr$Period, levels = c("During Warming", "Before Warming")) 
-DeepRegRatesPlot<-
-  ggplot(Slope_Reg.spr , aes(x = factor(Ord2Region), y = estimateNeg,fill=RevPeriod)) +
-  geom_errorbar(aes(ymin = conf.lowNeg, ymax = conf.highNeg), position = pd) +
-  geom_point(shape = 21, size = 3, position = pd) +
-  guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
-  scale_fill_manual(values = c("orangered","steelblue" ))+ #Reverse the colors
-  coord_flip() +
-  geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
- # ylim(-0.06, 0.06) +
-  theme_minimal() + # A cleaner minimal theme
-  theme(
-    text = element_text(family = "serif"),  
-    legend.position.inside = c(0.25, 0.6),               # Position of the legend
-    legend.box.background = element_blank(), # Transparent legend box
-    legend.title = element_blank(),             # Hide legend title
-    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
-    axis.text = element_text(size = 14),      # Customize x-axis label
-    axis.title.y = element_blank(),             # Remove y-axis label
-    axis.title.x = element_text(size = 14),      # Customize x-axis label
-    plot.margin=margin(10,40,20,30))+
-  xlab("") +                                     # Clear x-axis label
-  ylab("Rate of change in Depth (m) /year")
-DeepRegRatesPlot
-FigureDeepDeepRates<-plot_grid(DeepPlot, DeepRegRatesPlot, nrow = 2,rel_heights = c(2, 1),labels = c("(a)", "(b)"))#,align = "v", axis = "lr") # Add labels
-FigureDeepDeepRates
-#ggsave(here::here("R/DataforFinalFigs/Figure2AbdAbdRates.tiff"), plot = Figure2AbdAbdRates, dpi = 600, width = 8, height = 6, units = "in", device = "tiff")
-# END Plot abundance indexed regions  ----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureDeepDeepRates.jpeg"), plot = FigureDeepDeepRates, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #
-#COmmit
-#END Plot deepening----
 library(dplyr)
 library(ggplot2)
 library(stringr)

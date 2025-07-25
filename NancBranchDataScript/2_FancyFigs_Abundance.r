@@ -74,6 +74,15 @@ popr <- Reg_Prop_Spring %>%
             Total_EstimateForPeriod = first(Total_EstimateForPeriod)) %>%
   mutate(Prop = Total_EstimateForRegion / Total_EstimateForPeriod * 100) %>%
   ungroup()
+names(Reg_Prop_Spring)
+range(Reg_Prop_Spring$Proportion)
+Reg_Prop_Spring %>%
+  group_by(Region,Period) %>%
+  summarise(
+    min_prop = min(Proportion, na.rm = TRUE),
+    max_prop = max(Proportion, na.rm = TRUE),
+    .groups = "drop"
+  )
 ####ENDprop----
 Regiona_Proportion_Plot_Spring<-ggplot(Reg_Prop_Spring, aes(x = Year, y = Proportion, fill = Index_Region)) +
   geom_area() +
@@ -128,7 +137,11 @@ ggplot(data = FigAbd.Region.Spring.transformed, aes(x = Year, y = Index_Millions
   annotate("text", x = 1996, y = 0.13, label = "USA", color = "black", size = 5, family = "serif") +
   theme(text = element_text(family = "serif"),  
         legend.position = "none",
-        plot.margin = margin(10, 5, 10, 15))
+        plot.margin = margin(10, 5, 10, 15))#+
+  # Faceting by region
+ # facet_wrap(Region ~ ., 
+           #  scales = "free",
+           #  labeller = label_wrap_gen(width = 15)) 
 
 #END Option 1----
 # Solution 2: Use asymmetric error bars on log scale----

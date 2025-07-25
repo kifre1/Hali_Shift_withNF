@@ -1,4 +1,4 @@
-#MakeSlopeFile of all indicators
+#MakeSlopeFile of all indicators----
 #Abundance
 FigAbd.Region.Spring <- read.csv(here::here("2025-04-23/Output/IndexAbundance/abundance_ind_Region.Spring.csv"),row.names=NULL)
 names(FigAbd.Region.Spring)
@@ -97,14 +97,15 @@ summary(Deepening_coefficients_Reg_ScaledSpr)
 filtered_Deepening_coefficients_Reg_ScaledSpr <- Deepening_coefficients_Reg_ScaledSpr %>%
   filter(term == "scale(Year)")  # to isolate the effects of year and plot slopes and CIs
 filtered_Deepening_coefficients_Reg_ScaledSpr$Indicator<-"Deepening"
+
 #Distance to Border
 dist_hague_Reg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/dist_hague_Reg_seasonal.csv"))
 
 dist_hague_Reg$Period<-NULL
 pd <- position_dodge(.75)
-dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"Before Warming"
+dist_hague_Reg$Period[dist_hague_Reg$Year<2006]<-"1990-2005"
 
-dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"During Warming"
+dist_hague_Reg$Period[dist_hague_Reg$Year>2005]<-"2006-2023"
 #Scaled Region Slopes
 Overall.DFHcoefficients_df.Scaled.Spring <- dist_hague_Reg %>% filter(Season == "Spring")%>%
   group_by(Stratum,Period) %>%

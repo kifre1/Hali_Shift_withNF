@@ -39,7 +39,7 @@ theme_replace(legend.key =element_rect(colour="black",fill="white"),
               
               axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=1,size=12,family="serif"),
               
-              axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=12,family="serif"),
+              axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1,size=14,family="serif"),
               
               axis.title.x=element_text(size=12,hjust=0.5,vjust=-2,family="serif"))
 
@@ -75,21 +75,26 @@ Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
 ##PlotEOA----
 #IN 
 EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
-                aes(x = Year, y =Area_Threshold/1000000, color = Region, group = Region)) +
-  geom_line(size = 2) +
+                #aes(x = Year, y =Area_Threshold/1000000, color = Region, group = Region)) +
+                aes(x = Year, y =Area_Threshold/1000000)) +
+  geom_line(size = 1,color="darkgray") +
   scale_y_log10(
    # breaks = c(0.1, 0.5, 1, 2, 5, 10, 20, 50),
     #labels = c("0.1", "0.5", "1", "2", "5", "10", "20", "50")
   ) +
   scale_x_continuous(breaks = seq(1990, 2023, by = 5)) +
-  scale_fill_manual(values = regpal) +                    # Custom fill colors
-  scale_color_manual(values = regpal) +
-  labs(title = "",
+  #scale_fill_manual(values = regpal) +                    # Custom fill colors
+  #scale_color_manual(values = regpal) +
+   labs(title = "",
        x = expression(""),
-       y = expression(atop("Area Occupied", "(millions km"^2*")")),
+       y = expression(atop("Area Occupied", "(Millions km"^2*")")),
        color = "Region") +
   guides(color = guide_legend(title = ""))+
   geom_vline(xintercept=2005,lty=2,lwd=1.2)+
+    # Faceting by region
+    facet_wrap(Region ~ ., 
+               scales = "free",
+               labeller = label_wrap_gen(width = 15)) +
   theme(text = element_text(family = "serif"),  
         legend.box.background = element_blank(), # Transparent legend box
         legend.position = c(.7,.5),
@@ -119,33 +124,58 @@ PlotEAOAbd <- ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90),
               alpha = .1) +
   # Add log10 scales for both axes
   scale_x_log10() +  # This replaces the log10() transformation in aes()
-  scale_y_log10() +  # This replaces the log10() transformation in aes()
-  # Faceting by region
+    scale_y_log10(
+    name = NULL,
+    sec.axis = sec_axis(~., name = expression(atop("Area Occupied", "(Millions km"^2*")")))
+    )+
+   # Faceting by region
   facet_wrap(Region ~ ., 
              scales = "free",
              labeller = label_wrap_gen(width = 15)) +
   # Improved labels - you can keep the log notation in labels
   labs(title = "",
-       x =  expression("Total Annual Abundance(Millions)"),
-       y = "",#expression(atop("Area Occupied (millions km"^2*")")),
+      x =  expression("Total Annual Abundance(Millions)"),
+     #  y = "",#expression(atop("Area Occupied", "(Millions km"^2*")")),
        color = "Period") +
   guides(fill = "none") +
   # Clean theme
   theme_bw() +
   theme(
+    # Move y-axis title to the right, remove LHS label and RHS ticks/text
+    axis.title.y = element_blank(),
+    axis.title.y.right = element_text(
+      angle = 90, 
+      vjust = 0.5,
+      family = "serif",
+      size = 14
+    ),
+    axis.text.y.right = element_blank(),
+    axis.ticks.y.right = element_blank(),
+    
+    # General text and styling
     text = element_text(family = "serif"),  
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 12),
+    
+    # Legend styling
     legend.box.background = element_blank(),
     legend.position = "top",
-    axis.title = element_text(size = 14, family = "serif"),
-    axis.text = element_text(size = 14, family = "serif"),
     legend.title = element_blank(),
-    legend.text = element_text(size = 14, family = "serif"),
+    legend.text = element_text(size = 14),
     legend.key = element_rect(fill = "white", color = NA),
-    strip.text = element_text(size = 12, family = "serif"),
+    
+    # Strip styling
+    strip.text = element_text(size = 12),
     strip.background = element_rect(colour = "black", fill = "white"),
+    
+    # Grid lines
     panel.grid.minor = element_blank(),
     panel.grid.major = element_blank()
+  ) +
+  scale_y_log10(
+    sec.axis = dup_axis(name = expression(atop("Area Occupied", "(Millions km"^2*")")))
   )
+
 # Display the plot
 print(PlotEAOAbd)
 
@@ -225,8 +255,8 @@ range.sprN_coefficients_dfTR <- range.sprN_coefficients_dfTR%>%
 # Estimate distance shifted.----
 library(geosphere)
 names(range.spr)
-##CHECK THE FLOOLOOWING.
-Leadrange.sprAgg<-range.spr%>% group_by(Period)
+##CHECK THE FLOOLOOWING.NOT SUR EIF RIGHT----
+Leadrange.sprAgg<-range.spr%>% 
   mutate(
     # YearGroup = cut(Year, breaks = seq(1990, 2023, by = 5), right = FALSE)
     YearGroup = cut(Year, breaks = seq(1990, 2025, by = 5), right = FALSE)
@@ -402,7 +432,8 @@ RangeEdgeV3_large_terminal <- ggplot(range.spr,
                               family = "serif", 
                               angle = 0),
     strip.background = element_rect(colour = "black", 
-                                    fill = "white")
+                                    fill = "white"),
+    panel.grid.minor = element_blank(), panel.grid.major =  element_blank(),
   )
 
 RangeEdgeV3_large_terminal
@@ -451,7 +482,7 @@ EAORangeCombo_final <- ggdraw(EAORangeCombo_alt) +
 # Display the result
 print(EAORangeCombo_final)
 ##END Plot Range Edge----
-ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
+#ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/RangeEdge.jpeg"), plot = RangeEdge, dpi = 600, width = 8, height = 6, units = "in", device = "jpeg")
 #END Combo plot: Proper nested approach----
 
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/EAORangeCombo_final.jpeg"), plot = EAORangeCombo_final, dpi = 600, width = 10, height = 8, units = "in", device = "jpeg") 
