@@ -16,14 +16,14 @@ library(ggpubr)
 library(grid)
 
 # First, create a standardized theme for all plots to ensure consistency
-standard_theme <- function(show_legend = FALSE, bottom_margin = 3, top_margin = 3) {
+standard_theme <- function(show_legend = FALSE, bottom_margin =5, top_margin =-12) {
   theme_bw(base_family = "serif") +
     theme(
-      legend.position = if(show_legend) "bottom" else "none",
+      legend.position = if(show_legend) "right" else "none",
       legend.title = element_blank(),
       legend.text = element_text(size = 12),
       legend.key = element_rect(fill = "white", color = NA),
-      axis.text.y = element_text(size = 12,angle = 0),
+      axis.text.y = element_text(size = 12, angle = 0),
       axis.text.x = element_text(size = 10, angle = 0, hjust = 0.5, vjust = 0.5),
       axis.title = element_text(size = 12),
       axis.title.x = element_text(margin = margin(t = 8)),
@@ -31,8 +31,8 @@ standard_theme <- function(show_legend = FALSE, bottom_margin = 3, top_margin = 
       strip.background = element_rect(colour = "black", fill = "white"),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
-      plot.margin = margin(top_margin, 15, bottom_margin, 15),
-      panel.spacing = unit(0.3, "cm")
+      plot.margin = margin(top_margin, 15, bottom_margin, 50),
+      panel.spacing = unit(0.5, "cm")
     )
 }
 #end trail----
@@ -84,9 +84,9 @@ rangpl<-ggplot(rangcoef, aes(y = estimate, x = fct_rev(Indicator), fill = Period
            family = "serif", size = 4, hjust = 0)+
   annotate("text", x = 4.3, y = -25, label = "Southward", 
            family = "serif", size = 4, hjust = 0)+
-  annotate("text", x = 3.3, y = -25, label = "Eastward", 
+  annotate("text", x = 3.2, y = -25, label = "Westward", 
            family = "serif", size = 4, hjust = 0)+
-  annotate("text", x = 3.3, y = 15, label = "Westward", 
+  annotate("text", x = 2.8, y = 15, label = "Eastward", 
            family = "serif", size = 4, hjust = 0)+
   # Manual fill colors
   scale_fill_manual(values = c("steelblue", "orangered")) +
@@ -186,6 +186,7 @@ cogpl <- ggplot(cogcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   
 
 cogpl
+is.ggplot(cogpl)
 #END COGpl---
 
 
@@ -323,7 +324,7 @@ dtbpl <- ggplot(dtbcoef, aes(y = estimate, x = Indicator, fill = Period)) +
   facet_wrap(Region ~ ., nrow=1,scales = "fixed", labeller = label_wrap_gen(width = 15)) +
   # Labels
   labs(
-    y = "Centered Slope of Indicator",
+    y = "Slope of Indicator",
     #y="",
     x = NULL,
     fill = "Period"
@@ -342,35 +343,63 @@ rangpl
 
 # Combine all plots into one figure---
 
-rangpl<-rangpl + 
-    standard_theme(show_legend = FALSE, bottom_margin = 0, top_margin = 0)
-abdpl<-abdpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
-cogpl<-cogpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
-AOcoefpl<-AOcoefpl+
-    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
-AOabdpl<-AOabdpl +
-    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
-dwapl<-dwapl +
-    standard_theme(show_legend = FALSE, bottom_margin = 1, top_margin = 1)
-dtbpl<-dtbpl +
-    standard_theme(show_legend = TRUE, bottom_margin = 1, top_margin = 1)
+library(patchwork)
+library(cowplot)
+library(ggplot2)
+
+# Your existing standard_theme function
+standard_theme <- function(show_legend = FALSE, bottom_margin =5, top_margin =-12) {
+  theme_bw(base_family = "serif") +
+    theme(
+      legend.position = if(show_legend) "right" else "none",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 12),
+      legend.key = element_rect(fill = "white", color = NA),
+      axis.text.y = element_text(size = 12, angle = 0),
+      axis.text.x = element_text(size = 10, angle = 0, hjust = 0.5, vjust = 0.5),
+      axis.title = element_text(size = 12),
+      axis.title.x = element_text(margin = margin(t = 8)),
+      strip.text = element_text(size = 12),
+      strip.background = element_rect(colour = "black", fill = "white"),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      plot.margin = margin(top_margin, 15, bottom_margin, 50),
+      panel.spacing = unit(0.5, "cm")
+    )
+}
+
+# Apply themes to each plot
+p1 <- abdpl + standard_theme(show_legend = FALSE, top_margin = 15)  # maybe larger top margin for outer margin
+p2 <- cogpl + standard_theme(show_legend = FALSE) + theme(strip.text = element_blank())
+p3 <- AOcoefpl + standard_theme(show_legend = FALSE) + theme(strip.text = element_blank())
+p4 <- AOabdpl + standard_theme(show_legend = FALSE) + theme(strip.text = element_blank())
+p5 <- rangpl + standard_theme(show_legend = FALSE) + theme(strip.text = element_blank())
+p6 <- dwapl + standard_theme(show_legend = FALSE) + theme(strip.text = element_blank())
+p7 <- dtbpl + standard_theme(show_legend = TRUE) + theme(strip.text = element_blank())
+
+# Combine plots vertically with labels, aligned axes, and relative heights
+simple_combo <- plot_grid(
+  p1, p2, p3, p4, p5, p6, p7,
+  ncol = 1,
+  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)"),
+  label_fontfamily = "serif",
+  align = "v",
+  axis = "lr",
+  rel_heights = c(1.1, 1.1, .9, .9, 1.3, .6, .6),
+  label_x = 0.02,
+  label_y = 1
+)
+
+# Save directly - do NOT wrap in ggdraw or add a theme here
+ggsave(
+  filename = here::here("NancBranchDataScript/FancyFiguresforMS/CentredSlopeCombo.jpeg"),
+  plot = simple_combo,
+  width = 8,
+  height = 11,
+  units = "in",
+  dpi = 600
+)
 
 
-library(gridExtra)
-library(egg)
-
-simple_combo <- ggarrange(
-  abdpl + theme(legend.position = "none"),
-  cogpl + theme(legend.position = "none",strip.text = element_blank()),
-  AOcoefpl + theme(legend.position = "none",strip.text = element_blank()),
-  AOabdpl + theme(legend.position = "none",strip.text = element_blank()),
-  rangpl + theme(legend.position = "none",strip.text = element_blank()),
-  dwapl + theme(legend.position = "none",strip.text = element_blank()),
-  dtbpl + theme(legend.position = "bottom",strip.text = element_blank()),
-  nrow =7,
-  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)","(g)"))
-# Save the combined plot
- 
 ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/CentredSlopeCombo.jpeg"), plot = simple_combo, dpi = 600, width = 8, height = 11, units = "in", device = "jpeg") 
+
