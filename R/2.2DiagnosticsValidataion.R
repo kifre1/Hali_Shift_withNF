@@ -50,6 +50,8 @@ source(here::here("R/VAST_functions/vast_plotting_functions.R"))
 #5. AUC
 #6. Taylor 
 #7. Plot random effects (Omega, Epsilon, R, P)
+#8. Dharma plots
+#9. root mean squared error and mean absolute error
 #####
 
 #reopen each model output...we are going to compare them 
@@ -60,6 +62,10 @@ Hali_Env<- readRDS( here::here("2025-04-23/Halibut_BC/EnvOnly_mod_fit.rds"))
 Hali_Sp<- readRDS( here::here("2025-04-23/Halibut_BC/Sp_mod_fit.rds"))  
 vast_sample_data<- read.csv(here::here("2025-04-23/Output/vast_samp_dat.csv"), header=T)#written mid model-setup 
 
+length(Hali_SpSt$parameter_estimates$par)
+length(Hali_Env$parameter_estimates$par)
+length(Hali_Sp$parameter_estimates$par)
+length(Hali_Null$parameter_estimates$par)
 
 Hali_SpSt$Report$jnll
 Hali_SpSt$Report$deviance #is NaN
@@ -409,11 +415,103 @@ ggplot(halidf, aes(x = Lon_i, y = Lat_i, color = a_i)) +
   ) +
   theme_minimal() 
 
-#END
+###Additional variables added
+###8. Plot  the DHARMa plots 
+library(glmmTMB)
+library(DHARMa)
+
+R1_i<-Hali_SpSt$Report$R1_i#Pearson residuals for positive observations
+Hali_SpSt$Report$R2_i#Residuals for the encounter probability (stage 1)
+Hali_SpSt$data_frame$b_i
+
+par(mfrow = c(1, 3))
+#distribution of residuals
+plot(density(Hali_SpSt$Report$R1_i, na.rm = TRUE),
+     main = "Density Plot of Residuals (R1_i)",
+     xlab = "Residuals")
+
+#If residuals deviate strongly from the red line, it means they are not normally distributed.
+qqnorm(Hali_SpSt$Report$R1_i,
+       main = "QQ-plot of Residuals (R1_i)")+
+qqline(Hali_SpSt$Report$R1_i, col = "red")
 
 
+#Residuals vs Fitted values
+plot(Hali_SpSt$Report$D_i, Hali_SpSt$Report$R1_i,
+     xlab = "Predicted values (D_i)",
+     ylab = "Residuals (R1_i)",
+     main = "Residuals vs Predicted values",
+     pch = 19, col = rgb(0, 0, 1, 0.5))+
+abline(h = 0, col = "red", lty = 2)
 
-#8. extra from TargetsSDM----
+install.packages("moments")
+library(moments)
+
+skewness_val <- skewness(Hali_SpSt$Report$R1_i, na.rm = TRUE)
+cat("Skewness of residuals:", skewness_val, "\n")
+#under-predicts some higher values or struggles with outliers.
+
+#9. RMSE & MAE root mean squared error and mean absolute error for all 
+observed_SpSt <- Hali_SpSt$data_frame$b_i
+observed_SpSt<-as.numeric(observed_SpSt)
+predicted_SpSt <- Hali_SpSt$Report$D_i
+predicted_SpSt<-as.numeric(predicted_SpSt)
+range(Hali_SpSt$Report$D_i_SpSt)
+#root mean squared error
+rmse_SpSt <- sqrt(mean((as.numeric(observed_SpSt) - as.numeric(predicted_SpSt))^2, na.rm = TRUE))
+rmse_SpSt <- sqrt(mean((observed_SpSt - predicted_SpSt)^2, na.rm = TRUE))
+#Mean Absolute Erro
+mae_SpSt <- mean(abs(observed_SpSt - predicted_SpSt), na.rm = TRUE)
+
+observed_Null <- Hali_Null$data_frame$b_i
+observed_Null<-as.numeric(observed_Null)
+predicted_Null <- Hali_Null$Report$D_i
+predicted_Null<-as.numeric(predicted_Null)
+range(Hali_Null$Report$D_i)
+#root mean squared error
+rmse_Null <- sqrt(mean((as.numeric(observed_Null) - as.numeric(predicted_Null))^2, na.rm = TRUE))
+rmse_Null <- sqrt(mean((observed_Null - predicted_Null)^2, na.rm = TRUE))
+#Mean Absolute Erro
+mae_Null <- mean(abs(observed_Null - predicted_Null), na.rm = TRUE)
+
+observed_Env <- Hali_Env$data_frame$b_i
+observed_Env<-as.numeric(observed_Env)
+predicted_Env <- Hali_Env$Report$D_i
+predicted_Env<-as.numeric(predicted_Env)
+range(Hali_Env$Report$D_i)
+#root mean squared error
+rmse_Env <- sqrt(mean((as.numeric(observed_Env) - as.numeric(predicted_Env))^2, na.rm = TRUE))
+rmse_Env <- sqrt(mean((observed_Env - predicted_Env)^2, na.rm = TRUE))
+#Mean Absolute Erro
+mae_Env <- mean(abs(observed_Env - predicted_Env), na.rm = TRUE)
+
+observed_Sp <- Hali_Sp$data_frame$b_i
+observed_Sp<-as.numeric(observed_Sp)
+predicted_Sp <- Hali_Sp$Report$D_i
+predicted_Sp<-as.numeric(predicted_Sp)
+range(Hali_Sp$Report$D_i)
+#root mean squared error
+rmse_Sp <- sqrt(mean((as.numeric(observed_Sp) - as.numeric(predicted_Sp))^2, na.rm = TRUE))
+rmse_Sp <- sqrt(mean((observed_Sp - predicted_Sp)^2, na.rm = TRUE))
+#Mean Absolute Erro
+mae_Sp <- mean(abs(observed_Sp - predicted_Sp), na.rm = TRUE)
+
+rmse_Null
+mae_Null
+rmse_Env
+mae_Env
+rmse_Sp
+mae_Sp
+rmse_SpSt
+mae_SpSt
+out_dir<- here::here("2025-04-23/Output/Plot/ValidationData/")
+fit <- reload_model(Hali_SpSt)
+plot_DHARMa_res(n_samples = 1000, fit = fit, response_units =  NULL, out_dir = "C:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF/2025-04-23/Output/Plot/ValidationData", out_file = "DHARMa_diagnostics_SpSt.png")
+
+###END
+
+
+##10. extra stuff  from TargetsSDM----
 #this combines all the models and calculates:
 # DHARMA residuals, deviance explained, root mean square error, and a combined Taylor Diagram
 # this code takes a very long time and is quite finicky. I prefer the above methods,
@@ -429,7 +527,7 @@ for (i in seq_along(mod_fit_names)) {
 }
 
 
-# DHARMA residuals
+#DHARMA residuals
 # Model Diagnostics from A. Gruss. Then using pwalk as we aren't saving anything here and instead writing out the results to a folder
 mod_comp_res %>%
   pwalk(.,
@@ -510,97 +608,4 @@ ggplot(data = extrap_grid, aes(color = Region), alpha = 0.5) +
 
 
 
-###Additional variables added
-###Trying to get the DHARMa plots 
-library(glmmTMB)
-library(DHARMa)
 
-R1_i<-Hali_SpSt$Report$R1_i#Pearson residuals for positive observations
-Hali_SpSt$Report$R2_i#Residuals for the encounter probability (stage 1)
-Hali_SpSt$data_frame$b_i
-
-par(mfrow = c(1, 3))
-#distribution of residuals
-plot(density(Hali_SpSt$Report$R1_i, na.rm = TRUE),
-     main = "Density Plot of Residuals (R1_i)",
-     xlab = "Residuals")
-
-#If residuals deviate strongly from the red line, it means they are not normally distributed.
-qqnorm(Hali_SpSt$Report$R1_i,
-       main = "QQ-plot of Residuals (R1_i)")+
-qqline(Hali_SpSt$Report$R1_i, col = "red")
-
-
-#Residuals vs Fitted values
-plot(Hali_SpSt$Report$D_i, Hali_SpSt$Report$R1_i,
-     xlab = "Predicted values (D_i)",
-     ylab = "Residuals (R1_i)",
-     main = "Residuals vs Predicted values",
-     pch = 19, col = rgb(0, 0, 1, 0.5))+
-abline(h = 0, col = "red", lty = 2)
-
-install.packages("moments")
-library(moments)
-
-skewness_val <- skewness(Hali_SpSt$Report$R1_i, na.rm = TRUE)
-cat("Skewness of residuals:", skewness_val, "\n")
-#under-predicts some higher values or struggles with outliers.
-
-
-
-#get root mean squared error and mean absolute error for all 
-observed_SpSt <- Hali_SpSt$data_frame$b_i
-observed_SpSt<-as.numeric(observed_SpSt)
-predicted_SpSt <- Hali_SpSt$Report$D_i
-predicted_SpSt<-as.numeric(predicted_SpSt)
-range(Hali_SpSt$Report$D_i_SpSt)
-#root mean squared error
-rmse_SpSt <- sqrt(mean((as.numeric(observed_SpSt) - as.numeric(predicted_SpSt))^2, na.rm = TRUE))
-rmse_SpSt <- sqrt(mean((observed_SpSt - predicted_SpSt)^2, na.rm = TRUE))
-#Mean Absolute Erro
-mae_SpSt <- mean(abs(observed_SpSt - predicted_SpSt), na.rm = TRUE)
-
-observed_Null <- Hali_Null$data_frame$b_i
-observed_Null<-as.numeric(observed_Null)
-predicted_Null <- Hali_Null$Report$D_i
-predicted_Null<-as.numeric(predicted_Null)
-range(Hali_Null$Report$D_i)
-#root mean squared error
-rmse_Null <- sqrt(mean((as.numeric(observed_Null) - as.numeric(predicted_Null))^2, na.rm = TRUE))
-rmse_Null <- sqrt(mean((observed_Null - predicted_Null)^2, na.rm = TRUE))
-#Mean Absolute Erro
-mae_Null <- mean(abs(observed_Null - predicted_Null), na.rm = TRUE)
-
-observed_Env <- Hali_Env$data_frame$b_i
-observed_Env<-as.numeric(observed_Env)
-predicted_Env <- Hali_Env$Report$D_i
-predicted_Env<-as.numeric(predicted_Env)
-range(Hali_Env$Report$D_i)
-#root mean squared error
-rmse_Env <- sqrt(mean((as.numeric(observed_Env) - as.numeric(predicted_Env))^2, na.rm = TRUE))
-rmse_Env <- sqrt(mean((observed_Env - predicted_Env)^2, na.rm = TRUE))
-#Mean Absolute Erro
-mae_Env <- mean(abs(observed_Env - predicted_Env), na.rm = TRUE)
-
-observed_Sp <- Hali_Sp$data_frame$b_i
-observed_Sp<-as.numeric(observed_Sp)
-predicted_Sp <- Hali_Sp$Report$D_i
-predicted_Sp<-as.numeric(predicted_Sp)
-range(Hali_Sp$Report$D_i)
-#root mean squared error
-rmse_Sp <- sqrt(mean((as.numeric(observed_Sp) - as.numeric(predicted_Sp))^2, na.rm = TRUE))
-rmse_Sp <- sqrt(mean((observed_Sp - predicted_Sp)^2, na.rm = TRUE))
-#Mean Absolute Erro
-mae_Sp <- mean(abs(observed_Sp - predicted_Sp), na.rm = TRUE)
-
-rmse_Null
-mae_Null
-rmse_Env
-mae_Env
-rmse_Sp
-mae_Sp
-rmse_SpSt
-mae_SpSt
-out_dir<- here::here("2025-04-23/Output/Plot/ValidationData/")
-fit <- reload_model(Hali_SpSt)
-plot_DHARMa_res(n_samples = 1000, fit = fit, response_units =  NULL, out_dir = "C:/Users/fergusonk/Documents/Halibut/Hali_Shift_withNF/2025-04-23/Output/Plot/ValidationData", out_file = "DHARMa_diagnostics_SpSt.png")
