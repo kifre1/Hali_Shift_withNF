@@ -297,10 +297,14 @@ names(catch_data)
 write_rds(catch_data, here("Data/Derived/all_raw_halibut_catch_formattedAl14.rds"), compress = "gz")
 #go to 1.2 data_prep_ExtractBNAM to get covariates 
 
+
+
+#getting survey counts 
 catch_data %>%
   group_by(SURVEY, Swept) %>%
   summarize(count = n(), .groups = "drop")
 hist(catch_data$Swept)
+
 
 table(catch_data$SEASON, catch_data$SURVEY)
 head(catch_data)
@@ -318,3 +322,24 @@ nf_tows <- nf_tows %>%
   filter(season !="Winter")
 nf_tows <- nf_tows %>%
   filter(year !=2024)
+
+#newfoundland technically only have spring and fall surveys, but sometimes the bleed into summer months, if they happend in summer months, we classified them as summer 
+#nf_da<-subset(catch_data, catch_data$SURVEY == "NF")
+#nf_da<-subset(nf_da, nf_da$SEASON == "Summer")
+#nf_da <- nf_da %>%
+#  mutate(month = as.integer(format(DATE, "%m")))
+#nf_da %>%
+#  group_by(month) %>%
+#  summarise(count = n())
+#nf_da<-subset(nf_da, nf_da$month == 7)
+#nf_da <- nf_da %>%
+#  mutate(day = as.integer(format(DATE, "%d")))
+#tab<-nf_da %>%
+#  group_by(day) %>%
+#  summarise(count = n())
+#11+12+2+8+8+8+12+9+8+7+7
+#189-92
+#4720+92
+#1536+97
+
+
