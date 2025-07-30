@@ -47,6 +47,8 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
   5. AUC: measure model strength at distinguish between the positive and negative classes 
   6. Taylor diagram
   7. Plot random effects (Omega, Epsilon, R, P)...spatial
+  8. DHARMa plots
+  9. RMSE and MAE
 <br> 
 
 ## Prepare model output for Shift analysis  
