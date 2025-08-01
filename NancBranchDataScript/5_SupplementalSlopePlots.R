@@ -309,10 +309,11 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSCOGCASlopes.jpe
 
 
 #Plot deepening----
-  deepReg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
+deepReg<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_Reg.csv"))
+
 names(deepReg);summary(deepReg)
 deepReg.spr<-deepReg[deepReg$Season=="Spring",]
-deepReg.spr$ordRegion <- factor(deepReg.spr$Stratum, levels = c("USA", "Canada"))  # Set order for regions
+deepReg.spr$ordRegion <- factor(deepReg.spr$Stratum, levels = c("Canada", "USA"))  # Set order for regions
 deepReg.spr<-deepReg.spr%>% 
   mutate(Depth_MeanNeg = Depth_Mean*-1, 
          Depth_Q5Neg = Depth_Q5 *-1, 
@@ -347,14 +348,16 @@ DeepPlot<-
   # Combine legends
   guides(color = guide_legend(title = ""),
          fill = "none") + 
-  labs(y="COG by Depth (m)", x="")+
+  labs(y="Depth-Weighted Abundance (m)", x="")+
   guides(color = guide_legend(title = ""))+
-  annotate("text", x = 1996, y = 4.3, label = "1990-2005", color = "black", size = 5,family = "serif") +
-  annotate("text", x = 2014, y = 4.3, label = "2006-2023", color = "black", size = 5,family = "serif") +
+  #annotate("text", x = 1996, y = 4.3, label = "1990-2005", color = "black", size = 5,family = "serif") +
+  #annotate("text", x = 2014, y = 4.3, label = "2006-2023", color = "black", size = 5,family = "serif") +
+  facet_wrap(.~ordRegion,scales="free_y")+
   theme(text = element_text(family = "serif"),  
-        legend.box.background = element_blank(), # Transparent legend box
-        legend.position.inside = c(.15,.7),
-        legend.text = element_text(size = 14,family="serif"),
+        #legend.box.background = element_blank(), # Transparent legend box
+        legend.position="none",
+        #legend.position.inside = c(.15,.7),
+        #legend.text = element_text(size = 14,family="serif"),
         plot.margin=margin(10, 5, 10, 15))
 DeepPlot
 #END Figure ABD A----
@@ -393,3 +396,47 @@ ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureDeepDeepRates.jp
 #
 #COmmit
 #END Plot deepening----
+# DWA CA
+#read.csv(here::here("2025-04-23/Output/Shift_Indicators/Seasonal_Deepening_CA.csv"), row.names = NULL)
+dslopCA<-read.csv(here::here("2025-04-23/Output/Shift_Indicators/Deepening_Slope_CA.csv"), row.names = NULL)
+names(dslopCA)
+dslopCA<-dslopCA%>% 
+  mutate(estimateNeg = estimate*-1, 
+         conf.lowNeg = conf.low*-1, 
+         conf.highNeg = conf.high*-1)  # Negate the slope and confidence intervals
+#Scaled slopes for DEEP by region period 
+#modified in 8.1 and you can serach there for filtered_Deepening_coefficients_Reg_ScaledSpr
+
+dslopCA$ordCoreArea<-factor(dslopCA$Stratum, levels=c("Nantucket","CapeCod","EGOM","Georges","BOF","Browns","Sable","CapeBreton","Gully","HaliChan","GrandBanks","GBTail"))
+dslopCA$Period[dslopCA$Period == "Before Warming"] <- "1990-2005"
+dslopCA$Period[dslopCA$Period == "During Warming"] <- "2006-2023"
+dslopCA$RevPeriod <- factor(dslopCA$Period, levels = c("2006-2023", "1990-2005")) 
+
+DeepCARatesPlot<-
+  ggplot(dslopCA[dslopCA$Season=="Spring",] , aes(x = factor(ordCoreArea), y = estimateNeg,fill=RevPeriod)) +
+  geom_errorbar(aes(ymin = conf.lowNeg, ymax = conf.highNeg), width=0,lwd=1.5,position=pd,colour="darkgrey") +
+  geom_point(shape = 21, size = 3, position = pd) +
+  guides(fill = guide_legend(reverse = TRUE)) +  # Reverse the legend order
+  scale_fill_manual(values = c("orangered","steelblue" ))+ #Reverse the colors
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed") + # Dashed line for y=0
+  scale_y_continuous(breaks = seq(-20, 20, by = 5), 
+                     limits = c(-20, 20), 
+                     labels = scales::number_format(accuracy = 1)) +
+  # ylim(-0.06, 0.06) +
+ theme_minimal() + # A cleaner minimal theme
+  theme(
+    text = element_text(family = "serif"),  
+    legend.position.inside = c(0.25, 0.6),               # Position of the legend
+    legend.box.background = element_blank(), # Transparent legend box
+    legend.title = element_blank(),             # Hide legend title
+    legend.text = element_text(size = 12, family = "serif"), # Customize legend text
+    axis.text = element_text(size = 14),      # Customize x-axis label
+    axis.title.y = element_blank(),             # Remove y-axis label
+        axis.title.x = element_text(size = 14),      # Customize x-axis label
+    panel.border = element_rect(colour = "black",fill=NA),
+    plot.margin=margin(10,40,20,30))+
+  xlab("") +                                     # Clear x-axis label
+  ylab("Rate of change in Depth (m) /year")
+DeepCARatesPlot
+ggsave(here::here("NancBranchDataScript/FancyFiguresforMS/FigureSDeepCA_SlopesPlot.jpeg"), plot = DeepCARatesPlot, dpi = 600, width =10, height = 5, units = "in", device = "jpeg")
