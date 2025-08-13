@@ -29,6 +29,19 @@ Data from multiple RV surveys, and environmental covariates are combined into a 
   -**Halibut_Catch_Covariates_Scaled_June19.csv**:   Covariates, removed outliers, scaled and to have a mean of 0 and standard deviation of 1, Filtered depth to -30 to -1000m. 
 <br> 
 
+## Supplemental 
+**Sup1install_INLA.R: getting started** 
+- Downloading different versions of INLA and TMB, the wrong combinations will cause errors. 
+- I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15  
+**Sup2DataPlotst.R: pre-requisite to any script that does any mapping** 
+- Plot 1: Map of Core areas ...this needs to be loaded anytime you want to do any mapping because it houses all the supporting spatial data  
+**Sup3TMB_Error_fix.R: pre-requisite to any script that calls on TMB functions** 
+- When you try some commands that use TMB, you will get an error ('"TMBconfig" not available for .Call() for package') 
+**Sup4DataPlot.R: Explore the raw data a bit more**  
+- Makes Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys
+- Makes Supplemental Figure 2: Panel plot showing the data availability by Year
+<br>
+
 ## Run Model and Diagnostics  
 - **2.1FitFullMod.R**: This is the original SDM based on "A species distribution modeling workflow to project changes in marine  species occurrence in the northwest Atlantic" - Gulf of Maine Research Institute: Integrated Systems Ecology  Laboratory   
   - https://gulfofmaine.github.io/sdm_workflow/docs/index.html#preface 
@@ -177,17 +190,5 @@ Note from Jim: You could instead do this similar to Deepening, but instead using
 
 
 ### Effective Area Occupied 
-
-## Supplemental 
-**Sup1install_INLA.R** 
-- Downloading different versions of INLA and TMB, the wrong combinations will cause errors. 
-- I landed on: R 4.4.1, INLA 24.12.11, and TMB 1.9.15  
-**Sup2DataPlotst.R** 
-- Plot 1: Map of Core areas ...this needs to be loaded anytime you want to do any mapping because it houses all the supporting spatial data  
-**Sup3TMB_Error_fix.R** 
-- When you try some commands that use TMB, you will get an error ('"TMBconfig" not available for .Call() for package') 
-**Sup4DataPlot.R**  
-- Makes Supplemental Figure 1: Footprint of NEFSC and DFO Maritimes, and NF  RV surveys
-- Makes Supplemental Figure 2: Panel plot showing the data availability by Year
 
 #top 5 commercial and top 5 depleted species 
