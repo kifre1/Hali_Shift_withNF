@@ -13,7 +13,7 @@ library(dplyr)
 library(ggplot2)
 #Step1
 
-out_dir<- here::here("2025-04-23/Output/Shift_Indicators")
+out_dir<- here::here("2025-04-23/Output/Shift_Indicators/temp")
 fit<- readRDS( here::here("2025-04-23/Halibut_BC/SpST_mod_fit.rds")) 
 
 #parameters in range_Edge()

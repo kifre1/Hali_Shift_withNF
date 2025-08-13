@@ -67,8 +67,22 @@ length(Hali_Env$parameter_estimates$par)
 length(Hali_Sp$parameter_estimates$par)
 length(Hali_Null$parameter_estimates$par)
 
+names(Hali_SpSt)
+fit<-Hali_SpSt
+#for an understanding of the model structure: 
+for (n in names(fit)) {
+  cat("\n---", n, "---\n")
+  if (is.list(fit[[n]]) || is.environment(fit[[n]])) {
+    print(names(fit[[n]]))
+  } else {
+    print(class(fit[[n]]))
+  }
+}
+rep<-Hali_SpSt$Report
+
+
 Hali_SpSt$Report$jnll
-Hali_SpSt$Report$deviance #is NaN
+Hali_SpSt$Report$deviance #is NaN BECAUSE zero-inflated Poisson probably doesn't calculate relative deviance
 print(Hali_SpSt$parameter_estimates$objective)
 print(Hali_SpSt$parameter_estimates)
 
