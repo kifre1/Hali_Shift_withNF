@@ -164,8 +164,9 @@ names(cogregslope)
 
 #Plot COGMap----
 COG_Reg_map<-ggplot() +
-  geom_sf(data = contours, color="lightblue") +
+  geom_sf(data = contours, color="lightblue",lwd=.5) +
   geom_sf(data = All_region_df,  fill = NA) +
+  geom_sf(data = NAFO, color="black",lty=1,lwd=.8,fill = NA) +
   geom_sf(data = EEZ, color="black",lty=1,lwd=.8) +
   geom_sf(data = Hague,  fill = NA,lty=1,lwd=.8) +
   geom_sf(data = land, fill = "cornsilk") +  
@@ -204,6 +205,15 @@ name = "Year",limits = range(cogCA_spr$Year)) +
         #axis.text.x = element_blank(),      # Customize x-axis label
         plot.margin=margin(0,0,0,0))
 COG_Reg_map
+#SAVING COG Map for SHinyApp----
+ggsave(
+  filename = "COG_Reg_map.png",
+  plot = COG_Reg_map,          # optional if it's the last plot
+  path =  here::here("NancBranchDataScript/ShinyApp/www/"),
+  width = 8,
+  height = 6,
+  dpi = 300
+)
 #END READ PLOT COG Region ----
 #Plot COG CA----
 #Don't forget to run arrows in MakingMapArrowsandTables.r

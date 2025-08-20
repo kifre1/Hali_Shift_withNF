@@ -895,9 +895,9 @@ ShinyAbdMap12<-grid.arrange(
 ggsave(
   filename = "ShinyAbdMap12.png",
   plot = ShinyAbdMap12,          # optional if it's the last plot
-  path =  here::here("2025-04-23/FinalPlots"),
-  width = 6.5,
-  height = 7.3,
+  path =  here::here("NancBranchDataScript/ShinyApp/www/"),
+  width = 8,
+  height = 4,
   dpi = 300
 )
 
