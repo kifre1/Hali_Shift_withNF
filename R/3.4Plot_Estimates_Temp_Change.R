@@ -14,8 +14,11 @@
   #(PANEL D): TempChange (TempAfter-TempBefore)
   #FIGURE 2: BeforePlot,DifferencePlot,tempBefore,tempchange
 #STEP 4: Appendix figure3, seasonal comparison of estimates 
-
 #save as GridPlot_BTemp
+
+#STEP 5:Plots for shinyApp start around line 792
+
+
 #STEP 1 Plotting abundance estimates and difference---
 
 library(ggplot2)
@@ -790,4 +793,111 @@ ggsave(
   dpi = 300
 )
 
+##FOR SHINY APP
+library(gridExtra)
+library(ggpubr)
+library(RColorBrewer)
+gradient_colors1 <- rev(colorRampPalette(brewer.pal(9, "YlGnBu"), bias = 0.)(100))
+#max_value<-max(R1_df$EstimatedAbundance)
+max_value<-max(R2_df$EstimatedAbundance)
+ShinyAbdMap<- ggplot() +
+  geom_raster(data = R1_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  #scale_fill_viridis_c()+
+  scale_color_gradientn(colors = gradient_colors1,
+                        limits = c(0, max_value),   # ensure 0 = blue
+                        oob = scales::squish  )+      # clamp values outside range
+  scale_fill_gradientn(colors = gradient_colors1)+
+  #scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="black", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+    labs(title="Abundance 1990-2005", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  theme(
+    plot.margin = unit(c(23,3,0,2), "pt"),
+    #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    plot.title=element_text(size=12,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "bottom",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
+  )
+ShinyAbdMap
+ShinyAbdMap2<- ggplot() +
+  geom_raster(data = R2_df, aes(x = x, y = y, fill = EstimatedAbundance)) +
+  #scale_fill_viridis_c()+
+  scale_color_gradientn(colors = gradient_colors1,
+                        limits = c(0, max_value),   # ensure 0 = blue
+                        oob = scales::squish  )+      # clamp values outside range
+  scale_fill_gradientn(colors = gradient_colors1)+
+  #scale_fill_gradientn(colors = c("darkblue","deepskyblue1","darkorange",   "red"), na.value = "transparent", limits = rast_lims) +
+  coord_sf() +
+  geom_sf(data = NAFO, color="black", fill = NA) +
+  geom_sf(data = Hague, color="black", size = 2) +
+  geom_sf(data = EEZ, color="black", linetype = "dashed", size = 2) +
+  geom_sf(data = land, fill="cornsilk") +
+  xlim(-73, -48) + ylim(39, 52)+
+  theme_bw()+
+  labs(title="Abundance 2006-2023", x = NULL, y = NULL, fill = "sqrt\n(Abun.)")+
+  theme(
+    plot.margin = unit(c(23,3,0,2), "pt"),
+    #plot.margin=margin(20,3,3,3),
+    axis.text = element_text(family = "serif",size=10),
+    axis.text.y = element_blank(),
+    plot.title=element_text(size=12,family="serif"),
+    legend.title = element_text(size = 10,family="serif"), 
+    legend.text = element_text(size = 10,family="serif"),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),  # removes major grid lines
+    panel.grid.minor = element_blank(),   # removes minor grid lines
+    legend.position = "bottom",
+    legend.key.height   = unit(.4, "cm"),
+    legend.key.width = unit(.5, "cm"),
+    legend.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2),
+    legend.position.inside = c(0.01, 0.99),         # (x, y) coordinates inside plot
+    legend.justification.inside = c(0, 1),# anchor legend to top-left of its box
+  )
+
+ShinyAbdMap2
+library(grid)
+
+g1 <- ggplotGrob(ShinyAbdMap)
+g2 <- ggplotGrob(ShinyAbdMap2)
+g1$widths <- g2$widths <- unit.pmax(g1$widths, g2$widths)
+
+ShinyAbdMap12 <- grid.arrange(
+  grobs = list(g1, g2),
+  layout_matrix = rbind(c(1, 2)),
+  nrow = 1,
+  padding = unit(0, "line"),
+  widths = c(1, 1)
+)
+
+ShinyAbdMap12<-grid.arrange(
+  grobs = list(ShinyAbdMap, ShinyAbdMap2),
+  layout_matrix = rbind(c(1, 2)),
+  nrow=1,
+    padding = unit(0, "line")
+ ) # adjust the third column width as needed
+
+
+ggsave(
+  filename = "ShinyAbdMap12.png",
+  plot = ShinyAbdMap12,          # optional if it's the last plot
+  path =  here::here("2025-04-23/FinalPlots"),
+  width = 6.5,
+  height = 7.3,
+  dpi = 300
+)
 

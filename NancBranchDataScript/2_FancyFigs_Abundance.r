@@ -246,7 +246,7 @@ region_colours2 <- c(
   "Georges" = "#EDA752",
   "BOF" = "#8C510A",
   "Browns" = "#D8781D",
-  "Sable" = "#C0C0C0",
+  "Sable" = "black",
   "Gully" = "#7F7F7F",
   "CapeBreton" = "#4D4D4D",
   "HaliChan" = "#00441B",
@@ -262,13 +262,15 @@ abundance_ind_CA.spr$LogAbd <- log10(abundance_ind_CA.spr$Index_Estimate + 1)  #
 CI <- function(x) {
   sd(x, na.rm = TRUE) / sqrt(length(x)) * qt(0.975, df = length(x) - 1)
 }
-CI(abundance_ind_CA.spr$LogAbd)
+
 length(region_colours2)
-length(abundance_ind_CA.spr$ordCoreArea)
+length(unique(abundance_ind_CA.spr$ordCoreArea))
+
 names(abundance_ind_CA.spr)
-# CA Plot with Solution 3: Multiplicative error bars for log scale
-# CA Plot with Solution 3: Multiplicative error bars for log scale
-CAPlot <- ggplot(data = abundance_ind_CA.spr, aes(x = Year, y = Index_Estimate/1000000, color = ordCoreArea)) +
+
+# CA Plot with Solution 3: Multiplicative error bars for log scale----
+CAPlot <- ggplot(data = abundance_ind_CA.spr,  # Filter for years >= 1990], 
+                 aes(x = Year, y = Index_Estimate/1000000, color = ordCoreArea)) +
   scale_x_continuous(breaks = seq(1990, 2023, by = 5)) + # Set x-axis breaks
   scale_y_log10(
     breaks = c(0.001,0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),  # Custom breaks in natural units
@@ -279,8 +281,8 @@ CAPlot <- ggplot(data = abundance_ind_CA.spr, aes(x = Year, y = Index_Estimate/1
                   ymax = (Index_Estimate/1000000) * exp(Index_SD/Index_Estimate), 
                   fill = ordCoreArea), alpha = 0.3, colour = NA) +  # Multiplicative error bars
   geom_line(aes(color = ordCoreArea), linewidth = .9) +                         # Line for the group
-  scale_fill_manual(values = region_colours) +                    # Custom fill colors
-  scale_color_manual(values = region_colours) +
+ scale_fill_manual(values = region_colours) +                    # Custom fill colors
+ scale_color_manual(values = region_colours) +
   geom_vline(xintercept = 2005, linetype = "dashed", color = "black", size = 1) +
   # Combine legends
   guides(color = guide_legend(title = ""),
@@ -291,15 +293,59 @@ CAPlot <- ggplot(data = abundance_ind_CA.spr, aes(x = Year, y = Index_Estimate/1
         legend.position.inside = c(.15, .7),
         legend.text = element_text(size = 10, family = "serif"),
         plot.margin = margin(10, 5, 10, 15))
-
+#END CA Plot with Solution 3: Multiplicative error bars for log scale----
 CAPlot
+abundance_ind_CA.spr$Subregion<-NULL
+abundance_ind_CA.spr$Subregion[abundance_ind_CA.spr$ordCoreArea == "Nantucket" | abundance_ind_CA.spr$ordCoreArea=="Georges"|abundance_ind_CA.spr$ordCoreArea=="CapeCod" |abundance_ind_CA.spr$ordCoreArea=="EGOM"] <- "5ZY"
+abundance_ind_CA.spr$Subregion[abundance_ind_CA.spr$ordCoreArea == "BOF" | abundance_ind_CA.spr$ordCoreArea=="Browns"] <- "4X"
+abundance_ind_CA.spr$Subregion[abundance_ind_CA.spr$ordCoreArea == "Gully" | abundance_ind_CA.spr$ordCoreArea=="CapeBreton"| abundance_ind_CA.spr$ordCoreArea=="Sable"] <- "4VW"
+abundance_ind_CA.spr$Subregion[abundance_ind_CA.spr$ordCoreArea == "HaliChan" | abundance_ind_CA.spr$ordCoreArea=="GrandBanks"| abundance_ind_CA.spr$ordCoreArea=="GBTail"] <- "3NOPs"
+
+# Example of 12 bold colors (you can swap to any you like)
+region_colours12 <- c(
+  "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+  "#FF7F00", "#FFFF33", "#A65628", "#F781BF",
+  "#999999", "#66C2A5", "#FC8D62", "#8DA0CB"
+)
+
+CAPlotshort <- ggplot(
+  #data = abundance_ind_CA.spr[abundance_ind_CA.spr$Year >= 2017, ],
+  data = abundance_ind_CA.spr,
+  aes(x = Year, y = Index_Estimate/1000000, color = ordCoreArea, fill = ordCoreArea)
+) +
+  scale_x_continuous(breaks = seq(1990, 2023, by = 5)) +
+  scale_y_log10(
+    breaks = c(0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10),
+    labels = c("0.001","0.002","0.005","0.01","0.02","0.05","0.1","0.2","0.5","1","2","5","10")
+  ) +
+  geom_ribbon(
+    aes(
+      ymin = pmax((Index_Estimate/1000000) * exp(-Index_SD/Index_Estimate), 0.001),
+      ymax = (Index_Estimate/1000000) * exp(Index_SD/Index_Estimate)
+    ),
+    alpha = 0.2, color = NA   # <-- faint ribbons
+  ) +
+  geom_line(linewidth = .9) +
+  scale_color_manual(values = region_colours12) +
+  scale_fill_manual(values = region_colours12) +
+  guides(color = guide_legend(title = ""), fill = "none") +
+  labs(y = "Modelled Abundance (Millions)", x = "") +
+  facet_wrap(~Subregion, nrow = 1) +
+  theme(
+    text = element_text(family = "serif"),
+    legend.box.background = element_blank(),
+    legend.position.inside = c(.15, .7),
+    legend.text = element_text(size = 10, family = "serif"),
+    plot.margin = margin(10, 5, 10, 15)
+  )
+
+CAPlotshort
 
 
-CAPlot
 
 #Figure4: plot abundance trends with a map of the core areas 
 #go to Sup2DataPlots.R to make CAMAP 
-#CAMAP in C:\Users\shackelln\Documents\My_Program_Files\R\Hali_Shift_withNF\R\Sup2DataPlots.R
+#CAMAP in C:\Users\shackelln\Documents\My_Program_Files\R\Hali_Shift_withNF\Rhttp://127.0.0.1:21785/graphics/8becb3ce-f8a5-4389-9221-5f8cb03ac05a.png\Sup2DataPlots.R
 library(patchwork)
 library(grid)  # for textGrob
 
