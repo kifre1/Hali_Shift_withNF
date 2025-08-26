@@ -66,7 +66,7 @@ Area_ThresholdsforEAO_coefficients_df <- Area_ThresholdsforEAO %>%filter(Thresho
   }) %>%
   ungroup()
 Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
-  filter(term == "scale(Year)")
+  #filter(term == "scale(Year)")
   filter(term == "Year")
 #####END data prep and slopes for EAO over time----
 #Plot: EOA----
@@ -74,7 +74,7 @@ Area_ThresholdsforEAO_coefficients_df<- Area_ThresholdsforEAO_coefficients_df%>%
 EAOplot<-ggplot(Area_ThresholdsforEAO %>% filter(Threshold == 90), 
                 #aes(x = Year, y =Area_Threshold/1000000, color = Region, group = Region)) +
                 aes(x = Year, y =Area_Threshold/1000000)) +
-  geom_line(size = 1,color="darkgray") +
+  geom_line(linewidth = 1,color="darkgray") +
   scale_y_log10(
    # breaks = c(0.1, 0.5, 1, 2, 5, 10, 20, 50),
     #labels = c("0.1", "0.5", "1", "2", "5", "10", "20", "50")
